@@ -4,6 +4,10 @@ v0.1.0. **Implemented** means source exists and is exercised by local tests wher
 not mean deployed, reproduced on a published dataset, or production hardened. Exact counts and
 commands live in [VALIDATION.md](../results/VALIDATION.md).
 
+OpenRouter connection setup (2026-09-20): shared-environment launcher and bounded
+configuration added; credential authentication and model catalog checked. Actual
+model inference has not yet been tested.
+
 | Area | Delivered implementation | Local validation | Not established / remaining |
 |---|---|---|---|
 | Archive / causal replay | Original runner, explicit source availability, independent labels | Synthetic full flow and boundary tests | Real operational quality |

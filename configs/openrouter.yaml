@@ -1,0 +1,31 @@
+# Compatibility starting point; no real-model quality evaluation yet.
+# OpenRouter catalog checked 2026-09-20. Refresh prices before experiments.
+namespace: openrouter
+models:
+  perception:
+    kind: chat
+    base_url: https://openrouter.ai/api/v1
+    model: qwen/qwen3-vl-8b-instruct
+    api_key_env: OPENROUTER_API_KEY
+    revision: openrouter-unpinned
+    supports_images: true
+    json_mode: true
+    token_parameter: max_tokens
+    max_output_tokens: 1200
+    timeout_s: 90
+    max_retries: 0
+    retry_timeouts: false
+    prices:
+      input_per_million: 0.117
+      output_per_million: 0.455
+    extra_body:
+      provider:
+        require_parameters: true
+scheduler:
+  workers: 2
+  max_queue: 16
+  deadline_s: 120
+  drain_timeout_s: 180
+budget:
+  max_requests: 8
+  max_usd: 0.25  # Estimated admission limit, not a provider invoice cap.

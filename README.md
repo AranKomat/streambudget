@@ -77,6 +77,26 @@ Without configured prices, costs are **unknown**, not free. To enable a dollar b
 `prices.input_per_million`, `prices.output_per_million`, optionally `prices.cached_input_per_million`,
 and set `budget.max_usd`. Reservations are estimates; see [billing semantics](docs/OPERATIONS.md).
 
+### OpenRouter with a shared credential file
+
+`configs/openrouter.yaml` provides a small vision-model compatibility configuration
+with eight attempts, no retries, and a $0.25 estimated admission limit. Model and
+prices were checked against OpenRouter's catalog on 2026-09-20; refresh both before
+experiments. This is not a benchmark model selection or a guaranteed billing cap.
+
+The launcher reads `OPENROUTER_API_KEY` from the trusted `../.env` file (the shared
+`gpu/.env` in this workspace), or from the existing environment. Override the file
+with `STREAMBUDGET_ENV_FILE`. Credentials are not copied into this repository.
+
+```bash
+# Default: configuration/dependency check, no inference request.
+bash scripts/openrouter.sh
+
+# Explicit paid image/JSON compatibility probe when ready.
+bash scripts/openrouter.sh doctor --config configs/openrouter.yaml \
+  --probe --allow-network --out runs/openrouter-probe
+```
+
 ## 3. Bring a recording
 
 Install `ffmpeg` or `pip install -e '.[video]'` (PyAV). Both paths retain presentation timestamps.

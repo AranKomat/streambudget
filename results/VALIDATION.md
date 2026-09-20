@@ -1,5 +1,17 @@
 # Local validation receipt
 
+## OpenRouter connection check (2026-09-20)
+
+On macOS with Python 3.13.7, `bash scripts/openrouter.sh` successfully loaded the
+shared credential and validated `configs/openrouter.yaml` without inference.
+An authenticated GET to OpenRouter's `/api/v1/key` returned HTTP 200. The public
+model catalog listed `qwen/qwen3-vl-8b-instruct` with image inputs and response-format
+support; its listed token rates were used in the configuration. No paid model
+request was made, so image grounding and provider inference remain unvalidated.
+`bash -n scripts/openrouter.sh` and `git diff --check` passed.
+
+## Original bundle validation
+
 Build date: **2026-09-20**. This is an execution receipt, not a model-performance report.
 Environment: Linux x86-64, Python **3.13.5**. Package versions and unavailable optional packages are
 recorded in [environment.json](environment.json).
