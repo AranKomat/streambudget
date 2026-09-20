@@ -40,6 +40,7 @@ class ModelConfig(StrictModel):
     temperature: float | None = 0
     prices: Prices = Field(default_factory=Prices)
     extra_body: dict[str, Any] = Field(default_factory=dict)
+    expected_provider_names: list[str] = Field(default_factory=list, max_length=32)
     allow_insecure_remote: bool = False
 
     @model_validator(mode="after")

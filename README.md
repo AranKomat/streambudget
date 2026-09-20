@@ -19,6 +19,11 @@ seven concurrent trials plus grading, **911 calls / $0.534**. It exposed schema,
 tool-loop and proactive-timing failures; it does **not** establish a cost-quality
 advantage. Separate non-commercial research, with no protected data redistributed.
 
+[Provider/tool-loop follow-up](research/PROVIDER_FOLLOWUP_20260920.md): preferred
+GLM routing is configured, parser diagnostics are redacted, and Gemini now terminates
+with explicit abstention on the two unresolved queries. This is not improved answer
+accuracy or evidence that one provider is better than another.
+
 ## Read these first
 
 | File | Purpose |

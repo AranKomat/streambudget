@@ -25,6 +25,12 @@ $0.5339023542 reported cost. GLM had 152/699 failed background jobs; Gemini had
 0/120, but both query attempts exhausted their tool budget. No eligible alert met
 strict delivery timing. This identifies integration gaps, not a model ranking.
 
+Follow-up: [pinned-provider and tool-loop diagnostic](../research/PROVIDER_FOLLOWUP_20260920.md),
+47 calls, $0.0163152946 reported plus three uncertain-charge holds. Preferred GLM
+provider order now applies to future pilot preparation. Remaining-action and causal
+modality metadata let Gemini terminate with explicit abstention on the two retained
+queries; answer accuracy and fresh held-out performance remain unqualified.
+
 | Area | Delivered implementation | Local validation | Not established / remaining |
 |---|---|---|---|
 | Archive / causal replay | Original runner, explicit source availability, independent labels | Synthetic full flow and boundary tests | Real operational quality |

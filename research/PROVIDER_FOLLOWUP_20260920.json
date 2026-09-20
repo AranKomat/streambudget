@@ -1,0 +1,134 @@
+{
+  "protocol": "Synthetic pinned-provider format probes plus post-hoc frozen-state Gemini queries",
+  "fresh_benchmark": false,
+  "admission_ceiling": {
+    "calls": 60,
+    "usd": 1
+  },
+  "totals": {
+    "request_attempts": 47,
+    "reported_usd": 0.0163152946,
+    "provisional_usd": 0.0082756875,
+    "unknown_usage_attempts": 3,
+    "complete_reported_usd": null
+  },
+  "providers": [
+    {
+      "provider": "Z.AI",
+      "tag": "z-ai/fp8",
+      "attempted": 6,
+      "valid": 5,
+      "failures": [
+        {
+          "case": "plan-evidence",
+          "error_type": "ValidationError"
+        }
+      ]
+    },
+    {
+      "provider": "Fireworks",
+      "tag": "fireworks",
+      "attempted": 6,
+      "valid": 6,
+      "failures": []
+    },
+    {
+      "provider": "Novita",
+      "tag": "novita/fp8",
+      "attempted": 6,
+      "valid": 4,
+      "failures": [
+        {
+          "case": "plan-evidence",
+          "error_type": "ValidationError"
+        },
+        {
+          "case": "plan-missing-audio",
+          "error_type": "ValidationError"
+        }
+      ]
+    },
+    {
+      "provider": "Sail Research",
+      "tag": "sail-research/fp8",
+      "attempted": 6,
+      "valid": 3,
+      "failures": [
+        {
+          "case": "red-no-watch",
+          "error_type": "BackendError"
+        },
+        {
+          "case": "red-transition-watch",
+          "error_type": "BackendError"
+        },
+        {
+          "case": "empty-no-watch",
+          "error_type": "BackendError"
+        }
+      ]
+    },
+    {
+      "provider": "Together",
+      "tag": "together",
+      "attempted": 6,
+      "valid": 6,
+      "failures": []
+    },
+    {
+      "provider": "Modal",
+      "tag": "modal/fp8",
+      "attempted": 6,
+      "valid": 6,
+      "failures": []
+    }
+  ],
+  "gemini_queries": [
+    {
+      "question_id": "3",
+      "execution_status": "complete",
+      "answer_status": "abstained",
+      "model_calls": 2,
+      "tool_steps": [
+        "query_sensor"
+      ],
+      "elapsed_s": 8.734938874957152,
+      "imported": {
+        "raw": 520,
+        "derived": 51
+      },
+      "reported_usd": 0.001225125
+    },
+    {
+      "question_id": "5",
+      "execution_status": "complete",
+      "answer_status": "abstained",
+      "model_calls": 9,
+      "tool_steps": [
+        "search",
+        "read_state",
+        "inspect",
+        "inspect",
+        "ocr"
+      ],
+      "elapsed_s": 20.279515208036173,
+      "imported": {
+        "raw": 1102,
+        "derived": 110
+      },
+      "reported_usd": 0.010749374999999999
+    }
+  ],
+  "schema_issue_types": {
+    "missing": 3,
+    "extra_forbidden": 4
+  },
+  "provider_prompt_hashes": [
+    "dfb2f96c0986e4f7f130930fed773a87e10282ba014669057244a4532a224b9d",
+    "8f5f9056692ea056d2d8a7b0e4dd106108209d719ea0585bd55b080e1e2bebd9",
+    "cd691871e12e4e8707f27db47d94743ab53b17083fa14c7d5b64a8061163e79d",
+    "b586ff6223c52c5d7990b26cacd34fad126b00a0313fe23d76d4fc2c15206235",
+    "0b71622db41b3c32584bd6c41054823936c16592dca9a932a03f92a55bca30ce",
+    "18a095f8cd42acc205988e4e6b86e5e48fd442f676777e68e7f5e4a1f79d9659"
+  ]
+}

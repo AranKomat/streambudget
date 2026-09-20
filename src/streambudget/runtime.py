@@ -248,7 +248,8 @@ class Runtime:
                       "Observe these frames and conditions. JSON context:\n" + json.dumps(context),
                       self.image_inputs(frames), context)
         response = await self.pool.call("perception", req)
-        result = Perception.model_validate(response.json())
+        from .validation import validate_response
+        result = validate_response(Perception, response, self.trace, "perceive")
         allowed = {w.id for w in watches}
         if any(c.watch_id not in allowed for c in result.checks) or len({c.watch_id for c in result.checks}) != len(result.checks):
             raise ContractError("Model returned unknown or duplicate watch IDs")
@@ -263,7 +264,7 @@ class Runtime:
             verified = await self.pool.call("verifier", Request("verify", SYSTEM_PERCEPTION,
                 "Independently verify these conditions from the supplied visual evidence:\n" + json.dumps(verify_ctx),
                 req.images, verify_ctx))
-            verification = Perception.model_validate(verified.json())
+            verification = validate_response(Perception, verified, self.trace, "verify")
             uncertain_ids = {w.id for w in uncertain}
             for c in verification.checks:
                 if c.watch_id not in uncertain_ids:

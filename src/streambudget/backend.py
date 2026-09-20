@@ -209,6 +209,8 @@ class ModelPool:
                 routing = {k: data[k] for k in ("provider", "service_tier", "model")
                            if isinstance(data.get(k), str)}
                 self.trace.emit("model_route", role=role, request_hash=key, **routing)
+                if cfg.expected_provider_names and routing.get("provider") not in cfg.expected_provider_names:
+                    raise BackendError("Returned provider does not match the configured allowlist")
                 if cfg.extra_body.get("provider", {}).get("only") == ["google-ai-studio/flex"]:
                     if routing.get("provider") != "Google AI Studio" or routing.get("service_tier") != "flex":
                         raise BackendError("Requested AI Studio Flex route was not confirmed by response")

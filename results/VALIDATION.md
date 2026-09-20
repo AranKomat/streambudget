@@ -1,5 +1,22 @@
 # Local validation receipt
 
+## Provider and tool-loop follow-up (2026-09-20)
+
+- **139 tests passed**, two dependency deprecation warnings; targeted Ruff and
+  `git diff --check` passed. Added provider identity/billing, quota conservation,
+  diagnostic redaction, remaining-action limits, explicit abstention, frozen audio
+  visibility, malformed-action feedback, reconstruction cutoffs/media integrity,
+  and protected-answer export checks.
+- Isolated no-key demo: `runs/provider-followup-no-key-demo-20260920`, 25 mock calls,
+  $0, two toy answers and three toy alerts. Not a model-performance result.
+- [Diagnostic report](../research/PROVIDER_FOLLOWUP_20260920.md): 36 pinned synthetic
+  provider calls plus 11 Gemini query calls. $0.0163152946 reported; $0.0082756875
+  provisional holds for three requests without billing receipts. Do not assume zero
+  charge for those failures. No retries and no full new benchmark replay.
+- Both Gemini queries now explicitly abstain instead of exhausting their tool loop.
+  Neither establishes the requested answer. Provider sample size is too small to
+  justify a ranking; the user's priority order remains unchanged.
+
 ## StreamArena prefix pilot (2026-09-20)
 
 - **128 tests passed**, two dependency deprecation warnings. Targeted Ruff and

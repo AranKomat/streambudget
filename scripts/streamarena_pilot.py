@@ -74,7 +74,7 @@ def prepare(root, out):
     plan = json.loads((root / "plan.json").read_text())
     vids = [v["video_id"] for v in plan["videos"]]
     trials, grading = allocations(vids)
-    base = load_config("configs/benchmark-screening.yaml")
+    base = load_config("configs/streamarena-followup.yaml")
     out.mkdir(parents=True, exist_ok=False)
     (out / "configs").mkdir()
     configs = {}
@@ -231,7 +231,7 @@ async def grade(out, allow_network):
         if row["censored"]:
             row["semantic_correct"] = None
             return
-        if not row["prediction"] or row.get("status") in {"error", "missing", "step_limit", "no_evidence"}:
+        if not row["prediction"] or row.get("status") in {"error", "missing", "step_limit", "no_evidence", "abstained"}:
             row.update(semantic_correct=False, grade_basis="missing/error/step-limit")
             return
         async with semaphore:
