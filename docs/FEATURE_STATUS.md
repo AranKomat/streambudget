@@ -14,6 +14,11 @@ licensed clips completed for all three models, with verified Google AI Studio Fl
 routing for Gemini. [Report](../research/REAL_SCREEN_20260920.md). This is matched
 image-packet QA, not a runtime-policy experiment or an official benchmark result.
 
+Harder benchmark follow-up (2026-09-20): [MMVU/TOMATO report](../research/BENCHMARK_SCREEN_20260920.md),
+20 fixed questions each across three models, 123 calls, $1.1422144168 total.
+LVBench excluded. One metered Gemini truncation; no retries or dropped cases.
+Results use custom frame/prompt budgets, not official leaderboard protocols.
+
 | Area | Delivered implementation | Local validation | Not established / remaining |
 |---|---|---|---|
 | Archive / causal replay | Original runner, explicit source availability, independent labels | Synthetic full flow and boundary tests | Real operational quality |
@@ -35,7 +40,8 @@ image-packet QA, not a runtime-policy experiment or an official benchmark result
 | StreamArena | Independent lifecycle bridge and GT-ref exclusion | Contract-level tests | Full upstream loader/driver/dataset/scorer run; external Tool search |
 | Video-MME | Local nested JSON converter and official-shape exporter | Fixture tests | Real dataset and official scorer; subtitles intentionally off |
 | Domain scoring | One-to-one point-in-window event scorer, QA/MCQ local scoring | Matching/duplicate/missing/Pareto tests | Official ActEV protocol or validated semantic judge |
-| Other benchmarks | Integration plan only | None | FPS/Proactive/OmniPro/drone/etc loaders and results |
+| MMVU / TOMATO | Fixed subset acquisition, uniform full-video frames, evaluator-only labels, shared-budget screen | 20 questions each x 3 models; public-safe results | Full official protocols, repeated trials, runtime-policy ablations |
+| Other benchmarks | Integration plan only | None | FPS/Proactive/OmniPro/drone/etc loaders and results; LVBench skipped |
 | Training | None, intentionally | Not applicable | SFT/RL/distillation only after meaningful data |
 | Build/deployment | Packaging, CLI, Docker/CI definitions | See validation receipt | Docker build and remote CI not executed |
 | Security | Single-tenant bearer auth, typed read-only tools, path/time guards | Basic route/contract tests | Hardened production security review; no actuation |

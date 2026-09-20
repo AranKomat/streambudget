@@ -1,5 +1,22 @@
 # Local validation receipt
 
+## MMVU / TOMATO screening runner (2026-09-20)
+
+- **119 tests passed**, two dependency deprecation warnings. Targeted Ruff and
+  `git diff --check` passed.
+- Added coverage for answer-independent stratified selection, six-option answers,
+  evaluator metadata exclusion, image hashes/path/timestamp bounds, range-only ZIP
+  access, full-duration PyAV sampling, dynamic call counts, and public-safe exports.
+- Isolated no-key demo: `runs/benchmark-report-no-key-demo`, 25 mock attempts, $0,
+  2/2 toy answers and three toy events. Plumbing only.
+- Prepared all 40 fixed benchmark clips successfully (234,881,036 source bytes),
+  with no replacement questions. Exact full-output/image reserve quote: $8.033684
+  for 123 calls. Local budget reduced to $10 after removing LVBench.
+- [Protocol and rights](../research/BENCHMARK_SCREEN_PROTOCOL.md). Real model
+  [results](../research/BENCHMARK_SCREEN_20260920.md): 123 paid calls, $1.1422144168,
+  one charged truncation included in cost/latency and scored incorrect. The report
+  regression test ensures rejected responses do not disappear from model costs.
+
 ## Real-footage follow-up (2026-09-20)
 
 - **107 tests passed**, two dependency deprecation warnings; targeted Ruff and

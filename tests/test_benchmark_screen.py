@@ -159,3 +159,32 @@ def test_public_export_excludes_protected_content(monkeypatch):
     result = runner.public_summary(Path("unused"))
     assert "SECRET" not in json.dumps(result)
     assert result["models"]["qwen"]["rows"][0]["score"]["answer_correct"]
+
+
+async def test_truncated_response_cost_and_latency_are_in_report(tmp_path):
+    root = tmp_path / "data"
+    fixture(root)
+    config = load_config(Path(__file__).parents[1] / "configs/benchmark-screening.yaml")
+    out = tmp_path / "run"
+    runner.prepare(config, out, root, benchmark=True)
+    truncated = False
+
+    def handler(req):
+        body = json.loads(req.content)
+        return httpx.Response(200, json={"provider": "Google AI Studio", "service_tier": "flex",
+            "model": body["model"], "usage": {"prompt_tokens": 100, "completion_tokens": 10, "cost": .01},
+            "choices": [{"finish_reason": "length" if truncated else "stop", "message": {
+                "content": json.dumps({"answer": "C", "reason": "test", "evidence_ids": ["probe-f0"]})}}]})
+
+    transport = httpx.MockTransport(handler)
+    await runner.run_phase(config, out, "probe", allow_network=True, dataset=root,
+                           benchmark=True, transport=transport)
+    truncated = True
+    await runner.run_phase(config, out, "screen", allow_network=True, dataset=root,
+                           benchmark=True, transport=transport)
+    report = runner.public_summary(out)
+    assert report["ledger"]["reported_usd"] == pytest.approx(.06)
+    for model in report["models"].values():
+        assert model["errors"] == 1
+        assert model["provider_reported_usd_including_probe"] == pytest.approx(.02)
+        assert model["latency_p50_s"] > 0

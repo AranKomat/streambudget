@@ -10,6 +10,10 @@ The research question is: **can selective perception, shared observations, and p
 reduce total inference cost while preserving event recall, historical reasoning, and delivered latency?**
 The repository does not claim that this has already been demonstrated.
 
+Latest exploratory model screen: [MMVU and TOMATO subsets](research/BENCHMARK_SCREEN_20260920.md),
+20 questions each across three hosted models, 123 calls and $1.14 total. These are
+custom-protocol subset results, not official leaderboard or runtime-policy scores.
+
 ## Read these first
 
 | File | Purpose |

@@ -205,6 +205,8 @@ def summarize(out):
     second = json.loads((out / "screen" / "receipt.json").read_text())
     if first["status"] != "complete" or second["status"] != "complete":
         raise ValueError("Cannot summarize an unfinished screen")
+    events = [json.loads(line) for phase in ("probe", "screen")
+              for line in (out / phase / "trace.jsonl").read_text().splitlines()]
     models = {}
     for role, cfg in manifest["config"]["models"].items():
         rows = [r for r in second["rows"] if r["role"] == role]
@@ -214,6 +216,18 @@ def summarize(out):
         known = len(costs) == len(probes) + len(rows) and all(
             isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and v >= 0
             for v in costs)
+        # A rejected/truncated response can still have a fully reconciled charge.
+        attempts = [e for e in events if e["kind"] == "model_attempt" and e["role"] == role]
+        if len(attempts) == len(probes) + len(rows) and all(
+            e.get("billing_basis") == "provider_reported_cost" and not e.get("billing_uncertain")
+            for e in attempts
+        ):
+            costs = [e["reported_usd"] for e in attempts]
+            known = True
+        timings = [e["wall_s"] for e in events if e["kind"] == "model_timing"
+                   and e["role"] == role and e["operation"] != "probe"]
+        if len(timings) == len(rows):
+            times = sorted(timings)
         scores = {k: sum(bool(r.get("score", {}).get(k)) for r in rows) for k in (
             "schema_valid", "citations_valid", "answer_correct", "anchor_coverage", "supported_correct")}
         by_category = {}

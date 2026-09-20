@@ -1,0 +1,5336 @@
+{
+  "scope": "public benchmark subsets under custom frame/prompt budgets; not official leaderboard scores",
+  "ledger": {
+    "request_attempts": 123,
+    "reported_usd": 1.1422144168,
+    "complete_reported_usd": 1.1422144168,
+    "provisional_usd": 0.0,
+    "reserved_usd": 8.326672684688674e-17,
+    "unpriced_attempts": 0,
+    "unknown_usage_attempts": 0,
+    "provider_input_tokens": 3375407,
+    "provider_output_tokens": 62097,
+    "provider_cached_input_tokens": 640,
+    "gpu_seconds": null,
+    "gpu_measurement": "not_measured",
+    "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+  },
+  "fixture": "benchmark-subset-v1",
+  "config": {
+    "namespace": "benchmark-screening",
+    "models": {
+      "perception": {
+        "kind": "chat",
+        "model": "google/gemini-3.8-flash",
+        "revision": "openrouter-2026-09-20",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "supports_images": true,
+        "timeout_s": 300.0,
+        "max_retries": 0,
+        "retry_timeouts": false,
+        "json_mode": true,
+        "max_output_tokens": 4096,
+        "token_parameter": "max_tokens",
+        "image_detail": "auto",
+        "image_token_reserve": 4096,
+        "audio_per_minute_usd": null,
+        "temperature": 0.0,
+        "prices": {
+          "input_per_million": 0.375,
+          "output_per_million": 1.875,
+          "cached_input_per_million": 0.0375
+        },
+        "extra_body": {
+          "service_tier": "flex",
+          "reasoning": {
+            "effort": "low"
+          },
+          "provider": {
+            "only": [
+              "google-ai-studio/flex"
+            ],
+            "allow_fallbacks": false,
+            "require_parameters": true
+          }
+        },
+        "allow_insecure_remote": false
+      },
+      "qwen": {
+        "kind": "chat",
+        "model": "qwen/qwen3.8-27b",
+        "revision": "openrouter-2026-09-20",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "supports_images": true,
+        "timeout_s": 300.0,
+        "max_retries": 0,
+        "retry_timeouts": false,
+        "json_mode": true,
+        "max_output_tokens": 4096,
+        "token_parameter": "max_tokens",
+        "image_detail": "auto",
+        "image_token_reserve": 4096,
+        "audio_per_minute_usd": null,
+        "temperature": 0.0,
+        "prices": {
+          "input_per_million": 0.42,
+          "output_per_million": 3.0,
+          "cached_input_per_million": 0.085
+        },
+        "extra_body": {
+          "reasoning": {
+            "effort": "low"
+          },
+          "provider": {
+            "require_parameters": true
+          }
+        },
+        "allow_insecure_remote": false
+      },
+      "glm": {
+        "kind": "chat",
+        "model": "z-ai/glm-5.3-flash",
+        "revision": "openrouter-2026-09-20",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "supports_images": true,
+        "timeout_s": 300.0,
+        "max_retries": 0,
+        "retry_timeouts": false,
+        "json_mode": true,
+        "max_output_tokens": 4096,
+        "token_parameter": "max_tokens",
+        "image_detail": "auto",
+        "image_token_reserve": 4096,
+        "audio_per_minute_usd": null,
+        "temperature": 0.0,
+        "prices": {
+          "input_per_million": 0.15,
+          "output_per_million": 0.5,
+          "cached_input_per_million": 0.018
+        },
+        "extra_body": {
+          "reasoning": {
+            "effort": "low"
+          },
+          "provider": {
+            "require_parameters": true
+          }
+        },
+        "allow_insecure_remote": false
+      }
+    },
+    "policy": {
+      "mode": "adaptive",
+      "min_interval_s": 0.5,
+      "fixed_interval_s": 1,
+      "refresh_interval_s": 8,
+      "monitor_interval_s": 2,
+      "motion_mean_threshold": 0.012,
+      "motion_tile_threshold": 0.12,
+      "audit_probability": 0.01,
+      "random_seed": 7,
+      "recent_frames": 4,
+      "recent_window_s": 8,
+      "max_image_side": 768,
+      "max_inspect_frames": 16,
+      "max_agent_steps": 6,
+      "escalation": true,
+      "compact_every": 0
+    },
+    "scheduler": {
+      "workers": 2,
+      "max_queue": 32,
+      "deadline_s": 30,
+      "drain_timeout_s": 120
+    },
+    "budget": {
+      "max_requests": 123,
+      "max_usd": 10.0
+    },
+    "lexical_results": 8,
+    "hash_embeddings": false,
+    "semantic_embeddings": false,
+    "max_watches": 32
+  },
+  "config_sha256": "978c7379cd7fe6e68533e70429019994b069029a54f06bb1da2a41bc88203ffb",
+  "packets_sha256": "9c0a61a0d01c0ae5062043a0d63f4c36a0879d6ce9148dd2a2626b2385b88664",
+  "labels_sha256": "bb5b2b887efd14378b17e74ac923aee261fa7d3cffd8b1921c4808f1d75665a5",
+  "sources": {
+    "seed": "streambudget-bench-20260920-v1",
+    "selection": "seeded round-robin strata, unique videos, no answer filtering",
+    "revisions": {
+      "MMVU": "b937f414a87e9012acba49d95669020b24fa9ee9",
+      "TOMATO_code": "fe2025f4b9e1ce339618e0eecfd10f09caf67142"
+    },
+    "rights": {
+      "TOMATO": "CC BY-SA 4.0 annotations; official author video archive",
+      "MMVU": "Author-published evaluation data; no explicit data license located; local evaluation only"
+    },
+    "frame_budgets": {
+      "MMVU": 32,
+      "TOMATO": 64
+    },
+    "audio": false,
+    "subtitles": false,
+    "selected": [
+      {
+        "id": "MMVU-validation_913",
+        "benchmark": "MMVU",
+        "category": "Astronomy",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Astronomy/3.mp4"
+      },
+      {
+        "id": "MMVU-validation_788",
+        "benchmark": "MMVU",
+        "category": "Electronics and Communication",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Electronics_and_Communication/19.mp4"
+      },
+      {
+        "id": "MMVU-validation_776",
+        "benchmark": "MMVU",
+        "category": "Basic Medicine",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Basic_Medicine/22.mp4"
+      },
+      {
+        "id": "MMVU-validation_392",
+        "benchmark": "MMVU",
+        "category": "Dentistry",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Dentistry/3.mp4"
+      },
+      {
+        "id": "MMVU-validation_819",
+        "benchmark": "MMVU",
+        "category": "Law",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Law/10.mp4"
+      },
+      {
+        "id": "MMVU-validation_303",
+        "benchmark": "MMVU",
+        "category": "Materials Science",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Materials_Science/5.mp4"
+      },
+      {
+        "id": "MMVU-validation_743",
+        "benchmark": "MMVU",
+        "category": "Modern Physics",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Modern_Physics/13.mp4"
+      },
+      {
+        "id": "MMVU-validation_77",
+        "benchmark": "MMVU",
+        "category": "Neurobiology",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Neurobiology/3.mp4"
+      },
+      {
+        "id": "MMVU-validation_45",
+        "benchmark": "MMVU",
+        "category": "Economics",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Economics/0.mp4"
+      },
+      {
+        "id": "MMVU-validation_53",
+        "benchmark": "MMVU",
+        "category": "Mechanical Engineering",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Mechanical_Engineering/2.mp4"
+      },
+      {
+        "id": "MMVU-validation_532",
+        "benchmark": "MMVU",
+        "category": "Thermodynamics",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Thermodynamics/5.mp4"
+      },
+      {
+        "id": "MMVU-validation_18",
+        "benchmark": "MMVU",
+        "category": "Biology",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Biology/0.mp4"
+      },
+      {
+        "id": "MMVU-validation_961",
+        "benchmark": "MMVU",
+        "category": "History",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/History/2.mp4"
+      },
+      {
+        "id": "MMVU-validation_248",
+        "benchmark": "MMVU",
+        "category": "Electromagnetism",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Electromagnetism/19.mp4"
+      },
+      {
+        "id": "MMVU-validation_749",
+        "benchmark": "MMVU",
+        "category": "Management",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Management/12.mp4"
+      },
+      {
+        "id": "MMVU-validation_462",
+        "benchmark": "MMVU",
+        "category": "Chemistry",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Chemistry/5.mp4"
+      },
+      {
+        "id": "MMVU-validation_730",
+        "benchmark": "MMVU",
+        "category": "Civil Engineering",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Civil_Engineering/24.mp4"
+      },
+      {
+        "id": "MMVU-validation_689",
+        "benchmark": "MMVU",
+        "category": "Electrical Engineering",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Electrical_Engineering/25.mp4"
+      },
+      {
+        "id": "MMVU-validation_319",
+        "benchmark": "MMVU",
+        "category": "Mechanics",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Mechanics/14.mp4"
+      },
+      {
+        "id": "MMVU-validation_459",
+        "benchmark": "MMVU",
+        "category": "Preventive Medicine",
+        "video_key": "https://huggingface.co/datasets/yale-nlp/MMVU/resolve/main/videos/Preventive_Medicine/8.mp4"
+      },
+      {
+        "id": "TOMATO-direction-152",
+        "benchmark": "TOMATO",
+        "category": "direction",
+        "video_key": "0615-00"
+      },
+      {
+        "id": "TOMATO-velocity&frequency-163",
+        "benchmark": "TOMATO",
+        "category": "velocity&frequency",
+        "video_key": "0264-04"
+      },
+      {
+        "id": "TOMATO-count-74",
+        "benchmark": "TOMATO",
+        "category": "count",
+        "video_key": "0202-00"
+      },
+      {
+        "id": "TOMATO-rotation-250",
+        "benchmark": "TOMATO",
+        "category": "rotation",
+        "video_key": "0801-02"
+      },
+      {
+        "id": "TOMATO-visual_cues-4",
+        "benchmark": "TOMATO",
+        "category": "visual_cues",
+        "video_key": "0735-00"
+      },
+      {
+        "id": "TOMATO-shape&trend-205",
+        "benchmark": "TOMATO",
+        "category": "shape&trend",
+        "video_key": "0411-02"
+      },
+      {
+        "id": "TOMATO-direction-269",
+        "benchmark": "TOMATO",
+        "category": "direction",
+        "video_key": "0390-02"
+      },
+      {
+        "id": "TOMATO-velocity&frequency-128",
+        "benchmark": "TOMATO",
+        "category": "velocity&frequency",
+        "video_key": "0912-00"
+      },
+      {
+        "id": "TOMATO-count-237",
+        "benchmark": "TOMATO",
+        "category": "count",
+        "video_key": "0445-00"
+      },
+      {
+        "id": "TOMATO-rotation-172",
+        "benchmark": "TOMATO",
+        "category": "rotation",
+        "video_key": "0255-10"
+      },
+      {
+        "id": "TOMATO-visual_cues-3",
+        "benchmark": "TOMATO",
+        "category": "visual_cues",
+        "video_key": "0734-00"
+      },
+      {
+        "id": "TOMATO-shape&trend-88",
+        "benchmark": "TOMATO",
+        "category": "shape&trend",
+        "video_key": "0651-00"
+      },
+      {
+        "id": "TOMATO-direction-340",
+        "benchmark": "TOMATO",
+        "category": "direction",
+        "video_key": "0241-00"
+      },
+      {
+        "id": "TOMATO-velocity&frequency-29",
+        "benchmark": "TOMATO",
+        "category": "velocity&frequency",
+        "video_key": "0305-03"
+      },
+      {
+        "id": "TOMATO-count-250",
+        "benchmark": "TOMATO",
+        "category": "count",
+        "video_key": "0458-00"
+      },
+      {
+        "id": "TOMATO-rotation-50",
+        "benchmark": "TOMATO",
+        "category": "rotation",
+        "video_key": "0255-01"
+      },
+      {
+        "id": "TOMATO-visual_cues-67",
+        "benchmark": "TOMATO",
+        "category": "visual_cues",
+        "video_key": "0798-00"
+      },
+      {
+        "id": "TOMATO-shape&trend-196",
+        "benchmark": "TOMATO",
+        "category": "shape&trend",
+        "video_key": "0213-08"
+      },
+      {
+        "id": "TOMATO-direction-236",
+        "benchmark": "TOMATO",
+        "category": "direction",
+        "video_key": "0331-00"
+      },
+      {
+        "id": "TOMATO-velocity&frequency-16",
+        "benchmark": "TOMATO",
+        "category": "velocity&frequency",
+        "video_key": "0242-02"
+      }
+    ]
+  },
+  "models": {
+    "perception": {
+      "model": "google/gemini-3.8-flash",
+      "planned_cases": 40,
+      "returned_rows": 40,
+      "by_category": {
+        "MMVU": {
+          "planned": 20,
+          "correct": 16,
+          "errors": 0
+        },
+        "TOMATO": {
+          "planned": 20,
+          "correct": 11,
+          "errors": 1
+        }
+      },
+      "errors": 1,
+      "scores": {
+        "schema_valid": 39,
+        "citations_valid": 39,
+        "answer_correct": 27,
+        "anchor_coverage": 39,
+        "supported_correct": 27
+      },
+      "latency_p50_s": 9.346105563017773,
+      "latency_p95_s": 18.818489708995912,
+      "provider_reported_usd_including_probe": 0.825936,
+      "rows": [
+        {
+          "case_id": "MMVU-validation_788",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 7.128845624974929,
+          "usage": {
+            "prompt_tokens": 36172,
+            "completion_tokens": 90,
+            "total_tokens": 36262,
+            "cost": 0.01373325,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.01373325,
+              "upstream_inference_prompt_cost": 0.0135645,
+              "upstream_inference_completions_cost": 0.00016875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_776",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 8.531326500000432,
+          "usage": {
+            "prompt_tokens": 36148,
+            "completion_tokens": 247,
+            "total_tokens": 36395,
+            "cost": 0.014018625,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.014018625,
+              "upstream_inference_prompt_cost": 0.0135555,
+              "upstream_inference_completions_cost": 0.000463125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 182,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_913",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 9.185811624978669,
+          "usage": {
+            "prompt_tokens": 34989,
+            "completion_tokens": 181,
+            "total_tokens": 35170,
+            "cost": 0.01346025,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.01346025,
+              "upstream_inference_prompt_cost": 0.013120875,
+              "upstream_inference_completions_cost": 0.000339375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 105,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_392",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 8.157261999964248,
+          "usage": {
+            "prompt_tokens": 36223,
+            "completion_tokens": 233,
+            "total_tokens": 36456,
+            "cost": 0.0140205,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0140205,
+              "upstream_inference_prompt_cost": 0.013583625,
+              "upstream_inference_completions_cost": 0.000436875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 139,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_819",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 8.163261291978415,
+          "usage": {
+            "prompt_tokens": 36159,
+            "completion_tokens": 387,
+            "total_tokens": 36546,
+            "cost": 0.01428525,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.01428525,
+              "upstream_inference_prompt_cost": 0.013559625,
+              "upstream_inference_completions_cost": 0.000725625
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 317,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_303",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 9.165738125040662,
+          "usage": {
+            "prompt_tokens": 36147,
+            "completion_tokens": 418,
+            "total_tokens": 36565,
+            "cost": 0.014338875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.014338875,
+              "upstream_inference_prompt_cost": 0.013555125,
+              "upstream_inference_completions_cost": 0.00078375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 353,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_743",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 10.05530429200735,
+          "usage": {
+            "prompt_tokens": 36144,
+            "completion_tokens": 732,
+            "total_tokens": 36876,
+            "cost": 0.0149265,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0149265,
+              "upstream_inference_prompt_cost": 0.013554,
+              "upstream_inference_completions_cost": 0.0013725
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 602,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_77",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 6.956610583991278,
+          "usage": {
+            "prompt_tokens": 34995,
+            "completion_tokens": 112,
+            "total_tokens": 35107,
+            "cost": 0.013333125,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.013333125,
+              "upstream_inference_prompt_cost": 0.013123125,
+              "upstream_inference_completions_cost": 0.00021
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_45",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 7.54119266703492,
+          "usage": {
+            "prompt_tokens": 36193,
+            "completion_tokens": 381,
+            "total_tokens": 36574,
+            "cost": 0.01428675,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.01428675,
+              "upstream_inference_prompt_cost": 0.013572375,
+              "upstream_inference_completions_cost": 0.000714375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 280,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_53",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 7.652621416957118,
+          "usage": {
+            "prompt_tokens": 36137,
+            "completion_tokens": 166,
+            "total_tokens": 36303,
+            "cost": 0.013862625,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.013862625,
+              "upstream_inference_prompt_cost": 0.013551375,
+              "upstream_inference_completions_cost": 0.00031125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 107,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_18",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 7.175432417017873,
+          "usage": {
+            "prompt_tokens": 35518,
+            "completion_tokens": 204,
+            "total_tokens": 35722,
+            "cost": 0.01370175,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.01370175,
+              "upstream_inference_prompt_cost": 0.01331925,
+              "upstream_inference_completions_cost": 0.0003825
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 87,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_961",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 6.682312624994665,
+          "usage": {
+            "prompt_tokens": 36150,
+            "completion_tokens": 113,
+            "total_tokens": 36263,
+            "cost": 0.013768125,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.013768125,
+              "upstream_inference_prompt_cost": 0.01355625,
+              "upstream_inference_completions_cost": 0.000211875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_532",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 12.578133459028322,
+          "usage": {
+            "prompt_tokens": 35575,
+            "completion_tokens": 1587,
+            "total_tokens": 37162,
+            "cost": 0.01631625,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.01631625,
+              "upstream_inference_prompt_cost": 0.013340625,
+              "upstream_inference_completions_cost": 0.002975625
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1502,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_248",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 7.052644458017312,
+          "usage": {
+            "prompt_tokens": 35626,
+            "completion_tokens": 114,
+            "total_tokens": 35740,
+            "cost": 0.0135735,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0135735,
+              "upstream_inference_prompt_cost": 0.01335975,
+              "upstream_inference_completions_cost": 0.00021375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_749",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 8.33286995801609,
+          "usage": {
+            "prompt_tokens": 36112,
+            "completion_tokens": 217,
+            "total_tokens": 36329,
+            "cost": 0.013948875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.013948875,
+              "upstream_inference_prompt_cost": 0.013542,
+              "upstream_inference_completions_cost": 0.000406875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 158,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_462",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 7.675344832998235,
+          "usage": {
+            "prompt_tokens": 35063,
+            "completion_tokens": 277,
+            "total_tokens": 35340,
+            "cost": 0.013668,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.013668,
+              "upstream_inference_prompt_cost": 0.013148625,
+              "upstream_inference_completions_cost": 0.000519375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 162,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_730",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 8.331679541035555,
+          "usage": {
+            "prompt_tokens": 36217,
+            "completion_tokens": 317,
+            "total_tokens": 36534,
+            "cost": 0.01417575,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.01417575,
+              "upstream_inference_prompt_cost": 0.013581375,
+              "upstream_inference_completions_cost": 0.000594375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 224,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_689",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 7.234883875004016,
+          "usage": {
+            "prompt_tokens": 36172,
+            "completion_tokens": 252,
+            "total_tokens": 36424,
+            "cost": 0.014037,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.014037,
+              "upstream_inference_prompt_cost": 0.0135645,
+              "upstream_inference_completions_cost": 0.0004725
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 166,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_319",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 8.448793457995635,
+          "usage": {
+            "prompt_tokens": 36124,
+            "completion_tokens": 77,
+            "total_tokens": 36201,
+            "cost": 0.013690875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.013690875,
+              "upstream_inference_prompt_cost": 0.0135465,
+              "upstream_inference_completions_cost": 0.000144375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_459",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 9.506016084051225,
+          "usage": {
+            "prompt_tokens": 36151,
+            "completion_tokens": 133,
+            "total_tokens": 36284,
+            "cost": 0.013806,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.013806,
+              "upstream_inference_prompt_cost": 0.013556625,
+              "upstream_inference_completions_cost": 0.000249375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-152",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 15.978778999997303,
+          "usage": {
+            "prompt_tokens": 72135,
+            "completion_tokens": 895,
+            "total_tokens": 73030,
+            "cost": 0.02872875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.02872875,
+              "upstream_inference_prompt_cost": 0.027050625,
+              "upstream_inference_completions_cost": 0.001678125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 813,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-163",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 17.020159417006653,
+          "usage": {
+            "prompt_tokens": 72243,
+            "completion_tokens": 860,
+            "total_tokens": 73103,
+            "cost": 0.028703625,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.028703625,
+              "upstream_inference_prompt_cost": 0.027091125,
+              "upstream_inference_completions_cost": 0.0016125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 785,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-74",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 17.023854750033934,
+          "usage": {
+            "prompt_tokens": 72053,
+            "completion_tokens": 1159,
+            "total_tokens": 73212,
+            "cost": 0.029193,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.029193,
+              "upstream_inference_prompt_cost": 0.027019875,
+              "upstream_inference_completions_cost": 0.002173125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1097,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-4",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 13.264468458015472,
+          "usage": {
+            "prompt_tokens": 72172,
+            "completion_tokens": 393,
+            "total_tokens": 72565,
+            "cost": 0.027801375,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.027801375,
+              "upstream_inference_prompt_cost": 0.0270645,
+              "upstream_inference_completions_cost": 0.000736875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 310,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-250",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 19.95235295803286,
+          "usage": {
+            "prompt_tokens": 72143,
+            "completion_tokens": 1711,
+            "total_tokens": 73854,
+            "cost": 0.03026175,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.03026175,
+              "upstream_inference_prompt_cost": 0.027053625,
+              "upstream_inference_completions_cost": 0.003208125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1644,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-shape&trend-205",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 12.463776500022504,
+          "usage": {
+            "prompt_tokens": 72254,
+            "completion_tokens": 258,
+            "total_tokens": 72512,
+            "cost": 0.027579,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.027579,
+              "upstream_inference_prompt_cost": 0.02709525,
+              "upstream_inference_completions_cost": 0.00048375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 206,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-269",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 14.182669500005431,
+          "usage": {
+            "prompt_tokens": 72136,
+            "completion_tokens": 642,
+            "total_tokens": 72778,
+            "cost": 0.02825475,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.02825475,
+              "upstream_inference_prompt_cost": 0.027051,
+              "upstream_inference_completions_cost": 0.00120375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 570,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-128",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 13.731843707966618,
+          "usage": {
+            "prompt_tokens": 72255,
+            "completion_tokens": 942,
+            "total_tokens": 73197,
+            "cost": 0.028861875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.028861875,
+              "upstream_inference_prompt_cost": 0.027095625,
+              "upstream_inference_completions_cost": 0.00176625
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 817,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-237",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 8.997352083039004,
+          "usage": {
+            "prompt_tokens": 21522,
+            "completion_tokens": 1185,
+            "total_tokens": 22707,
+            "cost": 0.010292625,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.010292625,
+              "upstream_inference_prompt_cost": 0.00807075,
+              "upstream_inference_completions_cost": 0.002221875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1091,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-3",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 13.161272624973208,
+          "usage": {
+            "prompt_tokens": 72168,
+            "completion_tokens": 281,
+            "total_tokens": 72449,
+            "cost": 0.027589875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.027589875,
+              "upstream_inference_prompt_cost": 0.027063,
+              "upstream_inference_completions_cost": 0.000526875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 202,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-172",
+          "category": "TOMATO",
+          "status": "error",
+          "error": "Model output truncated at token limit"
+        },
+        {
+          "case_id": "TOMATO-shape&trend-88",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 17.55795449996367,
+          "usage": {
+            "prompt_tokens": 72185,
+            "completion_tokens": 1585,
+            "total_tokens": 73770,
+            "cost": 0.03004125,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.03004125,
+              "upstream_inference_prompt_cost": 0.027069375,
+              "upstream_inference_completions_cost": 0.002971875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1506,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-340",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 12.787343250005506,
+          "usage": {
+            "prompt_tokens": 72115,
+            "completion_tokens": 406,
+            "total_tokens": 72521,
+            "cost": 0.027804375,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.027804375,
+              "upstream_inference_prompt_cost": 0.027043125,
+              "upstream_inference_completions_cost": 0.00076125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 324,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-250",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 6.073620040959213,
+          "usage": {
+            "prompt_tokens": 31191,
+            "completion_tokens": 292,
+            "total_tokens": 31483,
+            "cost": 0.012244125,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.012244125,
+              "upstream_inference_prompt_cost": 0.011696625,
+              "upstream_inference_completions_cost": 0.0005475
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 195,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-29",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 18.81831412500469,
+          "usage": {
+            "prompt_tokens": 72199,
+            "completion_tokens": 2198,
+            "total_tokens": 74397,
+            "cost": 0.031195875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.031195875,
+              "upstream_inference_prompt_cost": 0.027074625,
+              "upstream_inference_completions_cost": 0.00412125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 2093,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-50",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 13.403199874970596,
+          "usage": {
+            "prompt_tokens": 72060,
+            "completion_tokens": 668,
+            "total_tokens": 72728,
+            "cost": 0.028275,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.028275,
+              "upstream_inference_prompt_cost": 0.0270225,
+              "upstream_inference_completions_cost": 0.0012525
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 596,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-67",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 11.65044466604013,
+          "usage": {
+            "prompt_tokens": 72233,
+            "completion_tokens": 1430,
+            "total_tokens": 73663,
+            "cost": 0.029768625,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.029768625,
+              "upstream_inference_prompt_cost": 0.027087375,
+              "upstream_inference_completions_cost": 0.00268125
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1331,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-shape&trend-196",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 6.325979791989084,
+          "usage": {
+            "prompt_tokens": 72271,
+            "completion_tokens": 68,
+            "total_tokens": 72339,
+            "cost": 0.027229125,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.027229125,
+              "upstream_inference_prompt_cost": 0.027101625,
+              "upstream_inference_completions_cost": 0.0001275
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-16",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 9.88442404201487,
+          "usage": {
+            "prompt_tokens": 72178,
+            "completion_tokens": 981,
+            "total_tokens": 73159,
+            "cost": 0.028906125,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.028906125,
+              "upstream_inference_prompt_cost": 0.02706675,
+              "upstream_inference_completions_cost": 0.001839375
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 889,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-236",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 11.38734866597224,
+          "usage": {
+            "prompt_tokens": 71631,
+            "completion_tokens": 80,
+            "total_tokens": 71711,
+            "cost": 0.027011625,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.027011625,
+              "upstream_inference_prompt_cost": 0.026861625,
+              "upstream_inference_completions_cost": 0.00015
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Google AI Studio",
+            "service_tier": "flex",
+            "model": "google/gemini-3.8-flash"
+          }
+        }
+      ],
+      "probe_routing": [
+        {
+          "provider": "Google AI Studio",
+          "service_tier": "flex",
+          "model": "google/gemini-3.8-flash"
+        }
+      ]
+    },
+    "qwen": {
+      "model": "qwen/qwen3.8-27b",
+      "planned_cases": 40,
+      "returned_rows": 40,
+      "by_category": {
+        "MMVU": {
+          "planned": 20,
+          "correct": 15,
+          "errors": 0
+        },
+        "TOMATO": {
+          "planned": 20,
+          "correct": 9,
+          "errors": 0
+        }
+      },
+      "errors": 0,
+      "scores": {
+        "schema_valid": 40,
+        "citations_valid": 40,
+        "answer_correct": 24,
+        "anchor_coverage": 40,
+        "supported_correct": 24
+      },
+      "latency_p50_s": 14.294351416523568,
+      "latency_p95_s": 66.91460695798742,
+      "provider_reported_usd_including_probe": 0.2092494518,
+      "rows": [
+        {
+          "case_id": "MMVU-validation_776",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 5.392564374953508,
+          "usage": {
+            "prompt_tokens": 8114,
+            "completion_tokens": 193,
+            "total_tokens": 8307,
+            "cost": 0.002006691,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 64,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.002006691,
+              "upstream_inference_prompt_cost": 0.001606216,
+              "upstream_inference_completions_cost": 0.000400475
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 65,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Phala",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_913",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 8.753625916026067,
+          "usage": {
+            "prompt_tokens": 6292,
+            "completion_tokens": 388,
+            "total_tokens": 6680,
+            "cost": 0.00236368,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00236368,
+              "upstream_inference_prompt_cost": 0.00151008,
+              "upstream_inference_completions_cost": 0.0008536
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 281,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_392",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 11.750313040975016,
+          "usage": {
+            "prompt_tokens": 8145,
+            "completion_tokens": 685,
+            "total_tokens": 8830,
+            "cost": 0.00334,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00334,
+              "upstream_inference_prompt_cost": 0.0016282687415831213,
+              "upstream_inference_completions_cost": 0.0017117312584168786
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 670,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Mancer 2",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_788",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 15.336612041981425,
+          "usage": {
+            "prompt_tokens": 8083,
+            "completion_tokens": 599,
+            "total_tokens": 8682,
+            "cost": 0.00325772,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00325772,
+              "upstream_inference_prompt_cost": 0.00193992,
+              "upstream_inference_completions_cost": 0.0013178
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 454,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_819",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 11.600634458009154,
+          "usage": {
+            "prompt_tokens": 8069,
+            "completion_tokens": 670,
+            "total_tokens": 8739,
+            "cost": 0.00349125,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00349125,
+              "upstream_inference_prompt_cost": 0.00201725,
+              "upstream_inference_completions_cost": 0.001474
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 512,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "AkashML",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_77",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 8.828178083000239,
+          "usage": {
+            "prompt_tokens": 6306,
+            "completion_tokens": 436,
+            "total_tokens": 6742,
+            "cost": 0.00235,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00235,
+              "upstream_inference_prompt_cost": 0.0012605563116706363,
+              "upstream_inference_completions_cost": 0.0010894436883293638
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 336,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Mancer 2",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_743",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 15.889542416029144,
+          "usage": {
+            "prompt_tokens": 8056,
+            "completion_tokens": 382,
+            "total_tokens": 8438,
+            "cost": 0.0025853,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0025853,
+              "upstream_inference_prompt_cost": 0.0016112,
+              "upstream_inference_completions_cost": 0.0009741
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 255,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Reka",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_532",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 6.1653464999981225,
+          "usage": {
+            "prompt_tokens": 8178,
+            "completion_tokens": 156,
+            "total_tokens": 8334,
+            "cost": 0.0019426648,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 64,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0019426648,
+              "upstream_inference_prompt_cost": 0.0016189648,
+              "upstream_inference_completions_cost": 0.0003237
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 65,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Phala",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_18",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 4.60727170901373,
+          "usage": {
+            "prompt_tokens": 5883,
+            "completion_tokens": 184,
+            "total_tokens": 6067,
+            "cost": 0.001533508,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 128,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.001533508,
+              "upstream_inference_prompt_cost": 0.001151708,
+              "upstream_inference_completions_cost": 0.0003818
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 65,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Phala",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_45",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 14.341085874999408,
+          "usage": {
+            "prompt_tokens": 8104,
+            "completion_tokens": 403,
+            "total_tokens": 8507,
+            "cost": 0.00264845,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00264845,
+              "upstream_inference_prompt_cost": 0.0016208,
+              "upstream_inference_completions_cost": 0.00102765
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 255,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Reka",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_53",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 12.213916540960781,
+          "usage": {
+            "prompt_tokens": 8046,
+            "completion_tokens": 521,
+            "total_tokens": 8567,
+            "cost": 0.0047814,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0047814,
+              "upstream_inference_prompt_cost": 0.0032184,
+              "upstream_inference_completions_cost": 0.001563
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 394,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_961",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 8.68727424996905,
+          "usage": {
+            "prompt_tokens": 8061,
+            "completion_tokens": 417,
+            "total_tokens": 8478,
+            "cost": 0.0026525,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0026525,
+              "upstream_inference_prompt_cost": 0.001610863939428184,
+              "upstream_inference_completions_cost": 0.001041636060571816
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 245,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Mancer 2",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_462",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 4.769831040990539,
+          "usage": {
+            "prompt_tokens": 6417,
+            "completion_tokens": 225,
+            "total_tokens": 6642,
+            "cost": 0.0017249558,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 128,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0017249558,
+              "upstream_inference_prompt_cost": 0.0012580808,
+              "upstream_inference_completions_cost": 0.000466875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 65,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Phala",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_749",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 7.24366304196883,
+          "usage": {
+            "prompt_tokens": 8024,
+            "completion_tokens": 435,
+            "total_tokens": 8459,
+            "cost": 0.00288276,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00288276,
+              "upstream_inference_prompt_cost": 0.00192576,
+              "upstream_inference_completions_cost": 0.000957
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 315,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_303",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 33.470021624991205,
+          "usage": {
+            "prompt_tokens": 3131,
+            "completion_tokens": 1340,
+            "total_tokens": 4471,
+            "cost": 0.00369944,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00369944,
+              "upstream_inference_prompt_cost": 0.00075144,
+              "upstream_inference_completions_cost": 0.002948
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Chutes",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_248",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 14.247225416009314,
+          "usage": {
+            "prompt_tokens": 8185,
+            "completion_tokens": 925,
+            "total_tokens": 9110,
+            "cost": 0.0039994,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0039994,
+              "upstream_inference_prompt_cost": 0.0019644,
+              "upstream_inference_completions_cost": 0.002035
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 750,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_689",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 9.267988292034715,
+          "usage": {
+            "prompt_tokens": 8083,
+            "completion_tokens": 440,
+            "total_tokens": 8523,
+            "cost": 0.00298875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00298875,
+              "upstream_inference_prompt_cost": 0.00202075,
+              "upstream_inference_completions_cost": 0.000968
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 297,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "AkashML",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_459",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 6.889301083050668,
+          "usage": {
+            "prompt_tokens": 8067,
+            "completion_tokens": 370,
+            "total_tokens": 8437,
+            "cost": 0.0043368,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0043368,
+              "upstream_inference_prompt_cost": 0.0032268,
+              "upstream_inference_completions_cost": 0.00111
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 237,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_319",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 12.420546750014182,
+          "usage": {
+            "prompt_tokens": 8035,
+            "completion_tokens": 500,
+            "total_tokens": 8535,
+            "cost": 0.0030284,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0030284,
+              "upstream_inference_prompt_cost": 0.0019284,
+              "upstream_inference_completions_cost": 0.0011
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 383,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-152",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 12.557994041999336,
+          "usage": {
+            "prompt_tokens": 23329,
+            "completion_tokens": 232,
+            "total_tokens": 23561,
+            "cost": 0.0051083512,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 128,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0051083512,
+              "upstream_inference_prompt_cost": 0.0046269512,
+              "upstream_inference_completions_cost": 0.0004814
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 65,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Phala",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_730",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 28.933743166038767,
+          "usage": {
+            "prompt_tokens": 8136,
+            "completion_tokens": 925,
+            "total_tokens": 9061,
+            "cost": 0.00581655,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00581655,
+              "upstream_inference_prompt_cost": 0.0034578,
+              "upstream_inference_completions_cost": 0.00235875
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 743,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Alibaba",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-163",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 30.326333084027283,
+          "usage": {
+            "prompt_tokens": 23447,
+            "completion_tokens": 1588,
+            "total_tokens": 25035,
+            "cost": 0.00935535,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00935535,
+              "upstream_inference_prompt_cost": 0.00586175,
+              "upstream_inference_completions_cost": 0.0034936
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1439,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "AkashML",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-250",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 24.557752583990805,
+          "usage": {
+            "prompt_tokens": 23349,
+            "completion_tokens": 636,
+            "total_tokens": 23985,
+            "cost": 0.0062916,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0062916,
+              "upstream_inference_prompt_cost": 0.0046698,
+              "upstream_inference_completions_cost": 0.0016218
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 255,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Reka",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-74",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 38.96632091701031,
+          "usage": {
+            "prompt_tokens": 23197,
+            "completion_tokens": 1613,
+            "total_tokens": 24810,
+            "cost": 0.013971875,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.013971875,
+              "upstream_inference_prompt_cost": 0.009858725,
+              "upstream_inference_completions_cost": 0.00411315
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1155,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Alibaba",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-shape&trend-205",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 20.09364962496329,
+          "usage": {
+            "prompt_tokens": 23460,
+            "completion_tokens": 466,
+            "total_tokens": 23926,
+            "cost": 0.0066556,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0066556,
+              "upstream_inference_prompt_cost": 0.0056304,
+              "upstream_inference_completions_cost": 0.0010252
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 335,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-237",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 7.855732958007138,
+          "usage": {
+            "prompt_tokens": 2295,
+            "completion_tokens": 401,
+            "total_tokens": 2696,
+            "cost": 0.00148155,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00148155,
+              "upstream_inference_prompt_cost": 0.000459,
+              "upstream_inference_completions_cost": 0.00102255
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 255,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Reka",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-269",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 30.53311154205585,
+          "usage": {
+            "prompt_tokens": 23278,
+            "completion_tokens": 1304,
+            "total_tokens": 24582,
+            "cost": 0.00845552,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00845552,
+              "upstream_inference_prompt_cost": 0.00558672,
+              "upstream_inference_completions_cost": 0.0028688
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1188,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-128",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 34.41082870803075,
+          "usage": {
+            "prompt_tokens": 23462,
+            "completion_tokens": 2320,
+            "total_tokens": 25782,
+            "cost": 0.0109695,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0109695,
+              "upstream_inference_prompt_cost": 0.0058655,
+              "upstream_inference_completions_cost": 0.005104
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 2124,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "AkashML",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-3",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 24.092275790986605,
+          "usage": {
+            "prompt_tokens": 23312,
+            "completion_tokens": 558,
+            "total_tokens": 23870,
+            "cost": 0.0070556,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0070556,
+              "upstream_inference_prompt_cost": 0.005828,
+              "upstream_inference_completions_cost": 0.0012276
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 394,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "AkashML",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-340",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 13.92364804202225,
+          "usage": {
+            "prompt_tokens": 23257,
+            "completion_tokens": 383,
+            "total_tokens": 23640,
+            "cost": 0.00562805,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00562805,
+              "upstream_inference_prompt_cost": 0.0046514,
+              "upstream_inference_completions_cost": 0.00097665
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 255,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Reka",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-172",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 36.78874275000999,
+          "usage": {
+            "prompt_tokens": 23350,
+            "completion_tokens": 1308,
+            "total_tokens": 24658,
+            "cost": 0.0084816,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0084816,
+              "upstream_inference_prompt_cost": 0.005604,
+              "upstream_inference_completions_cost": 0.0028776
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Chutes",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-4",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 87.21241137501784,
+          "usage": {
+            "prompt_tokens": 23316,
+            "completion_tokens": 562,
+            "total_tokens": 23878,
+            "cost": 0.00683224,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00683224,
+              "upstream_inference_prompt_cost": 0.00559584,
+              "upstream_inference_completions_cost": 0.0012364
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Chutes",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-67",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 12.77155591698829,
+          "usage": {
+            "prompt_tokens": 15953,
+            "completion_tokens": 364,
+            "total_tokens": 16317,
+            "cost": 0.0041188,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0041188,
+              "upstream_inference_prompt_cost": 0.0031906,
+              "upstream_inference_completions_cost": 0.0009282
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 255,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Reka",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-250",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 22.116667166992556,
+          "usage": {
+            "prompt_tokens": 2866,
+            "completion_tokens": 872,
+            "total_tokens": 3738,
+            "cost": 0.00260624,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00260624,
+              "upstream_inference_prompt_cost": 0.00068784,
+              "upstream_inference_completions_cost": 0.0019184
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 755,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-236",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 13.505609292013105,
+          "usage": {
+            "prompt_tokens": 24873,
+            "completion_tokens": 230,
+            "total_tokens": 25103,
+            "cost": 0.005411766,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 128,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.005411766,
+              "upstream_inference_prompt_cost": 0.004934516,
+              "upstream_inference_completions_cost": 0.00047725
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 65,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Phala",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-shape&trend-196",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 19.272856957977638,
+          "usage": {
+            "prompt_tokens": 23479,
+            "completion_tokens": 521,
+            "total_tokens": 24000,
+            "cost": 0.00701595,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00701595,
+              "upstream_inference_prompt_cost": 0.00586975,
+              "upstream_inference_completions_cost": 0.0011462
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 380,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "AkashML",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-50",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 48.106646207976155,
+          "usage": {
+            "prompt_tokens": 23267,
+            "completion_tokens": 1837,
+            "total_tokens": 25104,
+            "cost": 0.00962548,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00962548,
+              "upstream_inference_prompt_cost": 0.00558408,
+              "upstream_inference_completions_cost": 0.0040414
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Chutes",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-29",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 66.91422099998454,
+          "usage": {
+            "prompt_tokens": 23406,
+            "completion_tokens": 2780,
+            "total_tokens": 26186,
+            "cost": 0.01173344,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.01173344,
+              "upstream_inference_prompt_cost": 0.00561744,
+              "upstream_inference_completions_cost": 0.006116
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 2592,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-16",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 45.04584004095523,
+          "usage": {
+            "prompt_tokens": 23384,
+            "completion_tokens": 1568,
+            "total_tokens": 24952,
+            "cost": 0.00906176,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00906176,
+              "upstream_inference_prompt_cost": 0.00561216,
+              "upstream_inference_completions_cost": 0.0034496
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1396,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "qwen/qwen3.8-27b"
+          }
+        },
+        {
+          "case_id": "TOMATO-shape&trend-88",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 129.51213212497532,
+          "usage": {
+            "prompt_tokens": 23392,
+            "completion_tokens": 915,
+            "total_tokens": 24307,
+            "cost": 0.00762708,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00762708,
+              "upstream_inference_prompt_cost": 0.00561408,
+              "upstream_inference_completions_cost": 0.002013
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Chutes",
+            "model": "qwen/qwen3.8-27b"
+          }
+        }
+      ],
+      "probe_routing": [
+        {
+          "provider": "Parasail",
+          "model": "qwen/qwen3.8-27b"
+        }
+      ]
+    },
+    "glm": {
+      "model": "z-ai/glm-5.3-flash",
+      "planned_cases": 40,
+      "returned_rows": 40,
+      "by_category": {
+        "MMVU": {
+          "planned": 20,
+          "correct": 18,
+          "errors": 0
+        },
+        "TOMATO": {
+          "planned": 20,
+          "correct": 8,
+          "errors": 0
+        }
+      },
+      "errors": 0,
+      "scores": {
+        "schema_valid": 40,
+        "citations_valid": 40,
+        "answer_correct": 26,
+        "anchor_coverage": 40,
+        "supported_correct": 26
+      },
+      "latency_p50_s": 4.028362854005536,
+      "latency_p95_s": 33.758098541991785,
+      "provider_reported_usd_including_probe": 0.107028965,
+      "rows": [
+        {
+          "case_id": "MMVU-validation_776",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 1.8865140830166638,
+          "usage": {
+            "prompt_tokens": 10406,
+            "completion_tokens": 86,
+            "total_tokens": 10492,
+            "cost": 0.0016039,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0016039,
+              "upstream_inference_prompt_cost": 0.0015609,
+              "upstream_inference_completions_cost": 4.3e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 9,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_913",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.6184813750442117,
+          "usage": {
+            "prompt_tokens": 8294,
+            "completion_tokens": 76,
+            "total_tokens": 8370,
+            "cost": 0.0012821,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0012821,
+              "upstream_inference_prompt_cost": 0.0012441,
+              "upstream_inference_completions_cost": 3.8e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 19,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_788",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.7106975829810835,
+          "usage": {
+            "prompt_tokens": 10427,
+            "completion_tokens": 90,
+            "total_tokens": 10517,
+            "cost": 0.00160905,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00160905,
+              "upstream_inference_prompt_cost": 0.00156405,
+              "upstream_inference_completions_cost": 4.5e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 10,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_392",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.542264040966984,
+          "usage": {
+            "prompt_tokens": 10430,
+            "completion_tokens": 108,
+            "total_tokens": 10538,
+            "cost": 0.0016185,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0016185,
+              "upstream_inference_prompt_cost": 0.0015645,
+              "upstream_inference_completions_cost": 5.4e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 23,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_819",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.4875874169520102,
+          "usage": {
+            "prompt_tokens": 10376,
+            "completion_tokens": 74,
+            "total_tokens": 10450,
+            "cost": 0.0015934,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0015934,
+              "upstream_inference_prompt_cost": 0.0015564,
+              "upstream_inference_completions_cost": 3.7e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 8,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_303",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.7945422080229037,
+          "usage": {
+            "prompt_tokens": 4078,
+            "completion_tokens": 205,
+            "total_tokens": 4283,
+            "cost": 0.0007142,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0007142,
+              "upstream_inference_prompt_cost": 0.0006117,
+              "upstream_inference_completions_cost": 0.0001025
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 63,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_743",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 1.9574630829738453,
+          "usage": {
+            "prompt_tokens": 10402,
+            "completion_tokens": 115,
+            "total_tokens": 10517,
+            "cost": 0.0016178,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0016178,
+              "upstream_inference_prompt_cost": 0.0015603,
+              "upstream_inference_completions_cost": 5.75e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 32,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_77",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 1.576858207990881,
+          "usage": {
+            "prompt_tokens": 8341,
+            "completion_tokens": 93,
+            "total_tokens": 8434,
+            "cost": 0.00129765,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00129765,
+              "upstream_inference_prompt_cost": 0.00125115,
+              "upstream_inference_completions_cost": 4.65e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 14,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_45",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 3.1221252090181224,
+          "usage": {
+            "prompt_tokens": 10435,
+            "completion_tokens": 85,
+            "total_tokens": 10520,
+            "cost": 0.00160775,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00160775,
+              "upstream_inference_prompt_cost": 0.00156525,
+              "upstream_inference_completions_cost": 4.25e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_53",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.5241527920006774,
+          "usage": {
+            "prompt_tokens": 10372,
+            "completion_tokens": 98,
+            "total_tokens": 10470,
+            "cost": 0.0016048,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0016048,
+              "upstream_inference_prompt_cost": 0.0015558,
+              "upstream_inference_completions_cost": 4.9e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 12,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_532",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 2.6939042499870993,
+          "usage": {
+            "prompt_tokens": 10452,
+            "completion_tokens": 121,
+            "total_tokens": 10573,
+            "cost": 0.0016283,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0016283,
+              "upstream_inference_prompt_cost": 0.0015678,
+              "upstream_inference_completions_cost": 6.05e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 22,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_18",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 1.902428375033196,
+          "usage": {
+            "prompt_tokens": 7754,
+            "completion_tokens": 88,
+            "total_tokens": 7842,
+            "cost": 0.0012071,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0012071,
+              "upstream_inference_prompt_cost": 0.0011631,
+              "upstream_inference_completions_cost": 4.4e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_961",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.814271125011146,
+          "usage": {
+            "prompt_tokens": 10397,
+            "completion_tokens": 85,
+            "total_tokens": 10482,
+            "cost": 0.00160205,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00160205,
+              "upstream_inference_prompt_cost": 0.00155955,
+              "upstream_inference_completions_cost": 4.25e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 3,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_248",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 3.3448895000037737,
+          "usage": {
+            "prompt_tokens": 10514,
+            "completion_tokens": 196,
+            "total_tokens": 10710,
+            "cost": 0.0016751,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0016751,
+              "upstream_inference_prompt_cost": 0.0015771,
+              "upstream_inference_completions_cost": 9.8e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 79,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_749",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.6099872500053607,
+          "usage": {
+            "prompt_tokens": 10355,
+            "completion_tokens": 80,
+            "total_tokens": 10435,
+            "cost": 0.00159325,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00159325,
+              "upstream_inference_prompt_cost": 0.00155325,
+              "upstream_inference_completions_cost": 4e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 10,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_462",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 1.7444376250496134,
+          "usage": {
+            "prompt_tokens": 8392,
+            "completion_tokens": 103,
+            "total_tokens": 8495,
+            "cost": 0.0013103,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0013103,
+              "upstream_inference_prompt_cost": 0.0012588,
+              "upstream_inference_completions_cost": 5.15e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 22,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_730",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 3.14962945797015,
+          "usage": {
+            "prompt_tokens": 10479,
+            "completion_tokens": 112,
+            "total_tokens": 10591,
+            "cost": 0.00162785,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00162785,
+              "upstream_inference_prompt_cost": 0.00157185,
+              "upstream_inference_completions_cost": 5.6e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 18,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_459",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 2.3689213329926133,
+          "usage": {
+            "prompt_tokens": 10377,
+            "completion_tokens": 125,
+            "total_tokens": 10502,
+            "cost": 0.00161905,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00161905,
+              "upstream_inference_prompt_cost": 0.00155655,
+              "upstream_inference_completions_cost": 6.25e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 26,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_689",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 13.00646925001638,
+          "usage": {
+            "prompt_tokens": 10488,
+            "completion_tokens": 90,
+            "total_tokens": 10578,
+            "cost": 0.0008091,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0008091,
+              "upstream_inference_prompt_cost": 0.0007866,
+              "upstream_inference_completions_cost": 2.25e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 20,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "GMICloud",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-152",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 4.892131290980615,
+          "usage": {
+            "prompt_tokens": 30089,
+            "completion_tokens": 154,
+            "total_tokens": 30243,
+            "cost": 0.00459035,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00459035,
+              "upstream_inference_prompt_cost": 0.00451335,
+              "upstream_inference_completions_cost": 7.7e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 71,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "MMVU-validation_319",
+          "category": "MMVU",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 17.44362600002205,
+          "usage": {
+            "prompt_tokens": 10441,
+            "completion_tokens": 97,
+            "total_tokens": 10538,
+            "cost": 0.000807325,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.000807325,
+              "upstream_inference_prompt_cost": 0.000783075,
+              "upstream_inference_completions_cost": 2.425e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 18,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "GMICloud",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-163",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 8.179124291986227,
+          "usage": {
+            "prompt_tokens": 30257,
+            "completion_tokens": 98,
+            "total_tokens": 30355,
+            "cost": 0.00458755,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00458755,
+              "upstream_inference_prompt_cost": 0.00453855,
+              "upstream_inference_completions_cost": 4.9e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 9,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-4",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 6.954874708026182,
+          "usage": {
+            "prompt_tokens": 30200,
+            "completion_tokens": 108,
+            "total_tokens": 30308,
+            "cost": 0.004584,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.004584,
+              "upstream_inference_prompt_cost": 0.00453,
+              "upstream_inference_completions_cost": 5.4e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 16,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-shape&trend-205",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 6.715789499983657,
+          "usage": {
+            "prompt_tokens": 30161,
+            "completion_tokens": 81,
+            "total_tokens": 30242,
+            "cost": 0.00456465,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00456465,
+              "upstream_inference_prompt_cost": 0.00452415,
+              "upstream_inference_completions_cost": 4.05e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-269",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 9.328167417028453,
+          "usage": {
+            "prompt_tokens": 30066,
+            "completion_tokens": 105,
+            "total_tokens": 30171,
+            "cost": 0.0045624,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0045624,
+              "upstream_inference_prompt_cost": 0.0045099,
+              "upstream_inference_completions_cost": 5.25e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 30,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-74",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 46.55935125000542,
+          "usage": {
+            "prompt_tokens": 30075,
+            "completion_tokens": 238,
+            "total_tokens": 30313,
+            "cost": 0.00277339,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00277339,
+              "upstream_inference_prompt_cost": 0.00270675,
+              "upstream_inference_completions_cost": 6.664e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 124,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "InferenceNet",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-237",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 4.362660250044428,
+          "usage": {
+            "prompt_tokens": 2967,
+            "completion_tokens": 198,
+            "total_tokens": 3165,
+            "cost": 0.00054405,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00054405,
+              "upstream_inference_prompt_cost": 0.00044505,
+              "upstream_inference_completions_cost": 9.9e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 71,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-128",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 12.80860979197314,
+          "usage": {
+            "prompt_tokens": 30260,
+            "completion_tokens": 144,
+            "total_tokens": 30404,
+            "cost": 0.004611,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.004611,
+              "upstream_inference_prompt_cost": 0.004539,
+              "upstream_inference_completions_cost": 7.2e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 24,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-250",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 46.95987466699444,
+          "usage": {
+            "prompt_tokens": 30133,
+            "completion_tokens": 198,
+            "total_tokens": 30331,
+            "cost": 0.00461895,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00461895,
+              "upstream_inference_prompt_cost": 0.00451995,
+              "upstream_inference_completions_cost": 9.9e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 100,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Crusoe",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-172",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 7.342020625015721,
+          "usage": {
+            "prompt_tokens": 30132,
+            "completion_tokens": 204,
+            "total_tokens": 30336,
+            "cost": 0.0046218,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0046218,
+              "upstream_inference_prompt_cost": 0.0045198,
+              "upstream_inference_completions_cost": 0.000102
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 98,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-3",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 8.194344249961432,
+          "usage": {
+            "prompt_tokens": 30220,
+            "completion_tokens": 120,
+            "total_tokens": 30340,
+            "cost": 0.004593,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.004593,
+              "upstream_inference_prompt_cost": 0.004533,
+              "upstream_inference_completions_cost": 6e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 22,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-shape&trend-88",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 8.069923500006553,
+          "usage": {
+            "prompt_tokens": 30268,
+            "completion_tokens": 166,
+            "total_tokens": 30434,
+            "cost": 0.0046232,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0046232,
+              "upstream_inference_prompt_cost": 0.0045402,
+              "upstream_inference_completions_cost": 8.3e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 46,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-29",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 4.484685332980007,
+          "usage": {
+            "prompt_tokens": 30276,
+            "completion_tokens": 170,
+            "total_tokens": 30446,
+            "cost": 0.0046264,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0046264,
+              "upstream_inference_prompt_cost": 0.0045414,
+              "upstream_inference_completions_cost": 8.5e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 38,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-count-250",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 1.6401297500124201,
+          "usage": {
+            "prompt_tokens": 3407,
+            "completion_tokens": 101,
+            "total_tokens": 3508,
+            "cost": 0.00056155,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00056155,
+              "upstream_inference_prompt_cost": 0.00051105,
+              "upstream_inference_completions_cost": 5.05e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 31,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-rotation-50",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 3.69347308302531,
+          "usage": {
+            "prompt_tokens": 30110,
+            "completion_tokens": 176,
+            "total_tokens": 30286,
+            "cost": 0.0046045,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0046045,
+              "upstream_inference_prompt_cost": 0.0045165,
+              "upstream_inference_completions_cost": 8.8e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 45,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-visual_cues-67",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 4.543918500014115,
+          "usage": {
+            "prompt_tokens": 20662,
+            "completion_tokens": 116,
+            "total_tokens": 20778,
+            "cost": 0.0031573,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0031573,
+              "upstream_inference_prompt_cost": 0.0030993,
+              "upstream_inference_completions_cost": 5.8e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 21,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Together",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-340",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 33.75777941697743,
+          "usage": {
+            "prompt_tokens": 30094,
+            "completion_tokens": 82,
+            "total_tokens": 30176,
+            "cost": 0.00227755,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00227755,
+              "upstream_inference_prompt_cost": 0.00225705,
+              "upstream_inference_completions_cost": 2.05e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 9,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "GMICloud",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-shape&trend-196",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 6.649113874998875,
+          "usage": {
+            "prompt_tokens": 30179,
+            "completion_tokens": 137,
+            "total_tokens": 30316,
+            "cost": 0.00459535,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00459535,
+              "upstream_inference_prompt_cost": 0.00452685,
+              "upstream_inference_completions_cost": 6.85e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 20,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-direction-236",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": true,
+            "anchor_coverage": true,
+            "supported_correct": true
+          },
+          "latency_s": 6.971788791997824,
+          "usage": {
+            "prompt_tokens": 31893,
+            "completion_tokens": 88,
+            "total_tokens": 31981,
+            "cost": 0.00482795,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.00482795,
+              "upstream_inference_prompt_cost": 0.00478395,
+              "upstream_inference_completions_cost": 4.4e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 7,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "Parasail",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        },
+        {
+          "case_id": "TOMATO-velocity&frequency-16",
+          "category": "TOMATO",
+          "status": "ok",
+          "score": {
+            "schema_valid": true,
+            "citations_valid": true,
+            "answer_correct": false,
+            "anchor_coverage": true,
+            "supported_correct": false
+          },
+          "latency_s": 4.539198832993861,
+          "usage": {
+            "prompt_tokens": 30264,
+            "completion_tokens": 106,
+            "total_tokens": 30370,
+            "cost": 0.0045926,
+            "is_byok": false,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0,
+              "video_tokens": 0
+            },
+            "cost_details": {
+              "upstream_inference_cost": 0.0045926,
+              "upstream_inference_prompt_cost": 0.0045396,
+              "upstream_inference_completions_cost": 5.3e-05
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 10,
+              "image_tokens": 0,
+              "audio_tokens": 0
+            }
+          },
+          "routing": {
+            "provider": "CoreWeave",
+            "model": "z-ai/glm-5.3-flash"
+          }
+        }
+      ],
+      "probe_routing": [
+        {
+          "provider": "CoreWeave",
+          "model": "z-ai/glm-5.3-flash"
+        }
+      ]
+    }
+  }
+}
