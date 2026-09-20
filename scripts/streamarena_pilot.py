@@ -110,9 +110,10 @@ def prepare(root, out):
 
 def verify(out, *, images=True):
     manifest = json.loads((out / "manifest.json").read_text())
-    configs = {t["id"]: load_config(out / "configs" / (t["id"] + ".json")).public_dict()
+    # Hash the frozen representation, not a validated copy that coerces ints to floats.
+    configs = {t["id"]: json.loads((out / "configs" / (t["id"] + ".json")).read_text())
                for t in manifest["trials"]}
-    configs["judge"] = load_config(out / "configs/judge.json").public_dict()
+    configs["judge"] = json.loads((out / "configs/judge.json").read_text())
     if digest(configs) != manifest["configs_sha256"]:
         raise ValueError("Frozen configuration changed")
     if images and source_receipt(Path(manifest["dataset_root"])) != manifest["sources"]:

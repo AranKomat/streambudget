@@ -54,6 +54,23 @@ def test_partitioned_quotas_cannot_multiply_global_budget():
     assert len({t["id"] for t in trials}) == 7
 
 
+def test_frozen_config_roundtrip_and_tampering(tmp_path, monkeypatch):
+    root, out = tmp_path / "data", tmp_path / "run"
+    root.mkdir()
+    (root / "plan.json").write_text(json.dumps({"videos": [{"video_id": "a"}, {"video_id": "b"}]}))
+    monkeypatch.setattr(pilot, "source_receipt", lambda _: {"fixture": True})
+    monkeypatch.chdir(Path(__file__).parents[1])
+    pilot.prepare(root, out)
+    manifest = pilot.verify(out)
+    assert manifest["sources"] == {"fixture": True}
+    path = out / "configs" / (manifest["trials"][0]["id"] + ".json")
+    cfg = json.loads(path.read_text())
+    cfg["policy"]["min_interval_s"] = 1
+    path.write_text(json.dumps(cfg))
+    with pytest.raises(ValueError, match="Frozen configuration"):
+        pilot.verify(out)
+
+
 def test_pro_timing_and_censoring_are_evaluator_only(tmp_path):
     folder = tmp_path / "data" / "a"
     folder.mkdir(parents=True)
