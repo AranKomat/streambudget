@@ -161,7 +161,7 @@ def fingerprint(cases: list[Case]) -> str:
 def score(value: dict, case: Case, label: dict) -> dict:
     ids = value.get("evidence_ids")
     schema = (set(value) == {"answer", "evidence_ids", "reason"}
-              and value.get("answer") in ("A", "B", "C", "D")
+              and value.get("answer") in label.get("allowed_answers", ("A", "B", "C", "D"))
               and isinstance(value.get("reason"), str) and bool(value["reason"].strip())
               and isinstance(ids, list) and all(isinstance(x, str) for x in ids))
     allowed = {im.evidence_id for im in case.request.images}

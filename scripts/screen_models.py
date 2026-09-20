@@ -18,6 +18,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from streambudget.backend import BackendError, ModelPool
+from streambudget.benchmark_screen import build_benchmark_cases
 from streambudget.budget import BudgetExceeded, Ledger
 from streambudget.config import BudgetConfig, load_config
 from streambudget.footage_screen import build_footage_cases
@@ -67,12 +68,20 @@ def cumulative(current, previous):
     return result
 
 
-def prepare(config, out, dataset=None):
+def load_cases(dataset=None, benchmark=False):
+    if benchmark and dataset is None:
+        raise ValueError("Benchmark mode requires a prepared dataset")
+    return (build_cases() if dataset is None else
+            build_benchmark_cases(dataset) if benchmark else build_footage_cases(dataset))
+
+
+def prepare(config, out, dataset=None, *, benchmark=False):
     out.mkdir(parents=True, exist_ok=False)
-    cases, labels = build_cases() if dataset is None else build_footage_cases(dataset)
+    cases, labels = load_cases(dataset, benchmark)
     p, plabel = probe()
     all_cases = [p, *cases]
-    manifest = {"fixture": "synthetic-v1" if dataset is None else "real-footage-v1",
+    manifest = {"fixture": "benchmark-subset-v1" if benchmark else
+                "synthetic-v1" if dataset is None else "real-footage-v1",
                 "config": config.public_dict(),
                 "config_sha256": digest(config.public_dict()), "packets_sha256": fingerprint(all_cases),
                 "labels_sha256": digest({"probe": plabel, **labels}),
@@ -81,11 +90,11 @@ def prepare(config, out, dataset=None):
         manifest["sources"] = json.loads((dataset / "sources.json").read_text())
     write_json(out / "manifest.json", manifest)
     write_json(out / "labels.json", {"probe": plabel, **labels})
-    sheet = Image.new("RGB", (1280, 5 * 210), "white")
+    sheet = Image.new("RGB", (1280, math.ceil(len(cases) / 4) * 210), "white")
     for n, case in enumerate(all_cases):
         folder = out / "images" / case.id
         folder.mkdir(parents=True)
-        strip = Image.new("RGB", (4 * 320, 2 * 180), "white")
+        strip = Image.new("RGB", (4 * 320, math.ceil(len(case.request.images) / 4) * 180), "white")
         for i, im in enumerate(case.request.images):
             (folder / (im.evidence_id + ".jpg")).write_bytes(im.jpeg)
             thumb = Image.open(BytesIO(im.jpeg))
@@ -108,21 +117,23 @@ def prepare(config, out, dataset=None):
             inp = (len(req.text) + len(req.system) + 2) // 3 + len(req.images) * cfg.image_token_reserve
             quote += (inp * cfg.prices.input_per_million
                       + cfg.max_output_tokens * cfg.prices.output_per_million) / 1e6
-    receipt = {"cases_per_model": len(cases), "models": len(config.models), "attempts": 63,
+    receipt = {"cases_per_model": len(cases), "models": len(config.models),
+               "attempts": len(all_cases) * len(config.models),
                "full_output_and_image_reserve_estimate_usd": quote,
                "budget": config.budget.model_dump(), "no_network": True}
     write_json(out / "estimate.json", receipt)
     print(json.dumps(receipt, indent=2), flush=True)
 
 
-async def run_phase(config, out, phase, *, allow_network=False, transport=None, dataset=None, concurrency=3):
+async def run_phase(config, out, phase, *, allow_network=False, transport=None, dataset=None,
+                    concurrency=3, benchmark=False):
     if not allow_network:
         raise ValueError("Paid phases require --allow-network")
     if len(config.models) != 3 or any(m.max_retries != 0 for m in config.models.values()):
         raise ValueError("This screen requires three models, without retries")
     if not 1 <= concurrency <= 12:
         raise ValueError("Concurrency must be between 1 and 12")
-    cases, labels = build_cases() if dataset is None else build_footage_cases(dataset)
+    cases, labels = load_cases(dataset, benchmark)
     p, plabel = probe()
     manifest = json.loads((out / "manifest.json").read_text())
     if (manifest["config_sha256"] != digest(config.public_dict())
@@ -205,17 +216,48 @@ def summarize(out):
             for v in costs)
         scores = {k: sum(bool(r.get("score", {}).get(k)) for r in rows) for k in (
             "schema_valid", "citations_valid", "answer_correct", "anchor_coverage", "supported_correct")}
-        models[role] = {"model": cfg["model"], "planned_cases": 20, "returned_rows": len(rows),
+        by_category = {}
+        for category in sorted({p["category"] for p in manifest["packets"] if p["id"] != "probe"}):
+            group = [r for r in rows if r["category"] == category]
+            by_category[category] = {
+                "planned": sum(p["category"] == category for p in manifest["packets"]),
+                "correct": sum(bool(r.get("score", {}).get("answer_correct")) for r in group),
+                "errors": sum(r["status"] != "ok" for r in group),
+            }
+        models[role] = {"model": cfg["model"], "planned_cases": len(manifest["packets"]) - 1,
+                        "returned_rows": len(rows), "by_category": by_category,
                         "errors": sum(r["status"] != "ok" for r in rows), "scores": scores,
                         "latency_p50_s": statistics.median(times) if times else None,
                         "latency_p95_s": times[math.ceil(.95 * len(times)) - 1] if times else None,
                         "provider_reported_usd_including_probe": sum(costs) if known else None,
                         "failures": [r for r in rows if not r.get("score", {}).get("supported_correct")],
                         "rows": rows, "probes": probes}
-    return {"scope": ("synthetic compatibility only; not a real-video or runtime benchmark"
+    return {"scope": ("public benchmark subsets under custom frame/prompt budgets; not official leaderboard scores"
+                      if manifest["fixture"] == "benchmark-subset-v1" else
+                      "synthetic compatibility only; not a real-video or runtime benchmark"
                       if manifest["fixture"] == "synthetic-v1" else
                       "exploratory real-footage QA; not a public benchmark or runtime policy evaluation"),
             "manifest": manifest, "ledger": second["ledger"], "models": models}
+
+
+def public_summary(out):
+    """Allowlist metrics only; benchmark questions, labels, images and completions stay local."""
+    full = summarize(out)
+    manifest = full["manifest"]
+    return {
+        "scope": full["scope"], "ledger": full["ledger"],
+        "fixture": manifest["fixture"], "config": manifest["config"],
+        "config_sha256": manifest["config_sha256"],
+        "packets_sha256": manifest["packets_sha256"], "labels_sha256": manifest["labels_sha256"],
+        "sources": manifest.get("sources", {}),
+        "models": {role: {
+            **{key: value for key, value in model.items() if key not in ("rows", "probes", "failures")},
+            "rows": [{key: row[key] for key in (
+                "case_id", "category", "status", "score", "latency_s", "usage", "routing", "error")
+                if key in row} for row in model["rows"]],
+            "probe_routing": [row.get("routing", {}) for row in model["probes"]],
+        } for role, model in full["models"].items()},
+    }
 
 
 def main():
@@ -225,24 +267,26 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--allow-network", action="store_true")
     parser.add_argument("--report-out", type=Path)
+    parser.add_argument("--public-safe", action="store_true", help="Export metrics without prompts/labels/responses")
     parser.add_argument("--dataset", type=Path, help="Prepared real-footage root; omit for synthetic cases")
+    parser.add_argument("--benchmark", action="store_true", help="Use prepared public benchmark subsets")
     parser.add_argument("--concurrency", type=int, default=3)
     args = parser.parse_args()
     config = load_config(args.config)
     if args.phase == "report":
-        report = summarize(args.out)
+        report = public_summary(args.out) if args.public_safe else summarize(args.out)
         if args.report_out:
             args.report_out.parent.mkdir(parents=True, exist_ok=True)
             write_json(args.report_out, report)
         print(json.dumps({k: {name: value for name, value in v.items() if name not in ("rows", "probes")}
                           for k, v in report["models"].items()}, indent=2))
     elif args.phase == "prepare":
-        prepare(config, args.out, args.dataset)
+        prepare(config, args.out, args.dataset, benchmark=args.benchmark)
     else:
         if any(not os.environ.get(m.api_key_env) for m in config.models.values()):
             parser.error("Required API credential environment variable is unset")
         asyncio.run(run_phase(config, args.out, args.phase, allow_network=args.allow_network,
-                              dataset=args.dataset, concurrency=args.concurrency))
+                              dataset=args.dataset, concurrency=args.concurrency, benchmark=args.benchmark))
 
 
 if __name__ == "__main__":
