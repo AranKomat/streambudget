@@ -11,7 +11,6 @@ from pydantic import Field
 
 from .config import Config
 from .runtime import Runtime
-from .scheduler import QueueRejected
 from .types import ContractError, StrictModel, Watch
 
 
@@ -100,6 +99,7 @@ async def replay(events_path: Path, tasks_path: Path | None, config: Config, wor
         except Exception as exc:
             row = {"question_id": t.id, "text": "", "status": "error",
                    "error_type": type(exc).__name__, "evidence_ids": [], "as_of": t.at}
+        row["delivered_at"] = max(r.now, r.timeline_clock()) if r.timeline_clock else r.now
         predictions.append(row)
         with (workdir / "predictions.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps(row) + "\n")

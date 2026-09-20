@@ -206,6 +206,12 @@ class ModelPool:
                 usage = data.get("usage")
                 if not isinstance(usage, dict) or not all(k in usage for k in ("prompt_tokens", "completion_tokens")):
                     usage = None
+                routing = {k: data[k] for k in ("provider", "service_tier", "model")
+                           if isinstance(data.get(k), str)}
+                self.trace.emit("model_route", role=role, request_hash=key, **routing)
+                if cfg.extra_body.get("provider", {}).get("only") == ["google-ai-studio/flex"]:
+                    if routing.get("provider") != "Google AI Studio" or routing.get("service_tier") != "flex":
+                        raise BackendError("Requested AI Studio Flex route was not confirmed by response")
                 choice = data["choices"][0]
                 if choice.get("finish_reason") == "length":
                     raise BackendError("Model output truncated at token limit")
@@ -216,9 +222,6 @@ class ModelPool:
                 if not isinstance(text, str) or len(text) > 1000000:
                     raise BackendError("Missing, non-text, or oversized completion")
                 status = "ok"
-                routing = {k: data[k] for k in ("provider", "service_tier", "model")
-                           if isinstance(data.get(k), str)}
-                self.trace.emit("model_route", role=role, request_hash=key, **routing)
                 return Result(text, usage, time.monotonic() - start, str(data.get("id", key)), routing)
             except (httpx.TimeoutException, httpx.TransportError) as exc:
                 status = "transport_uncertain"
