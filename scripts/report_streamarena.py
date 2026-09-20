@@ -53,6 +53,10 @@ def summarize(out):
             "ledger": report["ledger"], "trace_counts": report["trace_counts"],
             "operation_counts": dict(Counter(r["operation"] for r in timings)),
             "attempt_statuses": dict(Counter(r["status"] for r in attempts)),
+            "job_error_types": dict(Counter(r["error_type"] for r in trace if r["kind"] == "job_failed")),
+            "background_observation_jobs": {
+                kind: sum(r["kind"] == kind and r.get("key", "").startswith("observe:") for r in trace)
+                for kind in ("job_enqueued", "job_done", "job_failed", "job_dropped")},
             "routes": [dict(provider=p, service_tier=t, count=n)
                        for (p, t), n in Counter((r.get("provider"), r.get("service_tier")) for r in routes).items()],
             "api_latency_p50_s": quantile([r["wall_s"] for r in timings], .5),
@@ -82,6 +86,7 @@ def summarize(out):
             "Seven concurrent speed-one predecoded replays; original decode excluded from runtime timing.",
             "Same caption/lexical memory in all three GLM policies; not a memory ablation.",
             "Gemini adaptive tested on only the first video; no full matched model comparison.",
+            "GLM used multiple OpenRouter providers, not a pinned serving endpoint; this confounds comparisons.",
             "Five-second observation floor plus API latency conflicts with strict two-second Pro timing.",
             "First Pro alert judged; post-prefix reference events right-censored, never replaced.",
             "Custom Gemini Flex text-reference grading, not the official judge or independent visual grounding.",
@@ -96,7 +101,7 @@ def render(report):
         "Separate non-commercial research; custom protocol, not an official StreamArena score.", "",
         f"**{totals['request_attempts']} model attempts; ${totals['reported_usd']:.6f} reported cost**, including grading.",
         f"Uncertain/provisional holds: ${totals['provisional_usd']:.6f}; reserved: ${totals['reserved_usd']:.6f}.", "",
-        "| Trial | Calls | Reported $ | RTP | HR | Pro semantic | Pro strict | API p50 / p95 (s) |",
+        "| Trial | Calls | Reported $ | RTP | HR | Pro text match | Pro strict | API p50 / p95 (s) |",
         "|---|---:|---:|---:|---:|---:|---:|---:|"]
     for t in report["trials"]:
         q = t["quality"]

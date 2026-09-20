@@ -19,6 +19,12 @@ Harder benchmark follow-up (2026-09-20): [MMVU/TOMATO report](../research/BENCHM
 LVBench excluded. One metered Gemini truncation; no retries or dropped cases.
 Results use custom frame/prompt budgets, not official leaderboard protocols.
 
+StreamArena runtime pilot (2026-09-20): [report](../research/STREAMARENA_PILOT_20260920.md),
+two ten-minute prefixes, seven concurrent trials, 911 calls including grading,
+$0.5339023542 reported cost. GLM had 152/699 failed background jobs; Gemini had
+0/120, but both query attempts exhausted their tool budget. No eligible alert met
+strict delivery timing. This identifies integration gaps, not a model ranking.
+
 | Area | Delivered implementation | Local validation | Not established / remaining |
 |---|---|---|---|
 | Archive / causal replay | Original runner, explicit source availability, independent labels | Synthetic full flow and boundary tests | Real operational quality |
@@ -29,15 +35,15 @@ Results use custom frame/prompt budgets, not official leaderboard protocols.
 | Monitoring | Typed goals, freshness-aware sampled dwell, repeat/cooldown, scalar predicates | Dwell/old response/shared observation/sensor tests | Calibrated recall and production event semantics |
 | Observation scheduler | Fixed, motion/cue+periodic, adaptive/dwell/audit, recent-only | Synthetic ablations and queue tests | Learned policy; proof of semantic skip safety |
 | Agent | Bounded JSON tool loop; search, inspect, VLM OCR, state, sensors | Tool bounds, evidence IDs, full mock loop | Real model tool-following and answer faithfulness |
-| Chat backend | Configurable compatible HTTP, images/timestamps, roles, retries, returned routing metadata | Three-model synthetic and exploratory real-footage QA; verified AI Studio Flex | Self-hosting, immutable model revisions, runtime-policy comparison |
+| Chat backend | Configurable compatible HTTP, images/timestamps, roles, retries, returned routing metadata | Hosted screens and prefix runtime pilot; verified AI Studio Flex | Self-hosting, immutable revisions, reliable schema/tool following, controlled provider comparison |
 | Specialist APIs | Text embeddings and chunked WAV transcription | Mocked HTTP contracts and WAV duration | Real embedding/ASR endpoint; native AV/omni |
 | Detector/OCR/sensors | External structured observations + generic mapping | Schema/time mapping tests | Dedicated detector/OCR/segmentation engine deployments |
 | Live video bridge | Trusted local video / RTSP to REST using PyAV | Code present; optional PyAV test skipped locally | Actual PyAV/RTSP execution, reconnect, audio sync |
-| Video preparation | Presentation timestamps via PyAV or FFmpeg | Actual FFmpeg generated-video test | PyAV path in this environment; long VFR footage sweep |
+| Video preparation | Presentation timestamps via PyAV or FFmpeg | FFmpeg fixture and PyAV real benchmark/prefix sampling | Long VFR sweep; full source archive hash verification for range-only acquisition |
 | Cost controls | Attempt cap, estimated reservation, usage reconciliation, unknown billing; validated OpenRouter cost receipts | Retry/timeout/schema tests; shared screening budget includes probe holds | Exact invoice cap, external CV/cloud costs, GPU telemetry |
 | vLLM/SGLang | Configured HTTP boundary and launch templates | Generic request-shape tests only | GPU deployment, native video, KV/encoder reuse/pruning |
 | VSS integration | JSON event mapper and service-boundary design | Synthetic message mapping | Actual pinned VSS/Kafka/protobuf/storage connector |
-| StreamArena | Independent lifecycle bridge and GT-ref exclusion | Contract-level tests | Full upstream loader/driver/dataset/scorer run; external Tool search |
+| StreamArena | Independent bridge, optional native inheritance wrapper and GT-ref exclusion | Native-driver mock smoke; paid predecoded prefix pilot with custom judge | Full official dataset/scorer and StreamMind comparison; Tool search and audio |
 | Video-MME | Local nested JSON converter and official-shape exporter | Fixture tests | Real dataset and official scorer; subtitles intentionally off |
 | Domain scoring | One-to-one point-in-window event scorer, QA/MCQ local scoring | Matching/duplicate/missing/Pareto tests | Official ActEV protocol or validated semantic judge |
 | MMVU / TOMATO | Fixed subset acquisition, uniform full-video frames, evaluator-only labels, shared-budget screen | 20 questions each x 3 models; public-safe results | Full official protocols, repeated trials, runtime-policy ablations |

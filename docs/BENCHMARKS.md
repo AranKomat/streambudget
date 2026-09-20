@@ -83,10 +83,14 @@ Delivered: an independent duck-typed `streambudget.adapters.streamarena:StreamBu
 the inspected `start`, `stop`, frame, ASR, question, and proactive-watch callbacks. Local tests confirm
 that future `ref_ts` is not included in watch state. Source file identities are in REFERENCES.md.
 
-Not executed: actual upstream loader/driver, full dataset, official judge, or a model-backed
-StreamMind comparison. Our adapter does not implement external web/image search for `Tool` tasks.
-It accepts transcribed audio, not raw native Omni input. The dynamic loader may require an upstream
-base-class wrapper; validate it rather than assuming contract similarity proves compatibility.
+The optional `streamarena_native:NativeStreamBudgetAgent` wrapper satisfies the upstream loader's
+inheritance check. An unmodified pinned driver completed a generated-video smoke test with three
+answer records, 24 mock calls and no paid inference. This qualifies loading/callbacks, not ML quality.
+
+Not executed: the full dataset, exact official judge, or a model-backed StreamMind comparison.
+Our adapter does not implement external web/image search for `Tool` tasks. It accepts transcribed
+audio, not raw native Omni input. The separate [prefix pilot](../research/STREAMARENA_PILOT_PROTOCOL.md)
+uses speed-one predecoded replay, not the native driver, and a custom text-reference judge.
 
 Use authorized data and a pinned upstream checkout. The handoff has the concrete invocation. Keep
 upstream question answer/evidence fields away from our runtime. Record event-delivery clock offset,

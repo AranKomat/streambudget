@@ -1,0 +1,1192 @@
+{
+  "protocol": "StreamArena-derived 600s prefixes, speed-one predecoded replay; not a full official run",
+  "official_score": false,
+  "rights": "StreamArena CC-BY-NC-4.0; authorized separate non-commercial research only",
+  "admission_ceiling": {
+    "calls": 1200,
+    "usd": 10
+  },
+  "totals": {
+    "request_attempts": 911,
+    "reported_usd": 0.5339023542000001,
+    "provisional_usd": 0.0,
+    "reserved_usd": 3.469446951953614e-18,
+    "unknown_usage_attempts": 0,
+    "unpriced_attempts": 0,
+    "provider_input_tokens": 2252896,
+    "provider_output_tokens": 114527,
+    "complete_reported_usd": 0.5339023542000001
+  },
+  "grading_ledger": {
+    "request_attempts": 13,
+    "reported_usd": 0.0014857500000000003,
+    "complete_reported_usd": 0.0014857500000000003,
+    "provisional_usd": 0.0,
+    "reserved_usd": 1.734723475976807e-18,
+    "unpriced_attempts": 0,
+    "unknown_usage_attempts": 0,
+    "provider_input_tokens": 2252,
+    "provider_output_tokens": 342,
+    "provider_cached_input_tokens": 0,
+    "gpu_seconds": null,
+    "gpu_measurement": "not_measured",
+    "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+  },
+  "trials": [
+    {
+      "id": "glm-fixed-JNpUsYTVM6k",
+      "video_id": "JNpUsYTVM6k",
+      "policy": "fixed",
+      "model": "z-ai/glm-5.3-flash",
+      "ledger": {
+        "request_attempts": 134,
+        "reported_usd": 0.049247064199999996,
+        "complete_reported_usd": 0.049247064199999996,
+        "provisional_usd": 0.0,
+        "reserved_usd": 0,
+        "unpriced_attempts": 0,
+        "unknown_usage_attempts": 0,
+        "provider_input_tokens": 290411,
+        "provider_output_tokens": 18694,
+        "provider_cached_input_tokens": 8384,
+        "gpu_seconds": null,
+        "gpu_measurement": "not_measured",
+        "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+      },
+      "trace_counts": {
+        "stage": 2405,
+        "frame_ingested": 1200,
+        "job_enqueued": 122,
+        "observation_skipped": 1080,
+        "model_route": 134,
+        "model_attempt": 134,
+        "model_timing": 134,
+        "job_failed": 32,
+        "observation_completed": 89,
+        "job_done": 90,
+        "watch_registered": 2,
+        "alert": 2,
+        "agent_action": 10
+      },
+      "operation_counts": {
+        "perceive": 123,
+        "plan": 11
+      },
+      "attempt_statuses": {
+        "ok": 134
+      },
+      "job_error_types": {
+        "ValidationError": 17,
+        "BackendError": 15
+      },
+      "background_observation_jobs": {
+        "job_enqueued": 120,
+        "job_done": 89,
+        "job_failed": 31,
+        "job_dropped": 0
+      },
+      "routes": [
+        {
+          "provider": "StreamLake",
+          "service_tier": null,
+          "count": 64
+        },
+        {
+          "provider": "CoreWeave",
+          "service_tier": null,
+          "count": 47
+        },
+        {
+          "provider": "Parasail",
+          "service_tier": null,
+          "count": 9
+        },
+        {
+          "provider": "InferenceNet",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Crusoe",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Venice",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "NextBit",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Wafer",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "GMICloud",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "Morph",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Friendli",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Near AI",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Together",
+          "service_tier": null,
+          "count": 3
+        },
+        {
+          "provider": "Phala",
+          "service_tier": null,
+          "count": 1
+        }
+      ],
+      "api_latency_p50_s": 3.5211129580275156,
+      "api_latency_p95_s": 16.616211708984338,
+      "qa_latency_p50_s": 25.17639862501528,
+      "elapsed_wall_s": 601.7557770420099,
+      "quality": {
+        "RTP": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "HR": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "Pro": {
+          "task_pairs": 2,
+          "eligible": 2,
+          "right_censored": 0,
+          "semantic_correct": 2,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 2,
+          "timely": 0,
+          "early": 0,
+          "late": 2
+        }
+      },
+      "pro_delivery_delays_s": [
+        4.787260291981511,
+        9.333287416957319
+      ],
+      "prediction_statuses": {
+        "error": 1,
+        "step_limit": 1
+      },
+      "alerts": 2
+    },
+    {
+      "id": "glm-motion-JNpUsYTVM6k",
+      "video_id": "JNpUsYTVM6k",
+      "policy": "motion",
+      "model": "z-ai/glm-5.3-flash",
+      "ledger": {
+        "request_attempts": 128,
+        "reported_usd": 0.04776419420000002,
+        "complete_reported_usd": 0.04776419420000002,
+        "provisional_usd": 0.0,
+        "reserved_usd": 0,
+        "unpriced_attempts": 0,
+        "unknown_usage_attempts": 0,
+        "provider_input_tokens": 269856,
+        "provider_output_tokens": 18951,
+        "provider_cached_input_tokens": 1344,
+        "gpu_seconds": null,
+        "gpu_measurement": "not_measured",
+        "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+      },
+      "trace_counts": {
+        "stage": 2403,
+        "frame_ingested": 1200,
+        "job_enqueued": 122,
+        "observation_skipped": 1080,
+        "model_route": 128,
+        "model_attempt": 128,
+        "model_timing": 128,
+        "observation_completed": 92,
+        "job_done": 93,
+        "job_failed": 29,
+        "watch_registered": 2,
+        "alert": 2,
+        "agent_action": 6
+      },
+      "operation_counts": {
+        "perceive": 121,
+        "plan": 7
+      },
+      "attempt_statuses": {
+        "ok": 128
+      },
+      "job_error_types": {
+        "ValidationError": 22,
+        "BackendError": 7
+      },
+      "background_observation_jobs": {
+        "job_enqueued": 120,
+        "job_done": 92,
+        "job_failed": 28,
+        "job_dropped": 0
+      },
+      "routes": [
+        {
+          "provider": "StreamLake",
+          "service_tier": null,
+          "count": 55
+        },
+        {
+          "provider": "CoreWeave",
+          "service_tier": null,
+          "count": 34
+        },
+        {
+          "provider": "Wafer",
+          "service_tier": null,
+          "count": 3
+        },
+        {
+          "provider": "Cloudflare",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Fireworks",
+          "service_tier": null,
+          "count": 7
+        },
+        {
+          "provider": "Friendli",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Crusoe",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Z.AI",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Novita",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Parasail",
+          "service_tier": null,
+          "count": 13
+        },
+        {
+          "provider": "Together",
+          "service_tier": null,
+          "count": 11
+        }
+      ],
+      "api_latency_p50_s": 3.7910339580266736,
+      "api_latency_p95_s": 8.673465041967575,
+      "qa_latency_p50_s": 12.437902749981731,
+      "elapsed_wall_s": 600.4468210000196,
+      "quality": {
+        "RTP": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "HR": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 1,
+          "strict_correct": 1,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "Pro": {
+          "task_pairs": 2,
+          "eligible": 2,
+          "right_censored": 0,
+          "semantic_correct": 2,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 2,
+          "timely": 0,
+          "early": 0,
+          "late": 2
+        }
+      },
+      "pro_delivery_delays_s": [
+        8.881505792029202,
+        18.038324083026964
+      ],
+      "prediction_statuses": {
+        "error": 1,
+        "ok": 1
+      },
+      "alerts": 2
+    },
+    {
+      "id": "glm-adaptive-JNpUsYTVM6k",
+      "video_id": "JNpUsYTVM6k",
+      "policy": "adaptive",
+      "model": "z-ai/glm-5.3-flash",
+      "ledger": {
+        "request_attempts": 131,
+        "reported_usd": 0.048405029599999996,
+        "complete_reported_usd": 0.048405029599999996,
+        "provisional_usd": 0.0,
+        "reserved_usd": 0,
+        "unpriced_attempts": 0,
+        "unknown_usage_attempts": 0,
+        "provider_input_tokens": 279536,
+        "provider_output_tokens": 16957,
+        "provider_cached_input_tokens": 448,
+        "gpu_seconds": null,
+        "gpu_measurement": "not_measured",
+        "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+      },
+      "trace_counts": {
+        "stage": 2406,
+        "frame_ingested": 1200,
+        "job_enqueued": 122,
+        "observation_skipped": 1080,
+        "model_route": 131,
+        "model_attempt": 131,
+        "model_timing": 131,
+        "observation_completed": 98,
+        "job_done": 99,
+        "job_failed": 23,
+        "watch_registered": 2,
+        "agent_action": 9,
+        "alert": 2
+      },
+      "operation_counts": {
+        "perceive": 120,
+        "plan": 10,
+        "ocr": 1
+      },
+      "attempt_statuses": {
+        "ok": 131
+      },
+      "job_error_types": {
+        "BackendError": 4,
+        "ValidationError": 17,
+        "ContractError": 1,
+        "TimeoutError": 1
+      },
+      "background_observation_jobs": {
+        "job_enqueued": 120,
+        "job_done": 98,
+        "job_failed": 22,
+        "job_dropped": 0
+      },
+      "routes": [
+        {
+          "provider": "StreamLake",
+          "service_tier": null,
+          "count": 45
+        },
+        {
+          "provider": "Together",
+          "service_tier": null,
+          "count": 17
+        },
+        {
+          "provider": "CoreWeave",
+          "service_tier": null,
+          "count": 42
+        },
+        {
+          "provider": "Near AI",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Fireworks",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "InferenceNet",
+          "service_tier": null,
+          "count": 3
+        },
+        {
+          "provider": "Reka",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "Parasail",
+          "service_tier": null,
+          "count": 15
+        },
+        {
+          "provider": "Phala",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "GMICloud",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Wafer",
+          "service_tier": null,
+          "count": 1
+        }
+      ],
+      "api_latency_p50_s": 3.1666405830183066,
+      "api_latency_p95_s": 19.383061666972935,
+      "qa_latency_p50_s": 29.249801750003826,
+      "elapsed_wall_s": 599.5998836660292,
+      "quality": {
+        "RTP": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "HR": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "Pro": {
+          "task_pairs": 2,
+          "eligible": 2,
+          "right_censored": 0,
+          "semantic_correct": 2,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 2,
+          "timely": 0,
+          "early": 0,
+          "late": 2
+        }
+      },
+      "pro_delivery_delays_s": [
+        12.523754875001032,
+        88.42318191600498
+      ],
+      "prediction_statuses": {
+        "error": 1,
+        "step_limit": 1
+      },
+      "alerts": 2
+    },
+    {
+      "id": "glm-fixed-9CQ6qmoOhlQ",
+      "video_id": "9CQ6qmoOhlQ",
+      "policy": "fixed",
+      "model": "z-ai/glm-5.3-flash",
+      "ledger": {
+        "request_attempts": 131,
+        "reported_usd": 0.047814502999999994,
+        "complete_reported_usd": 0.047814502999999994,
+        "provisional_usd": 0.0,
+        "reserved_usd": 0,
+        "unpriced_attempts": 0,
+        "unknown_usage_attempts": 0,
+        "provider_input_tokens": 287385,
+        "provider_output_tokens": 16206,
+        "provider_cached_input_tokens": 1600,
+        "gpu_seconds": null,
+        "gpu_measurement": "not_measured",
+        "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+      },
+      "trace_counts": {
+        "stage": 2405,
+        "frame_ingested": 1200,
+        "job_enqueued": 122,
+        "observation_skipped": 1080,
+        "model_route": 131,
+        "model_attempt": 131,
+        "model_timing": 131,
+        "observation_completed": 91,
+        "job_done": 93,
+        "job_failed": 29,
+        "watch_registered": 2,
+        "alert": 1,
+        "agent_action": 9
+      },
+      "operation_counts": {
+        "perceive": 122,
+        "plan": 9
+      },
+      "attempt_statuses": {
+        "ok": 131
+      },
+      "job_error_types": {
+        "ValidationError": 24,
+        "ContractError": 1,
+        "BackendError": 4
+      },
+      "background_observation_jobs": {
+        "job_enqueued": 120,
+        "job_done": 91,
+        "job_failed": 29,
+        "job_dropped": 0
+      },
+      "routes": [
+        {
+          "provider": "CoreWeave",
+          "service_tier": null,
+          "count": 36
+        },
+        {
+          "provider": "StreamLake",
+          "service_tier": null,
+          "count": 56
+        },
+        {
+          "provider": "Parasail",
+          "service_tier": null,
+          "count": 9
+        },
+        {
+          "provider": "Wafer",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Crusoe",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "InferenceNet",
+          "service_tier": null,
+          "count": 3
+        },
+        {
+          "provider": "Morph",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "GMICloud",
+          "service_tier": null,
+          "count": 5
+        },
+        {
+          "provider": "Z.AI",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "DeepInfra",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Friendli",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Reka",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Together",
+          "service_tier": null,
+          "count": 11
+        },
+        {
+          "provider": "Cloudflare",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Near AI",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "NextBit",
+          "service_tier": null,
+          "count": 1
+        }
+      ],
+      "api_latency_p50_s": 4.188280042028055,
+      "api_latency_p95_s": 14.649597333045676,
+      "qa_latency_p50_s": 8.459844666998833,
+      "elapsed_wall_s": 599.5107654170133,
+      "quality": {
+        "RTP": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "HR": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "Pro": {
+          "task_pairs": 2,
+          "eligible": 1,
+          "right_censored": 1,
+          "semantic_correct": 1,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 1,
+          "timely": 0,
+          "early": 0,
+          "late": 1
+        }
+      },
+      "pro_delivery_delays_s": [
+        4.255434042017441
+      ],
+      "prediction_statuses": {
+        "ok": 1,
+        "step_limit": 1
+      },
+      "alerts": 1
+    },
+    {
+      "id": "glm-motion-9CQ6qmoOhlQ",
+      "video_id": "9CQ6qmoOhlQ",
+      "policy": "motion",
+      "model": "z-ai/glm-5.3-flash",
+      "ledger": {
+        "request_attempts": 120,
+        "reported_usd": 0.044812049199999995,
+        "complete_reported_usd": 0.044812049199999995,
+        "provisional_usd": 0.0,
+        "reserved_usd": 0,
+        "unpriced_attempts": 0,
+        "unknown_usage_attempts": 0,
+        "provider_input_tokens": 264501,
+        "provider_output_tokens": 16122,
+        "provider_cached_input_tokens": 2176,
+        "gpu_seconds": null,
+        "gpu_measurement": "not_measured",
+        "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+      },
+      "trace_counts": {
+        "stage": 2403,
+        "frame_ingested": 1200,
+        "job_enqueued": 111,
+        "observation_skipped": 1091,
+        "model_route": 120,
+        "model_attempt": 120,
+        "model_timing": 120,
+        "job_failed": 24,
+        "observation_completed": 86,
+        "job_done": 87,
+        "watch_registered": 2,
+        "alert": 1,
+        "agent_action": 8
+      },
+      "operation_counts": {
+        "perceive": 110,
+        "plan": 9,
+        "ocr": 1
+      },
+      "attempt_statuses": {
+        "ok": 120
+      },
+      "job_error_types": {
+        "BackendError": 9,
+        "ValidationError": 15
+      },
+      "background_observation_jobs": {
+        "job_enqueued": 109,
+        "job_done": 86,
+        "job_failed": 23,
+        "job_dropped": 0
+      },
+      "routes": [
+        {
+          "provider": "StreamLake",
+          "service_tier": null,
+          "count": 48
+        },
+        {
+          "provider": "Phala",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "CoreWeave",
+          "service_tier": null,
+          "count": 42
+        },
+        {
+          "provider": "GMICloud",
+          "service_tier": null,
+          "count": 4
+        },
+        {
+          "provider": "Venice",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Wafer",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "BaseTen",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Reka",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Parasail",
+          "service_tier": null,
+          "count": 11
+        },
+        {
+          "provider": "Together",
+          "service_tier": null,
+          "count": 6
+        },
+        {
+          "provider": "Fireworks",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "InferenceNet",
+          "service_tier": null,
+          "count": 1
+        }
+      ],
+      "api_latency_p50_s": 2.90085779101355,
+      "api_latency_p95_s": 11.128869082953315,
+      "qa_latency_p50_s": 12.600525208050385,
+      "elapsed_wall_s": 628.28273825004,
+      "quality": {
+        "RTP": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "HR": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "Pro": {
+          "task_pairs": 2,
+          "eligible": 1,
+          "right_censored": 1,
+          "semantic_correct": 1,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 1,
+          "timely": 0,
+          "early": 0,
+          "late": 1
+        }
+      },
+      "pro_delivery_delays_s": [
+        4.482892875035759
+      ],
+      "prediction_statuses": {
+        "error": 1,
+        "step_limit": 1
+      },
+      "alerts": 1
+    },
+    {
+      "id": "glm-adaptive-9CQ6qmoOhlQ",
+      "video_id": "9CQ6qmoOhlQ",
+      "policy": "adaptive",
+      "model": "z-ai/glm-5.3-flash",
+      "ledger": {
+        "request_attempts": 119,
+        "reported_usd": 0.04333301400000002,
+        "complete_reported_usd": 0.04333301400000002,
+        "provisional_usd": 0.0,
+        "reserved_usd": 1.734723475976807e-18,
+        "unpriced_attempts": 0,
+        "unknown_usage_attempts": 0,
+        "provider_input_tokens": 252223,
+        "provider_output_tokens": 14713,
+        "provider_cached_input_tokens": 1024,
+        "gpu_seconds": null,
+        "gpu_measurement": "not_measured",
+        "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+      },
+      "trace_counts": {
+        "stage": 2402,
+        "frame_ingested": 1200,
+        "job_enqueued": 112,
+        "observation_skipped": 1090,
+        "model_route": 119,
+        "model_attempt": 119,
+        "model_timing": 119,
+        "job_failed": 21,
+        "observation_completed": 91,
+        "job_done": 91,
+        "watch_registered": 2,
+        "alert": 1,
+        "agent_action": 5
+      },
+      "operation_counts": {
+        "perceive": 111,
+        "plan": 7,
+        "ocr": 1
+      },
+      "attempt_statuses": {
+        "ok": 119
+      },
+      "job_error_types": {
+        "ValidationError": 17,
+        "BackendError": 4
+      },
+      "background_observation_jobs": {
+        "job_enqueued": 110,
+        "job_done": 91,
+        "job_failed": 19,
+        "job_dropped": 0
+      },
+      "routes": [
+        {
+          "provider": "Venice",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "CoreWeave",
+          "service_tier": null,
+          "count": 43
+        },
+        {
+          "provider": "StreamLake",
+          "service_tier": null,
+          "count": 53
+        },
+        {
+          "provider": "Crusoe",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "NextBit",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "GMICloud",
+          "service_tier": null,
+          "count": 2
+        },
+        {
+          "provider": "Cloudflare",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Friendli",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Parasail",
+          "service_tier": null,
+          "count": 7
+        },
+        {
+          "provider": "Novita",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Wafer",
+          "service_tier": null,
+          "count": 1
+        },
+        {
+          "provider": "Together",
+          "service_tier": null,
+          "count": 5
+        }
+      ],
+      "api_latency_p50_s": 3.0596608329797164,
+      "api_latency_p95_s": 7.096393125015311,
+      "qa_latency_p50_s": null,
+      "elapsed_wall_s": 603.0778731660102,
+      "quality": {
+        "RTP": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "HR": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "Pro": {
+          "task_pairs": 2,
+          "eligible": 1,
+          "right_censored": 1,
+          "semantic_correct": 1,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 1,
+          "timely": 0,
+          "early": 0,
+          "late": 1
+        }
+      },
+      "pro_delivery_delays_s": [
+        5.460363249992952
+      ],
+      "prediction_statuses": {
+        "error": 2
+      },
+      "alerts": 1
+    },
+    {
+      "id": "gemini-adaptive-JNpUsYTVM6k",
+      "video_id": "JNpUsYTVM6k",
+      "policy": "adaptive",
+      "model": "google/gemini-3.8-flash",
+      "ledger": {
+        "request_attempts": 135,
+        "reported_usd": 0.25104075000000003,
+        "complete_reported_usd": 0.25104075000000003,
+        "provisional_usd": 0.0,
+        "reserved_usd": 0,
+        "unpriced_attempts": 0,
+        "unknown_usage_attempts": 0,
+        "provider_input_tokens": 606732,
+        "provider_output_tokens": 12542,
+        "provider_cached_input_tokens": 0,
+        "gpu_seconds": null,
+        "gpu_measurement": "not_measured",
+        "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."
+      },
+      "trace_counts": {
+        "stage": 2407,
+        "frame_ingested": 1200,
+        "job_enqueued": 122,
+        "observation_skipped": 1080,
+        "model_route": 135,
+        "model_attempt": 135,
+        "model_timing": 135,
+        "observation_completed": 120,
+        "job_done": 122,
+        "watch_registered": 2,
+        "alert": 2,
+        "agent_action": 12
+      },
+      "operation_counts": {
+        "perceive": 123,
+        "plan": 12
+      },
+      "attempt_statuses": {
+        "ok": 135
+      },
+      "job_error_types": {},
+      "background_observation_jobs": {
+        "job_enqueued": 120,
+        "job_done": 120,
+        "job_failed": 0,
+        "job_dropped": 0
+      },
+      "routes": [
+        {
+          "provider": "Google AI Studio",
+          "service_tier": "flex",
+          "count": 135
+        }
+      ],
+      "api_latency_p50_s": 3.0757987500401214,
+      "api_latency_p95_s": 4.86322270904202,
+      "qa_latency_p50_s": 11.437601416022517,
+      "elapsed_wall_s": 599.8398915000143,
+      "quality": {
+        "RTP": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "HR": {
+          "task_pairs": 1,
+          "eligible": 1,
+          "right_censored": 0,
+          "semantic_correct": 0,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 0,
+          "timely": 0,
+          "early": 0,
+          "late": 0
+        },
+        "Pro": {
+          "task_pairs": 2,
+          "eligible": 2,
+          "right_censored": 0,
+          "semantic_correct": 2,
+          "strict_correct": 0,
+          "ungraded": 0,
+          "emitted": 2,
+          "timely": 0,
+          "early": 0,
+          "late": 2
+        }
+      },
+      "pro_delivery_delays_s": [
+        6.158862125012092,
+        7.437420125002973
+      ],
+      "prediction_statuses": {
+        "step_limit": 2
+      },
+      "alerts": 2
+    }
+  ],
+  "source_fingerprints": {
+    "plan_sha256": "1a75645ea58aba46b4c39b70bfc67e0384b2f999822176e90a2148d800210fef",
+    "files": {
+      "JNpUsYTVM6k": {
+        "events.jsonl": "3f06571458e8abe3656e3570d0cfe35706bf0f0f8e6f972be1f75186e3c3563d",
+        "tasks.jsonl": "e41cf8365f833db634b4e2dbf4607a0edc1ad2b9a5a3445266303a86919ae225",
+        "labels-private.jsonl": "a7491d4999cbf5ba8e1be53c55c22d793a2e26213cc8325385e2b54cf4f0412e",
+        "preparation.json": "20d7364e693867d388982ded92e2c19ed1fa2321ba30351a31f679710b10d1c1"
+      },
+      "9CQ6qmoOhlQ": {
+        "events.jsonl": "3f06571458e8abe3656e3570d0cfe35706bf0f0f8e6f972be1f75186e3c3563d",
+        "tasks.jsonl": "23a883fbb7d6954eec22e57bf82d9bbf926e26e0033ceed58c436fe697d5bd91",
+        "labels-private.jsonl": "82669e105f35bd875f4734c4db26c8b10bb9a1ccfeb9ba3d0600edea35b89103",
+        "preparation.json": "c5ac483201c73286002d51cf621b1d1d1a90a423f6031622ed83a11d4d451625"
+      }
+    }
+  },
+  "config_sha256": "1ef7faa93953b4a2fdf9f143827204fbe603003b472c594c849e0821f3c9b6e8",
+  "limitations": [
+    "Eight distinct questions from two hash-selected ten-minute prefixes; not a model leaderboard.",
+    "Vision-only 2 FPS, 768-pixel JPEG input; audio-dependent questions retained without audio.",
+    "Seven concurrent speed-one predecoded replays; original decode excluded from runtime timing.",
+    "Same caption/lexical memory in all three GLM policies; not a memory ablation.",
+    "Gemini adaptive tested on only the first video; no full matched model comparison.",
+    "GLM used multiple OpenRouter providers, not a pinned serving endpoint; this confounds comparisons.",
+    "Five-second observation floor plus API latency conflicts with strict two-second Pro timing.",
+    "First Pro alert judged; post-prefix reference events right-censored, never replaced.",
+    "Custom Gemini Flex text-reference grading, not the official judge or independent visual grounding.",
+    "No retries; failures and ungraded cases retained. Unknown billing is not zero cost.",
+    "Source revision/archive lengths pinned; derivative hashes checked, full archive SHA not verified."
+  ]
+}

@@ -14,6 +14,11 @@ Latest exploratory model screen: [MMVU and TOMATO subsets](research/BENCHMARK_SC
 20 questions each across three hosted models, 123 calls and $1.14 total. These are
 custom-protocol subset results, not official leaderboard or runtime-policy scores.
 
+Latest runtime pilot: [two StreamArena prefixes](research/STREAMARENA_PILOT_20260920.md),
+seven concurrent trials plus grading, **911 calls / $0.534**. It exposed schema,
+tool-loop and proactive-timing failures; it does **not** establish a cost-quality
+advantage. Separate non-commercial research, with no protected data redistributed.
+
 ## Read these first
 
 | File | Purpose |

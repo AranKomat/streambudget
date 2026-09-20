@@ -276,8 +276,8 @@ presented as interchangeable.
 The benchmark input schema has no `answer`, `reference_answer`, evidence hints, or target trigger
 fields. Labels are read only by a separate scorer. The StreamArena bridge deliberately ignores the
 future reference time supplied by its evaluation callback. That reference must not become a hint for
-when to inspect or emit. The bridge follows inspected interfaces, but an actual upstream execution
-is outstanding [R01–R03].
+when to inspect or emit. The bridge and optional inheritance wrapper passed a generated-video run
+inside the pinned upstream driver [R01–R03]. That is not a full model-backed benchmark reproduction.
 
 Video-MME conversion and output export support user-provided nested JSON and local footage [R12].
 The current mode excludes subtitles. Future subtitle support must follow the benchmark's sampled-

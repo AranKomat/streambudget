@@ -13,8 +13,8 @@ vendor, not a robot controller.
 
 Read [SPEC.md](SPEC.md), [FEATURE_STATUS.md](docs/FEATURE_STATUS.md), [BENCHMARKS.md](docs/BENCHMARKS.md),
 and [VALIDATION.md](results/VALIDATION.md). The repository is original code, not a fork or reproduction
-of StreamMind, OmniAgent, or VSS. The upstream adapter follows inspected interfaces but has not yet
-been run inside the full upstream environment.
+of StreamMind, OmniAgent, or VSS. The upstream adapter has passed a generated-video smoke run
+inside the unmodified pinned driver. That does not reproduce StreamMind or a full official score.
 
 ## What was completed locally
 
@@ -23,15 +23,14 @@ input, typed watches and scalar predicates, shared visual observations, bounded 
 agent tool loop, SQLite evidence/lineage/search, optional compaction and text embeddings, configurable
 Chat Completions/ASR/embedding clients, accounting, baseline runners, reporting, and benchmark bridges.
 
-The local suite runs synthetic vision and mocked HTTP contracts. It includes an actual FFmpeg encode/
-extract timestamp test. See the validation receipt for the exact final count and commands. The PyAV
-path is optional and skipped locally because that package was unavailable; attempted installation
-failed due to package-host DNS access. Ruff was also unavailable. Do not interpret those omissions
-as tested functionality. Docker and GitHub Actions definitions are supplied but were not executed.
+The local suite runs synthetic vision and mocked HTTP contracts, including an actual FFmpeg
+encode/extract timestamp test. PyAV media preparation, targeted Ruff and hosted API screening
+have since been exercised; the original bundle's missing-dependency notes are historical.
+See the validation receipt and public-safe research reports for current commands and results.
 
-**No real LLM API, hosted embedding/ASR, GPU inference engine, VSS service, camera feed, full official
-benchmark, or customer workload was tested. There are no demonstrated commercial savings.** The
-synthetic backend is deliberately a red-pixel test double, not an ML result.
+**Hosted image-packet screens are not evidence of reliable runtime tool following or commercial
+savings.** Hosted embedding/ASR, GPU serving, VSS, real cameras, full official benchmark protocols
+and customer workloads remain unqualified. The synthetic backend is a test double, not an ML result.
 
 ## Non-negotiable constraints
 
@@ -157,21 +156,22 @@ export STREAMBUDGET_OUTPUT=/absolute/path/runs/streamarena
 export STREAMBUDGET_ALLOW_NETWORK=1
 # Run from your separately checked-out StreamArena repository:
 python method/streammind/run_streammind.py \
-  --agent streambudget.adapters.streamarena:StreamBudgetAgent \
+  --agent streambudget.adapters.streamarena_native:NativeStreamBudgetAgent \
   --dataset /path/to/authorized/StreamArena --language en \
   --video-dir /path/to/videos --videos YOUR_VIDEO_ID --out /path/to/results.jsonl
 ```
 
-Verify actual dynamic loading. The adapter is duck-typed; if the upstream loader enforces inheritance,
-add a tiny separately maintained upstream wrapper subclass rather than vendor the whole project.
+The upstream loader enforces inheritance. The optional `streamarena_native` wrapper supplies it
+without vendoring upstream code. `scripts/check_streamarena_native.py` verifies dynamic loading
+with generated footage and the mock backend; it requires PyAV and OpenCV in the local environment.
 Check frame/ASR arrival times, start/stop isolation, grace periods, qtype handling, answer callbacks,
 and proactive delivery time. **Keep `ref_ts` and its ground-truth-derived deadline outside agent state.**
 Our adapter intentionally ignores them. Actual user-specified deadlines would be different inputs.
 
 The bridge does not implement external web/image search. StreamArena Tool tasks are therefore not
 fully covered; exclude with explicit scope or add a budgeted safe tool before claiming a full score.
-Native audio is not passed through; ASR observations are supported. Calibrate timestamp offset from
-the driver start signal when executing the full live harness.
+Native audio is not passed through; ASR observations are supported. The adapter anchors its clock
+at the first legitimate frame/ask/audio callback, excluding decoder warm-up and future references.
 
 Run upstream StreamMind unchanged with the same backbone where practical. Separate paper v1, current
 core, and documented v2. Inspect whether the v2 OCR/retrieval code and matching configurations were

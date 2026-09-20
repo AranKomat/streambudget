@@ -1,5 +1,30 @@
 # Local validation receipt
 
+## StreamArena prefix pilot (2026-09-20)
+
+- **128 tests passed**, two dependency deprecation warnings. Targeted Ruff and
+  `git diff --check` passed. Added config-freeze roundtrip/tamper, protected-text
+  export, quota conservation, selection independence, bounds and censoring tests.
+- No-key demo: `runs/streamarena-no-key-demo-20260920`, 25 mock calls, $0,
+  2/2 toy answers and three toy alerts. Plumbing only.
+- Native smoke: `scripts/check_streamarena_native.py` executed the unmodified
+  pinned StreamArena driver with generated footage and the optional wrapper:
+  three answer records, 24 mock calls, no paid inference. OpenCV/PyAV used locally.
+- Two pinned 600-second prefixes prepared concurrently: 2,400 source-PTS JPEGs,
+  576,727,048 source range bytes. Derivative hashes validated. Full source TAR
+  checksums were not verified because complete archives were not downloaded.
+- Config freeze initially failed before dispatch because validation coerced integer
+  fields to floats. Fixed representation hashing with a regression test; no paid
+  retry, altered setting or source replacement was involved.
+- [Protocol](../research/STREAMARENA_PILOT_PROTOCOL.md) and
+  [results/review](../research/STREAMARENA_PILOT_20260920.md): **911 calls,
+  $0.5339023542**, including 13 grading calls. No unknown-charge holds, no retries,
+  no quota exhaustion; sub-$1e-15 reservation remainder is numerical roundoff.
+- Preserved all outcomes: 25 eligible task-trial pairs plus three right-censored;
+  1/14 question reference matches, 0/11 strict proactive hits. Text-only matching
+  overcredits event identity and does not establish visual grounding. All protected
+  data/raw answers remain local under ignored `data/` and `runs/` directories.
+
 ## MMVU / TOMATO screening runner (2026-09-20)
 
 - **119 tests passed**, two dependency deprecation warnings. Targeted Ruff and
