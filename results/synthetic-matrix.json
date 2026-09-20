@@ -1,0 +1,90 @@
+[
+  {
+    "mode": "fixed",
+    "synthetic": true,
+    "cost": {
+      "request_attempts": 69,
+      "reported_usd": 0.0,
+      "complete_reported_usd": 0.0,
+      "provisional_usd": 0.0,
+      "reserved_usd": 0,
+      "unpriced_attempts": 0,
+      "unknown_usage_attempts": 0,
+      "provider_input_tokens": 0,
+      "provider_output_tokens": 0,
+      "provider_cached_input_tokens": 0,
+      "gpu_seconds": null,
+      "gpu_measurement": "not_measured",
+      "cost_note": "Reported dollars use configured rates and provider usage, not invoice reconciliation."
+    },
+    "event_recall": 1.0,
+    "qa_accuracy": 1.0,
+    "frame_observations": 61
+  },
+  {
+    "mode": "motion",
+    "synthetic": true,
+    "cost": {
+      "request_attempts": 19,
+      "reported_usd": 0.0,
+      "complete_reported_usd": 0.0,
+      "provisional_usd": 0.0,
+      "reserved_usd": 0,
+      "unpriced_attempts": 0,
+      "unknown_usage_attempts": 0,
+      "provider_input_tokens": 0,
+      "provider_output_tokens": 0,
+      "provider_cached_input_tokens": 0,
+      "gpu_seconds": null,
+      "gpu_measurement": "not_measured",
+      "cost_note": "Reported dollars use configured rates and provider usage, not invoice reconciliation."
+    },
+    "event_recall": 1.0,
+    "qa_accuracy": 1.0,
+    "frame_observations": 11
+  },
+  {
+    "mode": "adaptive",
+    "synthetic": true,
+    "cost": {
+      "request_attempts": 25,
+      "reported_usd": 0.0,
+      "complete_reported_usd": 0.0,
+      "provisional_usd": 0.0,
+      "reserved_usd": 0,
+      "unpriced_attempts": 0,
+      "unknown_usage_attempts": 0,
+      "provider_input_tokens": 0,
+      "provider_output_tokens": 0,
+      "provider_cached_input_tokens": 0,
+      "gpu_seconds": null,
+      "gpu_measurement": "not_measured",
+      "cost_note": "Reported dollars use configured rates and provider usage, not invoice reconciliation."
+    },
+    "event_recall": 1.0,
+    "qa_accuracy": 1.0,
+    "frame_observations": 17
+  },
+  {
+    "mode": "recent_only",
+    "synthetic": true,
+    "cost": {
+      "request_attempts": 33,
+      "reported_usd": 0.0,
+      "complete_reported_usd": 0.0,
+      "provisional_usd": 0.0,
+      "reserved_usd": 0,
+      "unpriced_attempts": 0,
+      "unknown_usage_attempts": 0,
+      "provider_input_tokens": 0,
+      "provider_output_tokens": 0,
+      "provider_cached_input_tokens": 0,
+      "gpu_seconds": null,
+      "gpu_measurement": "not_measured",
+      "cost_note": "Reported dollars use configured rates and provider usage, not invoice reconciliation."
+    },
+    "event_recall": 1.0,
+    "qa_accuracy": 0.0,
+    "frame_observations": 31
+  }
+]

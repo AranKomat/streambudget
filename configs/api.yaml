@@ -1,0 +1,36 @@
+# Provider-agnostic, deliberately no unverified model names or hard-coded prices.
+# Environment: VLM_BASE_URL, VLM_MODEL, VLM_API_KEY.
+# Start with one model to isolate architecture; optional per-role settings below.
+namespace: local
+models:
+  perception:
+    kind: chat
+    base_url: "${VLM_BASE_URL}"
+    model: "${VLM_MODEL}"
+    api_key_env: VLM_API_KEY
+    revision: user-must-record-checkpoint-or-api-version
+    supports_images: true
+    json_mode: true
+    token_parameter: max_tokens
+    max_output_tokens: 1200
+    timeout_s: 90
+    max_retries: 1
+    retry_timeouts: false
+policy:
+  mode: adaptive
+  min_interval_s: 0.5
+  refresh_interval_s: 8
+  monitor_interval_s: 2
+  recent_frames: 4
+  max_image_side: 768
+  max_inspect_frames: 16
+  max_agent_steps: 6
+  compact_every: 0
+scheduler:
+  workers: 2
+  max_queue: 16
+  deadline_s: 120
+  drain_timeout_s: 180
+budget:
+  max_requests: 80
+  max_usd: null  # Set real rates before enabling a dollar cap. Null != free.

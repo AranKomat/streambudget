@@ -1,0 +1,13 @@
+{
+  "source_path": "sensor.id",
+  "timestamp_path": "timestamp_ms",
+  "timestamp_unit": "milliseconds",
+  "timestamp_origin": 0,
+  "kind": "detector",
+  "text_path": "description",
+  "data_fields": {
+    "object_count": "detection.count",
+    "label": "detection.label",
+    "confidence": "detection.confidence"
+  }
+}

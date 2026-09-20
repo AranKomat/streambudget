@@ -1,0 +1,3 @@
+{"type":"watch","at":0,"id":"packing_dwell","source":"camera","watch":{"goal":"A package remains in the marked work area","dwell_seconds":10,"max_observation_gap":4,"repeat":false}}
+{"type":"watch","at":0,"id":"temperature_high","source":"camera","watch":{"goal":"Operator-defined temperature threshold exceeded","sensor_predicate":{"key":"temperature","op":"gt","value":85,"kind":"sensor"},"repeat":false}}
+{"type":"ask","at":119,"id":"investigation","source":"camera","question":"What occupied the work area earlier? Inspect and cite evidence."}

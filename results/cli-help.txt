@@ -1,0 +1,20 @@
+usage: streambudget [-h]
+                    {demo,run,prepare-video,score,report,doctor,validate-data,serve,bridge-video,import-videomme,export-videomme,transcribe} ...
+
+StreamBudget: API-first continuous perception research runtime
+
+positional arguments:
+  {demo,run,prepare-video,score,report,doctor,validate-data,serve,bridge-video,import-videomme,export-videomme,transcribe}
+    demo                Generate and run a synthetic, no-API integration
+                        fixture
+    run                 Run normalized events and tasks; does NOT accept
+                        labels
+    prepare-video       Use PyAV PTS to create an image manifest (decoding is
+                        measured)
+    score               Post-hoc scoring; labels are separate from runtime
+    report              Create a local HTML run report
+    doctor              Validate configuration, dependencies and optionally
+                        one real VLM call
+
+options:
+  -h, --help            show this help message and exit

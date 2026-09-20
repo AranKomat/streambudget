@@ -1,0 +1,38 @@
+namespace: local
+models:
+  perception:
+    kind: chat
+    base_url: "${VLM_BASE_URL}"
+    model: "${VLM_MODEL}"
+    api_key_env: VLM_API_KEY
+  planner:
+    kind: chat
+    base_url: "${PLANNER_BASE_URL}"
+    model: "${PLANNER_MODEL}"
+    api_key_env: PLANNER_API_KEY
+    supports_images: false  # Planner consumes tool evidence; perception sees images.
+  verifier:
+    kind: chat
+    base_url: "${VERIFIER_BASE_URL}"
+    model: "${VERIFIER_MODEL}"
+    api_key_env: VERIFIER_API_KEY
+  embedding:
+    kind: chat
+    base_url: "${EMBED_BASE_URL}"
+    model: "${EMBED_MODEL}"
+    api_key_env: EMBED_API_KEY
+    supports_images: false
+  asr:
+    kind: chat
+    base_url: "${ASR_BASE_URL}"
+    model: "${ASR_MODEL}"
+    api_key_env: ASR_API_KEY
+    supports_images: false
+    audio_per_minute_usd: null
+semantic_embeddings: true
+policy:
+  mode: adaptive
+  escalation: true
+  compact_every: 8
+budget:
+  max_requests: 250

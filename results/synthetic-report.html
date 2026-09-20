@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><meta charset="utf-8">
+<title>StreamBudget run report</title><style>
+body{font:16px/1.6 system-ui,sans-serif;max-width:1100px;margin:48px auto;padding:0 24px;color:#172335;background:#f7f9fc}
+h1{font-size:36px;letter-spacing:-1px}small{color:#596777}section,.card{background:white;border:1px solid #dbe2eb;padding:22px;margin:18px 0;border-radius:10px}
+table{width:100%;border-collapse:collapse;background:white}td,th{text-align:left;padding:12px;border-bottom:1px solid #dbe2eb}pre{overflow:auto;font-size:12px}strong{font-weight:650}
+</style><h1>StreamBudget / run report</h1><p>Evidence-preserving continuous perception · v0.1</p>
+<div class="card"><strong>SYNTHETIC FIXTURE — not a model-quality benchmark</strong>
+<p>Mode: deterministic. Attempts: 25.
+Calculable cost subtotal: 0.000000. Provisional: 0.000000.
+Complete reported cost: 0.0.
+Unpriced attempts: 0. Unknown-usage attempts: 0. GPU-seconds: <strong>not measured</strong>.</p></div>
+<h2>Events</h2><table><tr><th>Source</th><th>Watch</th><th>Observed t</th><th>Delivered t</th><th>Evidence</th></tr><tr><td>camera</td><td>red_box_dwell</td><td>14.0</td><td>14.0</td><td>Synthetic red-pixel fixture</td></tr><tr><td>machine</td><td>temperature_high</td><td>25.0</td><td>25.0</td><td>Structured observation predicate; not a model verdict</td></tr><tr><td>camera</td><td>red_box_dwell</td><td>39.0</td><td>39.0</td><td>Synthetic red-pixel fixture</td></tr></table>
+<h2>Investigations</h2><section><h3>history_1</h3><p>A red box was observed in the work area.</p><small>Status: ok · Evidence: [&#x27;a8946d656e655939a9ff30e0ae87a5c2&#x27;, &#x27;b83a71638c7c5d819e11e534a6d5b937&#x27;, &#x27;cafdab4122dc5ce7bce79901a86552f6&#x27;]</small></section><section><h3>history_2</h3><p>A red box was observed in the work area.</p><small>Status: ok · Evidence: [&#x27;c898482c8b5055a09b4333f0b8c287a7&#x27;, &#x27;cafdab4122dc5ce7bce79901a86552f6&#x27;, &#x27;e1cd64ca7cd65a859d36fe46abba9b6b&#x27;]</small></section><h2>Operational counters</h2><section><pre>{
+  &quot;watch_registered&quot;: 2,
+  &quot;stage&quot;: 122,
+  &quot;frame_ingested&quot;: 60,
+  &quot;job_enqueued&quot;: 19,
+  &quot;model_attempt&quot;: 25,
+  &quot;model_timing&quot;: 25,
+  &quot;observation_completed&quot;: 17,
+  &quot;job_done&quot;: 19,
+  &quot;observation_skipped&quot;: 44,
+  &quot;signal_ingested&quot;: 2,
+  &quot;alert&quot;: 3,
+  &quot;agent_action&quot;: 6
+}</pre></section>
+<p>Counts and latency are not quality or compute-savings claims. Inspect trace.jsonl, config.resolved.json,
+source rights, errors, and the benchmark protocol before interpreting results.</p></html>

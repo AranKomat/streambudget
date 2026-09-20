@@ -1,0 +1,13 @@
+namespace: local
+models:
+  perception:
+    kind: mock
+    model: synthetic-pixel-fixture
+policy:
+  mode: adaptive
+  refresh_interval_s: 8
+  monitor_interval_s: 2
+  recent_frames: 4
+  audit_probability: 0.01
+budget:
+  max_requests: 300

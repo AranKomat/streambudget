@@ -1,0 +1,63 @@
+{
+  "qa": {
+    "count": 2,
+    "correct": 2,
+    "accuracy": 1.0,
+    "scoring": "strict_mcq_or_exact_text; not an open-ended semantic judge",
+    "items": [
+      {
+        "id": "history_1",
+        "correct": true,
+        "missing": false
+      },
+      {
+        "id": "history_2",
+        "correct": true,
+        "missing": false
+      }
+    ]
+  },
+  "events": {
+    "tp": 3,
+    "fp": 0,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 1.0,
+    "false_alerts_per_camera_hour": 0.0,
+    "evidence_delay_p50_s": 1.0,
+    "delivered_timeline_delay_p95_s": 1.0,
+    "per_class": {
+      "red_box_dwell": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "recall": 1.0
+      },
+      "temperature_high": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "recall": 1.0
+      }
+    },
+    "note": "Delivered timeline delay is real-time only in speed=1 paced/live runs."
+  },
+  "synthetic": true,
+  "official_score": false,
+  "timing": "deterministic",
+  "cost": {
+    "request_attempts": 25,
+    "reported_usd": 0.0,
+    "complete_reported_usd": 0.0,
+    "provisional_usd": 0.0,
+    "reserved_usd": 0,
+    "unpriced_attempts": 0,
+    "unknown_usage_attempts": 0,
+    "provider_input_tokens": 0,
+    "provider_output_tokens": 0,
+    "provider_cached_input_tokens": 0,
+    "gpu_seconds": null,
+    "gpu_measurement": "not_measured",
+    "cost_note": "Reported dollars use configured rates and provider usage, not invoice reconciliation."
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "source_tree": "clean copy without build caches/git metadata",
+  "import_path": "PYTHONPATH=src from copied tree",
+  "pytest_output": "..................................s..................................... [ 80%]\n..................                                                       [100%]\n89 passed, 1 skipped in 1.27s\n",
+  "demo_completed": true,
+  "real_model_api": false,
+  "status": "passed"
+}

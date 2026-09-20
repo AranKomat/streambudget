@@ -1,0 +1,14 @@
+WARNING: The directory '/home/oai/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+Obtaining file:///mnt/data/streambudget
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: streambudget
+  Building editable for streambudget (pyproject.toml): started
+  Building editable for streambudget (pyproject.toml): finished with status 'done'
+  Created wheel for streambudget: filename=streambudget-0.1.0-0.editable-py3-none-any.whl size=6593 sha256=4516fa15f5111d676a65968641f04c2868d8404183c7514631727dd353db69ad
+  Stored in directory: /tmp/pip-ephem-wheel-cache-7z6569lg/wheels/8b/32/e6/19f3ce67df5e22edbee17175a11c80d79983f401dd476a7e84
+Successfully built streambudget
+Installing collected packages: streambudget
+Successfully installed streambudget-0.1.0

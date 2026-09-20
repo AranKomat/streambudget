@@ -1,0 +1,16 @@
+# Works at the HTTP-contract level with compatible vLLM/SGLang deployments.
+# Actual model/prompt compatibility must pass `doctor --probe` on your server.
+models:
+  perception:
+    kind: chat
+    base_url: "${LOCAL_BASE_URL}"
+    model: "${VLM_MODEL}"
+    api_key_env: LOCAL_API_KEY
+    revision: pin-your-checkpoint
+    supports_images: true
+    max_output_tokens: 1200
+    json_mode: true
+policy:
+  mode: adaptive
+budget:
+  max_requests: 300

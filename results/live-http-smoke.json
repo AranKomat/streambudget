@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "model_api_calls": false,
+  "transport": "authenticated loopback HTTP",
+  "port": 40101,
+  "unauthenticated_status": 401,
+  "health": 200,
+  "authorized_frame_post": 200,
+  "watch_id": "red",
+  "alert_evidence_ids": [
+    "27b49832ae045cbb88b1a5bc2ce8c79b"
+  ],
+  "question_status": "ok",
+  "question_has_evidence": true,
+  "gpu_seconds": null,
+  "status": "passed"
+}

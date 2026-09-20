@@ -1,0 +1,36 @@
+{
+  "checked_on": "2026-09-20",
+  "note": "File blob identifiers, NOT repository commit locks. No source vendored.",
+  "files": [
+    {
+      "repository": "JIA-Lab-research/StreamArena",
+      "path": "method/streammind/agent.py",
+      "git_blob_sha": "3f456974707332268055cdb09b850cfdb89f616b",
+      "url": "https://github.com/JIA-Lab-research/StreamArena/blob/main/method/streammind/agent.py"
+    },
+    {
+      "repository": "JIA-Lab-research/StreamArena",
+      "path": "method/streammind/README.md",
+      "git_blob_sha": "ae24163bf8088fb4ab40fb718545b730ed936f82",
+      "url": "https://github.com/JIA-Lab-research/StreamArena/blob/main/method/streammind/README.md"
+    },
+    {
+      "repository": "JIA-Lab-research/StreamArena",
+      "path": "streamarena/data.py",
+      "git_blob_sha": "00fa9029671668b05a462848765d93aa69e8a818",
+      "url": "https://github.com/JIA-Lab-research/StreamArena/blob/main/streamarena/data.py"
+    },
+    {
+      "repository": "MME-Benchmarks/Video-MME",
+      "path": "README.md",
+      "git_blob_sha": "69ade7d2dee0af20470c075de4e36f07ee126160",
+      "url": "https://github.com/MME-Benchmarks/Video-MME/blob/main/README.md"
+    },
+    {
+      "repository": "MME-Benchmarks/Video-MME",
+      "path": "evaluation/output_test_template.json",
+      "git_blob_sha": "edd71473c57c02170477f16a20842676765b2147",
+      "url": "https://github.com/MME-Benchmarks/Video-MME/blob/main/evaluation/output_test_template.json"
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+{
+  "ledger": {
+    "request_attempts": 25,
+    "reported_usd": 0.0,
+    "complete_reported_usd": 0.0,
+    "provisional_usd": 0.0,
+    "reserved_usd": 0,
+    "unpriced_attempts": 0,
+    "unknown_usage_attempts": 0,
+    "provider_input_tokens": 0,
+    "provider_output_tokens": 0,
+    "provider_cached_input_tokens": 0,
+    "gpu_seconds": null,
+    "gpu_measurement": "not_measured",
+    "cost_note": "Reported dollars use configured rates and provider usage, not invoice reconciliation."
+  },
+  "trace_counts": {
+    "watch_registered": 2,
+    "stage": 122,
+    "frame_ingested": 60,
+    "job_enqueued": 19,
+    "model_attempt": 25,
+    "model_timing": 25,
+    "observation_completed": 17,
+    "job_done": 19,
+    "observation_skipped": 44,
+    "signal_ingested": 2,
+    "alert": 3,
+    "agent_action": 6
+  },
+  "max_queue_depth": 1,
+  "alerts": 3,
+  "synthetic_backend": true,
+  "now": 59.0,
+  "sources": [
+    "camera"
+  ],
+  "warning": "No quality or savings claim follows from mock runs or contract tests.",
+  "timing": "deterministic",
+  "speed": 1.0,
+  "input_format": "predecoded_image_manifest",
+  "video_decode_included": false,
+  "event_time_seconds": 59.0,
+  "camera_hours": 0.01638888888888889,
+  "elapsed_wall_s": 0.15820286899997882,
+  "predictions": [
+    {
+      "question_id": "history_1",
+      "text": "A red box was observed in the work area.",
+      "evidence_ids": [
+        "a8946d656e655939a9ff30e0ae87a5c2",
+        "b83a71638c7c5d819e11e534a6d5b937",
+        "cafdab4122dc5ce7bce79901a86552f6"
+      ],
+      "as_of": 29.0,
+      "status": "ok",
+      "elapsed_s": 0.003834860000097251,
+      "tool_steps": [
+        {
+          "tool": "search",
+          "arguments": {
+            "query": "red box",
+            "source": "camera"
+          },
+          "result": {
+            "evidence": [
+              {
+                "id": "a8946d656e655939a9ff30e0ae87a5c2",
+                "source": "camera",
+                "kind": "caption",
+                "start": 10.0,
+                "end": 18.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "03f59b07d7435049a3e69c206f4ae19d",
+                  "13f252fc83715a2abe552f36556b6562",
+                  "75f502697b015ea9b495999b2a3cd1d2",
+                  "f51d0df2c44956fe87bf08407a831b68"
+                ]
+              },
+              {
+                "id": "cafdab4122dc5ce7bce79901a86552f6",
+                "source": "camera",
+                "kind": "caption",
+                "start": 8.0,
+                "end": 16.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "77d0a6ad6cf05b14bac9897f209011e4",
+                  "915a3f4d2c575548a107e4f6055c132c",
+                  "944af7926e0151e78e94e2a2c80742eb",
+                  "bceddcb404845790b5bb741fe312bc4a",
+                  "f51d0df2c44956fe87bf08407a831b68"
+                ]
+              },
+              {
+                "id": "83ed6ed31e73578eaddccc8785f47bf3",
+                "source": "camera",
+                "kind": "caption",
+                "start": 6.0,
+                "end": 14.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "68573201c1095217a9f4c71d67b174f5",
+                  "915a3f4d2c575548a107e4f6055c132c",
+                  "bceddcb404845790b5bb741fe312bc4a",
+                  "bf83d139112b5176b092d992a2ceb7c6",
+                  "f6e7d56bd17a514593dd2cfdf36adb14"
+                ]
+              },
+              {
+                "id": "b83a71638c7c5d819e11e534a6d5b937",
+                "source": "camera",
+                "kind": "caption",
+                "start": 4.0,
+                "end": 12.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "427a814225df51e69e031ca4fcd17360",
+                  "57e382bfdbe85a88b2f240be256a4e3d",
+                  "915a3f4d2c575548a107e4f6055c132c",
+                  "adcfa6fd3b2356a8af4a14702d005b29",
+                  "f6e7d56bd17a514593dd2cfdf36adb14"
+                ]
+              },
+              {
+                "id": "a290ef1343915aaeaf4c980febc64962",
+                "source": "camera",
+                "kind": "caption",
+                "start": 2.0,
+                "end": 10.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "03f59b07d7435049a3e69c206f4ae19d",
+                  "57e382bfdbe85a88b2f240be256a4e3d",
+                  "604e75f81f1b57158767f337084e748e",
+                  "915a3f4d2c575548a107e4f6055c132c",
+                  "9d4cb7a804d7526594ef3b28b2c2af31"
+                ]
+              }
+            ],
+            "coverage": "indexed_observations_only"
+          }
+        },
+        {
+          "tool": "inspect",
+          "arguments": {
+            "source": "camera",
+            "start": 16.0,
+            "end": 18.0,
+            "frames": 2,
+            "question": "Describe the work area."
+          },
+          "result": {
+            "evidence": [
+              {
+                "id": "10085e455e9456b39742f510702825f1",
+                "source": "camera",
+                "kind": "caption",
+                "start": 16.0,
+                "end": 18.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "75f502697b015ea9b495999b2a3cd1d2",
+                  "944af7926e0151e78e94e2a2c80742eb"
+                ]
+              }
+            ],
+            "frame_ids": [
+              "944af7926e0151e78e94e2a2c80742eb",
+              "75f502697b015ea9b495999b2a3cd1d2"
+            ],
+            "sampled_timestamps": [
+              16.0,
+              18.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "question_id": "history_2",
+      "text": "A red box was observed in the work area.",
+      "evidence_ids": [
+        "c898482c8b5055a09b4333f0b8c287a7",
+        "cafdab4122dc5ce7bce79901a86552f6",
+        "e1cd64ca7cd65a859d36fe46abba9b6b"
+      ],
+      "as_of": 59.0,
+      "status": "ok",
+      "elapsed_s": 0.003766525999708392,
+      "tool_steps": [
+        {
+          "tool": "search",
+          "arguments": {
+            "query": "red box",
+            "source": "camera"
+          },
+          "result": {
+            "evidence": [
+              {
+                "id": "e1cd64ca7cd65a859d36fe46abba9b6b",
+                "source": "camera",
+                "kind": "caption",
+                "start": 35.0,
+                "end": 43.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "14210d48a72f566083cbc78001da9a54",
+                  "1db2f9afbb245d628aa44e3cc8bbe582",
+                  "5b18123245555ebbb2a7dae41eee6686",
+                  "99e5e5dc83bc593382f709bb8c59e867"
+                ]
+              },
+              {
+                "id": "c87382a121645b44b346229b063d79dc",
+                "source": "camera",
+                "kind": "caption",
+                "start": 33.0,
+                "end": 41.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "14210d48a72f566083cbc78001da9a54",
+                  "6b5f4b8b51765939b554cc2ba8179dde",
+                  "6d889c1d6bca5e6bbc3f73cb43075d3e",
+                  "e4575109f3215305ae845bf7b0d60a3e"
+                ]
+              },
+              {
+                "id": "2c08d4f7dd005f7892a19d4eab414cbb",
+                "source": "camera",
+                "kind": "caption",
+                "start": 31.0,
+                "end": 39.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "3ac4ed5d3877527187319a6a3b43235c",
+                  "7ba97656e3a456adaf461f890035b398",
+                  "abd968ce7197551dba79ee11a34ea69f",
+                  "e4575109f3215305ae845bf7b0d60a3e"
+                ]
+              },
+              {
+                "id": "2e0ff2e473ea5e0c83060345723dbd00",
+                "source": "camera",
+                "kind": "caption",
+                "start": 29.0,
+                "end": 37.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "a0515b68cfeb56479952f6649035a11c",
+                  "abd968ce7197551dba79ee11a34ea69f",
+                  "bd444d09208a597fa11d4e66868bf951",
+                  "ce1e05d752f652428a3080bff7246bc9"
+                ]
+              },
+              {
+                "id": "89e00a0582b05af78f3f90016d65dce1",
+                "source": "camera",
+                "kind": "caption",
+                "start": 27.0,
+                "end": 35.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "1db2f9afbb245d628aa44e3cc8bbe582",
+                  "811747ca08c358d6b957214d247fb25e",
+                  "bd444d09208a597fa11d4e66868bf951",
+                  "cdbb5ea86d3653159c46e3584609d98d"
+                ]
+              },
+              {
+                "id": "a8946d656e655939a9ff30e0ae87a5c2",
+                "source": "camera",
+                "kind": "caption",
+                "start": 10.0,
+                "end": 18.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "03f59b07d7435049a3e69c206f4ae19d",
+                  "13f252fc83715a2abe552f36556b6562",
+                  "75f502697b015ea9b495999b2a3cd1d2",
+                  "f51d0df2c44956fe87bf08407a831b68"
+                ]
+              },
+              {
+                "id": "10085e455e9456b39742f510702825f1",
+                "source": "camera",
+                "kind": "caption",
+                "start": 16.0,
+                "end": 18.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "75f502697b015ea9b495999b2a3cd1d2",
+                  "944af7926e0151e78e94e2a2c80742eb"
+                ]
+              },
+              {
+                "id": "cafdab4122dc5ce7bce79901a86552f6",
+                "source": "camera",
+                "kind": "caption",
+                "start": 8.0,
+                "end": 16.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "77d0a6ad6cf05b14bac9897f209011e4",
+                  "915a3f4d2c575548a107e4f6055c132c",
+                  "944af7926e0151e78e94e2a2c80742eb",
+                  "bceddcb404845790b5bb741fe312bc4a",
+                  "f51d0df2c44956fe87bf08407a831b68"
+                ]
+              }
+            ],
+            "coverage": "indexed_observations_only"
+          }
+        },
+        {
+          "tool": "inspect",
+          "arguments": {
+            "source": "camera",
+            "start": 41.0,
+            "end": 43.0,
+            "frames": 2,
+            "question": "Describe the work area."
+          },
+          "result": {
+            "evidence": [
+              {
+                "id": "c898482c8b5055a09b4333f0b8c287a7",
+                "source": "camera",
+                "kind": "caption",
+                "start": 41.0,
+                "end": 43.0,
+                "text": "A red box occupies the work area.",
+                "parents": [
+                  "5b18123245555ebbb2a7dae41eee6686",
+                  "6d889c1d6bca5e6bbc3f73cb43075d3e"
+                ]
+              }
+            ],
+            "frame_ids": [
+              "6d889c1d6bca5e6bbc3f73cb43075d3e",
+              "5b18123245555ebbb2a7dae41eee6686"
+            ],
+            "sampled_timestamps": [
+              41.0,
+              43.0
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "alerts_detail": [
+    {
+      "watch_id": "red_box_dwell",
+      "source": "camera",
+      "observed_at": 14.0,
+      "delivered_at": 14.0,
+      "delivery_wall_s": 0.04351855599998089,
+      "confidence": 0.99,
+      "text": "Synthetic red-pixel fixture",
+      "evidence_ids": [
+        "83ed6ed31e73578eaddccc8785f47bf3"
+      ],
+      "positive_since": 10.0
+    },
+    {
+      "watch_id": "temperature_high",
+      "source": "machine",
+      "observed_at": 25.0,
+      "delivered_at": 25.0,
+      "delivery_wall_s": 0.06830118800007767,
+      "confidence": 1.0,
+      "text": "Structured observation predicate; not a model verdict",
+      "evidence_ids": [
+        "a8c433c45e555a81aecd39e872e44762"
+      ],
+      "positive_since": 25.0
+    },
+    {
+      "watch_id": "red_box_dwell",
+      "source": "camera",
+      "observed_at": 39.0,
+      "delivered_at": 39.0,
+      "delivery_wall_s": 0.11261954699966736,
+      "confidence": 0.99,
+      "text": "Synthetic red-pixel fixture",
+      "evidence_ids": [
+        "2c08d4f7dd005f7892a19d4eab414cbb"
+      ],
+      "positive_since": 35.0
+    }
+  ],
+  "capacity_measurement": false,
+  "capacity_caveat": "Manifest replay excludes original video decoding and camera transport."
+}
