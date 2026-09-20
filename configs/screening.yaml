@@ -1,0 +1,44 @@
+# Synthetic compatibility screen only. OpenRouter catalog: 2026-09-20.
+# The three roles share ONE ledger; these are not three separate budgets.
+namespace: screening
+models:
+  perception: &common
+    kind: chat
+    model: google/gemini-3.8-flash
+    revision: openrouter-unpinned-2026-09-20
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    supports_images: true
+    json_mode: true
+    max_output_tokens: 4096
+    image_token_reserve: 4096
+    timeout_s: 180
+    max_retries: 0
+    retry_timeouts: false
+    temperature: 0
+    prices:
+      input_per_million: 0.75
+      output_per_million: 3.75
+      cached_input_per_million: 0.075
+    extra_body:
+      reasoning:
+        effort: low
+      provider:
+        require_parameters: true
+  qwen:
+    <<: *common
+    model: qwen/qwen3.8-27b
+    prices:
+      input_per_million: 0.42
+      output_per_million: 3.0
+      cached_input_per_million: 0.085
+  glm:
+    <<: *common
+    model: z-ai/glm-5.3-flash
+    prices:
+      input_per_million: 0.09
+      output_per_million: 0.30
+      cached_input_per_million: 0.018
+budget:
+  max_requests: 63
+  max_usd: 3.0

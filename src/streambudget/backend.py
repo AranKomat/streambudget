@@ -230,8 +230,12 @@ class ModelPool:
                 if not retry or attempt == cfg.max_retries:
                     raise
             finally:
+                provider_cost = None
+                if cfg.base_url.rstrip("/") == "https://openrouter.ai/api/v1" and isinstance(usage, dict):
+                    provider_cost = usage.get("cost")
                 await self.ledger.settle(ticket, role=role, prices=cfg.prices, usage=usage,
-                                         status=status, synthetic=cfg.kind == "mock")
+                                         status=status, synthetic=cfg.kind == "mock",
+                                         provider_cost_usd=provider_cost)
                 self.trace.emit("model_timing", role=role, operation=request.operation,
                                 model=cfg.model, revision=cfg.revision, request_hash=key,
                                 frames=len(request.images), wall_s=time.monotonic() - start,

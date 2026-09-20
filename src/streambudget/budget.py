@@ -54,7 +54,8 @@ class Ledger:
 
     async def settle(self, ticket: Ticket, *, role: str, prices: Prices,
                      usage: dict | None, status: str, synthetic: bool = False,
-                     measured_media_usd: float | None = None) -> None:
+                     measured_media_usd: float | None = None,
+                     provider_cost_usd: float | None = None) -> None:
         async with self._lock:
             if not ticket.active:
                 raise RuntimeError("Budget ticket settled twice")
@@ -77,6 +78,9 @@ class Ledger:
                     usage_valid = True
                 except (KeyError, AttributeError, TypeError, ValueError):
                     pass
+            provider_cost_valid = (isinstance(provider_cost_usd, (int, float))
+                                   and not isinstance(provider_cost_usd, bool)
+                                   and math.isfinite(provider_cost_usd) and provider_cost_usd >= 0)
             reported = None
             if synthetic:
                 reported = 0.0
@@ -91,6 +95,10 @@ class Ledger:
                     cp = prices.input_per_million if cp is None else cp
                     reported = ((inp - cached) * prices.input_per_million
                                 + cached * cp + out * prices.output_per_million) / 1e6
+            if provider_cost_valid and not synthetic and measured_media_usd is None:
+                # Aggregator routing can change prices relative to the catalog.
+                # Use its request charge when present; this is not an invoice audit.
+                reported = provider_cost_usd
             if reported is None:
                 if ticket.quote_usd is None:
                     self.unpriced_attempts += 1
@@ -104,7 +112,9 @@ class Ledger:
                             synthetic=synthetic, provider_usage=normalized_usage, reported_usd=reported,
                             provider_usage_invalid=usage is not None and not usage_valid,
                             estimated_reservation_usd=ticket.quote_usd,
-                            billing_basis="media_duration_and_configured_rate" if measured_media_usd is not None else "tokens",
+                            billing_basis=("media_duration_and_configured_rate" if measured_media_usd is not None
+                                           else "provider_reported_cost" if provider_cost_valid else "tokens"),
+                            provider_cost_invalid=provider_cost_usd is not None and not provider_cost_valid,
                             billing_uncertain=not synthetic and not usage_valid and measured_media_usd is None)
             if self.config.max_usd is not None and self.reported_usd + self.provisional_usd > self.config.max_usd:
                 self.trace.emit("budget_overrun", reason="Actual/provisional usage exceeded estimated reservation")
@@ -117,4 +127,4 @@ class Ledger:
                 "provider_input_tokens": self.input_tokens, "provider_output_tokens": self.output_tokens,
                 "provider_cached_input_tokens": self.cached_input_tokens,
                 "gpu_seconds": None, "gpu_measurement": "not_measured",
-                "cost_note": "Reported dollars use configured rates and provider usage, not invoice reconciliation."}
+                "cost_note": "Reported dollars use validated provider costs when supported, otherwise configured rates and usage; not invoice reconciliation."}

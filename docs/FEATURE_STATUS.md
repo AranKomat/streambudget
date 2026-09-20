@@ -4,9 +4,10 @@ v0.1.0. **Implemented** means source exists and is exercised by local tests wher
 not mean deployed, reproduced on a published dataset, or production hardened. Exact counts and
 commands live in [VALIDATION.md](../results/VALIDATION.md).
 
-OpenRouter connection setup (2026-09-20): shared-environment launcher and bounded
-configuration added; credential authentication and model catalog checked. Actual
-model inference has not yet been tested.
+OpenRouter screening (2026-09-20): three hosted models tested on controlled,
+generated-image sequences. This qualifies the image/JSON transport, not real-video
+quality or end-to-end runtime performance. See the
+[screening report](../research/MODEL_SCREEN_20260920.md).
 
 | Area | Delivered implementation | Local validation | Not established / remaining |
 |---|---|---|---|
@@ -18,12 +19,12 @@ model inference has not yet been tested.
 | Monitoring | Typed goals, freshness-aware sampled dwell, repeat/cooldown, scalar predicates | Dwell/old response/shared observation/sensor tests | Calibrated recall and production event semantics |
 | Observation scheduler | Fixed, motion/cue+periodic, adaptive/dwell/audit, recent-only | Synthetic ablations and queue tests | Learned policy; proof of semantic skip safety |
 | Agent | Bounded JSON tool loop; search, inspect, VLM OCR, state, sensors | Tool bounds, evidence IDs, full mock loop | Real model tool-following and answer faithfulness |
-| Chat backend | Configurable compatible HTTP, images/timestamps, roles, retries | HTTPX contract tests | Any real provider or self-hosted model run |
+| Chat backend | Configurable compatible HTTP, images/timestamps, roles, retries | HTTPX contracts plus three hosted-model synthetic screens | Real footage, self-hosting, provider/revision pinning |
 | Specialist APIs | Text embeddings and chunked WAV transcription | Mocked HTTP contracts and WAV duration | Real embedding/ASR endpoint; native AV/omni |
 | Detector/OCR/sensors | External structured observations + generic mapping | Schema/time mapping tests | Dedicated detector/OCR/segmentation engine deployments |
 | Live video bridge | Trusted local video / RTSP to REST using PyAV | Code present; optional PyAV test skipped locally | Actual PyAV/RTSP execution, reconnect, audio sync |
 | Video preparation | Presentation timestamps via PyAV or FFmpeg | Actual FFmpeg generated-video test | PyAV path in this environment; long VFR footage sweep |
-| Cost controls | Attempt cap, estimated reservation, usage reconciliation, unknown billing | Retries/timeouts/malformed counts/prices tests | Exact invoice cap, external CV/cloud costs, GPU telemetry |
+| Cost controls | Attempt cap, estimated reservation, usage reconciliation, unknown billing; validated OpenRouter cost receipts | Retry/timeout/schema tests; shared screening budget includes probe holds | Exact invoice cap, external CV/cloud costs, GPU telemetry |
 | vLLM/SGLang | Configured HTTP boundary and launch templates | Generic request-shape tests only | GPU deployment, native video, KV/encoder reuse/pruning |
 | VSS integration | JSON event mapper and service-boundary design | Synthetic message mapping | Actual pinned VSS/Kafka/protobuf/storage connector |
 | StreamArena | Independent lifecycle bridge and GT-ref exclusion | Contract-level tests | Full upstream loader/driver/dataset/scorer run; external Tool search |

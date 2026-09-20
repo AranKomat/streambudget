@@ -97,6 +97,31 @@ bash scripts/openrouter.sh doctor --config configs/openrouter.yaml \
   --probe --allow-network --out runs/openrouter-probe
 ```
 
+### Bounded multi-model compatibility screen
+
+`configs/screening.yaml` selects Gemini 3.8 Flash, Qwen3.8-27B, and GLM-5.3-Flash.
+`scripts/screen_models.py` sends each model the same 20 generated eight-image packets,
+after one single-image probe per model. It uses **one shared $3 estimated budget and
+63-attempt ceiling**, including the probes, with no retries. This is a synthetic
+image/JSON/temporal-reasoning screen, not StreamArena or a real-video quality ranking.
+
+```bash
+python scripts/screen_models.py prepare --out runs/model-screen
+# Inspect contact.png and estimate.json; export OPENROUTER_API_KEY from your trusted environment.
+python scripts/screen_models.py probe --out runs/model-screen --allow-network
+# Inspect probe/receipt.json before continuing. All three probes must pass.
+python scripts/screen_models.py screen --out runs/model-screen --allow-network
+python scripts/screen_models.py report --out runs/model-screen
+```
+
+Cases and labels are stored separately. Failed responses stay in the denominator;
+unknown charges remain held against the cumulative budget. Reusing a phase directory
+fails to prevent accidental duplicate dispatch. After interruption, inspect the trace
+and reconcile any uncertain attempts before authorizing another run; this script does
+not provide automatic durable resume. Rates and model revisions are not provider-pinned.
+The [first screening report](research/MODEL_SCREEN_20260920.md) records the actual
+results and explains why this tiny synthetic set cannot select a video-quality winner.
+
 ## 3. Bring a recording
 
 Install `ffmpeg` or `pip install -e '.[video]'` (PyAV). Both paths retain presentation timestamps.

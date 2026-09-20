@@ -1,5 +1,25 @@
 # Local validation receipt
 
+## Hosted synthetic screening (2026-09-20)
+
+Real OpenRouter requests are now exercised against generated visual sequences; see
+[results and limitations](../research/MODEL_SCREEN_20260920.md). The historical
+"not executed" statements below describe the original bundle, not this later run.
+
+Local validation on macOS / Python 3.13.7:
+
+- `.venv/bin/python -m pytest -q`: **104 passed**, two dependency deprecation warnings.
+- Targeted Ruff check on screening, backend, budget, runner and new tests: passed.
+- `streambudget demo --out runs/screening-cost-no-key-demo`: 25 mock attempts,
+  2/2 toy QA answers, 3 toy events, no false positives, $0; plumbing only.
+- `git diff --check`: passed.
+
+The new tests cover frozen balanced packets, evaluator-label separation, citation
+bounds, unknown-charge carryover, failed-response denominators, no accidental
+redispatch, identical model packets, config changes, provider-reported cost
+admission, invalid cost handling, and provider-specific cost-field interpretation.
+The pre-existing repository-wide Ruff findings were not changed by this work.
+
 ## OpenRouter connection check (2026-09-20)
 
 On macOS with Python 3.13.7, `bash scripts/openrouter.sh` successfully loaded the
