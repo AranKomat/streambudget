@@ -122,6 +122,14 @@ not provide automatic durable resume. Rates and model revisions are not provider
 The [first screening report](research/MODEL_SCREEN_20260920.md) records the actual
 results and explains why this tiny synthetic set cannot select a video-quality winner.
 
+The [real-footage follow-up](research/REAL_SCREEN_20260920.md) uses five openly licensed
+clips, 20 matched questions and nine concurrent requests. `configs/footage-screening.yaml`
+pins Gemini to **Google AI Studio Flex**, with no Vertex or standard-tier fallback;
+the runner checks the returned provider/tier rather than just assuming the request
+was honored. Other models retain automatic routing. Use `--dataset` to select the
+prepared footage and `--concurrency` to set up to 12 simultaneous calls under the
+same shared ledger. The report includes download/reproduction and attribution details.
+
 ## 3. Bring a recording
 
 Install `ffmpeg` or `pip install -e '.[video]'` (PyAV). Both paths retain presentation timestamps.

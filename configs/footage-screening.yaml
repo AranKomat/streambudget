@@ -1,0 +1,56 @@
+# OpenRouter endpoints API checked 2026-09-20; no Vertex or standard-tier fallback.
+namespace: footage-screening
+models:
+  perception: &common
+    kind: chat
+    model: google/gemini-3.8-flash
+    revision: openrouter-2026-09-20
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    supports_images: true
+    json_mode: true
+    max_output_tokens: 4096
+    image_token_reserve: 4096
+    timeout_s: 180
+    max_retries: 0
+    retry_timeouts: false
+    temperature: 0
+    prices:
+      input_per_million: 0.375
+      output_per_million: 1.875
+      cached_input_per_million: 0.0375
+    extra_body:
+      service_tier: flex
+      reasoning:
+        effort: low
+      provider:
+        only: [google-ai-studio/flex]
+        allow_fallbacks: false
+        require_parameters: true
+  qwen:
+    <<: *common
+    model: qwen/qwen3.8-27b
+    prices:
+      input_per_million: 0.42
+      output_per_million: 3.0
+      cached_input_per_million: 0.085
+    extra_body:
+      reasoning:
+        effort: low
+      provider:
+        require_parameters: true
+  glm:
+    <<: *common
+    model: z-ai/glm-5.3-flash
+    prices:
+      input_per_million: 0.15
+      output_per_million: 0.50
+      cached_input_per_million: 0.018
+    extra_body:
+      reasoning:
+        effort: low
+      provider:
+        require_parameters: true
+budget:
+  max_requests: 63
+  max_usd: 3.0

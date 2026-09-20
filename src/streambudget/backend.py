@@ -44,6 +44,7 @@ class Result:
     usage: dict | None
     latency_s: float
     request_id: str
+    routing: dict = field(default_factory=dict)
 
     def json(self) -> dict:
         text = self.text.strip()
@@ -215,7 +216,10 @@ class ModelPool:
                 if not isinstance(text, str) or len(text) > 1000000:
                     raise BackendError("Missing, non-text, or oversized completion")
                 status = "ok"
-                return Result(text, usage, time.monotonic() - start, str(data.get("id", key)))
+                routing = {k: data[k] for k in ("provider", "service_tier", "model")
+                           if isinstance(data.get(k), str)}
+                self.trace.emit("model_route", role=role, request_hash=key, **routing)
+                return Result(text, usage, time.monotonic() - start, str(data.get("id", key)), routing)
             except (httpx.TimeoutException, httpx.TransportError) as exc:
                 status = "transport_uncertain"
                 retry = cfg.retry_timeouts

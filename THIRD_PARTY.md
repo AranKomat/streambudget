@@ -17,3 +17,10 @@ Machine-generated captions/OCR on customer data are runtime outputs, not copied 
 No claimed visual-model accuracy result is derived from those fixtures.
 
 See `docs/REFERENCES.md` for the official Creative Commons terms and upstream source locations.
+
+The optional `scripts/prepare_footage.py` fetches five openly licensed Wikimedia Commons
+clips for exploratory QA. These files remain in ignored local data directories and
+are not part of the repository's MIT-licensed software. Source-specific attribution,
+license links, derivative descriptions and hashes are in
+`research/REAL_SCREEN_20260920.md` and its JSON receipt. Downloading is explicit opt-in;
+the script fails if the expected permissive rights metadata changes.

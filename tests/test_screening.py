@@ -1,4 +1,5 @@
 import importlib.util
+import asyncio
 import json
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from streambudget.budget import BudgetExceeded, Ledger
 from streambudget.backend import ModelPool
 from streambudget.screening import build_cases, fingerprint, packet, probe, score
 from streambudget.trace import Trace
+from streambudget.footage_screen import FRAME_INDICES, build_footage_cases
+from PIL import Image
 
 spec = importlib.util.spec_from_file_location("screen_runner", Path(__file__).parents[1] / "scripts/screen_models.py")
 runner = importlib.util.module_from_spec(spec)
@@ -165,3 +168,76 @@ async def test_cost_field_only_trusted_for_supported_provider(tmp_path, endpoint
     finally:
         await pool.close()
     assert ledger.reported_usd == pytest.approx(expected)
+
+
+def test_real_packet_separation_cutoffs_and_paths(tmp_path):
+    for cid, indices in FRAME_INDICES.items():
+        folder = tmp_path / cid / "prepared"
+        folder.mkdir(parents=True)
+        Image.new("RGB", (40, 80), "red").save(folder / "frame.jpg")
+        (folder / "events.jsonl").write_text("\n".join(json.dumps({
+            "ts": i / 2, "media": "frame.jpg"}) for i in range(max(indices) + 1)))
+    cases, labels = build_footage_cases(tmp_path)
+    assert len(cases) == len(labels) == 20
+    for case in cases:
+        assert len(case.request.images) == 8
+        assert "anchor_groups" not in json.dumps(packet(case))
+        assert "sweetlabs" not in json.dumps(case.request.context)
+        assert f"{case.request.images[-1].timestamp:.6f}" in case.request.text
+        assert all(i.timestamp <= case.request.images[-1].timestamp for i in case.request.images)
+    bad = tmp_path / "c01/prepared/events.jsonl"
+    rows = [json.loads(line) for line in bad.read_text().splitlines()]
+    rows[0]["media"] = "../../../outside.jpg"
+    bad.write_text("\n".join(json.dumps(r) for r in rows))
+    with pytest.raises(ValueError, match="escapes"):
+        build_footage_cases(tmp_path)
+
+
+async def test_parallel_workers_and_verified_flex_route(tmp_path):
+    cfg = config()
+    cfg.models["perception"].extra_body = {"service_tier": "flex", "provider": {
+        "only": ["google-ai-studio/flex"], "allow_fallbacks": False}}
+    out = tmp_path / "run"
+    runner.prepare(cfg, out)
+    active = peak = 0
+
+    async def handler(req):
+        nonlocal active, peak
+        body = json.loads(req.content)
+        active += 1
+        peak = max(active, peak)
+        await asyncio.sleep(.01)
+        active -= 1
+        if body["model"] == "test":
+            assert body["service_tier"] == "flex"
+            assert body["provider"]["only"] == ["google-ai-studio/flex"]
+        return httpx.Response(200, json={
+            "provider": "Google AI Studio", "service_tier": "flex", "model": body["model"],
+            "usage": {"prompt_tokens": 100, "completion_tokens": 20},
+            "choices": [{"finish_reason": "stop", "message": {"content": json.dumps({
+                "answer": "C", "reason": "Test", "evidence_ids": ["probe-f0"]})}}]})
+
+    transport = httpx.MockTransport(handler)
+    p = await runner.run_phase(cfg, out, "probe", allow_network=True, transport=transport)
+    assert p["all_passed"]
+    result = await runner.run_phase(cfg, out, "screen", allow_network=True, transport=transport, concurrency=9)
+    assert peak == 9
+    assert result["ledger"]["request_attempts"] == 63
+    assert all(r["routing"]["service_tier"] == "flex" for r in result["rows"])
+
+
+async def test_wrong_tier_is_not_silently_accepted(tmp_path):
+    cfg = config()
+    cfg.models["perception"].extra_body = {"provider": {"only": ["google-ai-studio/flex"]}}
+    out = tmp_path / "run"
+    runner.prepare(cfg, out)
+    transport = httpx.MockTransport(lambda _: httpx.Response(200, json={
+        "provider": "Google AI Studio", "service_tier": "default",
+        "usage": {"prompt_tokens": 100, "completion_tokens": 20}, "choices": [{
+            "finish_reason": "stop", "message": {"content": json.dumps({
+                "answer": "C", "reason": "Test", "evidence_ids": ["probe-f0"]})}}]}))
+    result = await runner.run_phase(cfg, out, "probe", allow_network=True, transport=transport)
+    assert not result["all_passed"]
+    assert result["ledger"]["request_attempts"] == 3
+    assert result["ledger"]["reported_usd"] > 0
+    assert next(r for r in result["rows"] if r["role"] == "perception")["status"] == "error"

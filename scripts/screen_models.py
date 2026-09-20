@@ -1,4 +1,4 @@
-"""Bounded, two-phase synthetic API screen. No automatic retry or crash resume.
+"""Bounded synthetic or real-footage API screen. No automatic retry or crash resume.
 
 Prepare first, run probes, inspect their receipt, then explicitly run the screen.
 Interrupted phases require manual accounting, never redispatch into a fresh directory.
@@ -20,6 +20,7 @@ from PIL import Image, ImageDraw
 from streambudget.backend import BackendError, ModelPool
 from streambudget.budget import BudgetExceeded, Ledger
 from streambudget.config import BudgetConfig, load_config
+from streambudget.footage_screen import build_footage_cases
 from streambudget.screening import build_cases, fingerprint, packet, probe, score
 from streambudget.trace import Trace
 
@@ -66,14 +67,18 @@ def cumulative(current, previous):
     return result
 
 
-def prepare(config, out):
+def prepare(config, out, dataset=None):
     out.mkdir(parents=True, exist_ok=False)
-    cases, labels = build_cases()
+    cases, labels = build_cases() if dataset is None else build_footage_cases(dataset)
     p, plabel = probe()
     all_cases = [p, *cases]
-    manifest = {"fixture": "synthetic-v1", "config": config.public_dict(),
+    manifest = {"fixture": "synthetic-v1" if dataset is None else "real-footage-v1",
+                "config": config.public_dict(),
                 "config_sha256": digest(config.public_dict()), "packets_sha256": fingerprint(all_cases),
+                "labels_sha256": digest({"probe": plabel, **labels}),
                 "packets": [packet(c) for c in all_cases]}
+    if dataset is not None:
+        manifest["sources"] = json.loads((dataset / "sources.json").read_text())
     write_json(out / "manifest.json", manifest)
     write_json(out / "labels.json", {"probe": plabel, **labels})
     sheet = Image.new("RGB", (1280, 5 * 210), "white")
@@ -83,13 +88,15 @@ def prepare(config, out):
         strip = Image.new("RGB", (4 * 320, 2 * 180), "white")
         for i, im in enumerate(case.request.images):
             (folder / (im.evidence_id + ".jpg")).write_bytes(im.jpeg)
-            thumb = Image.open(BytesIO(im.jpeg)).resize((320, 180))
+            thumb = Image.open(BytesIO(im.jpeg))
+            thumb.thumbnail((320, 180))
             ImageDraw.Draw(thumb).text((220, 160), f"t={im.timestamp:g}", fill="black")
             strip.paste(thumb, ((i % 4) * 320, (i // 4) * 180))
         strip.save(folder / "contact.png")
         if n:
             index = n - 1
-            tile = Image.open(BytesIO(case.request.images[-1].jpeg)).resize((320, 180))
+            tile = Image.open(BytesIO(case.request.images[-1].jpeg))
+            tile.thumbnail((320, 180))
             x, y = index % 4 * 320, index // 4 * 210
             sheet.paste(tile, (x, y))
             ImageDraw.Draw(sheet).text((x + 5, y + 182), f"{case.id} {case.category}", fill="black")
@@ -108,17 +115,20 @@ def prepare(config, out):
     print(json.dumps(receipt, indent=2), flush=True)
 
 
-async def run_phase(config, out, phase, *, allow_network=False, transport=None):
+async def run_phase(config, out, phase, *, allow_network=False, transport=None, dataset=None, concurrency=3):
     if not allow_network:
         raise ValueError("Paid phases require --allow-network")
     if len(config.models) != 3 or any(m.max_retries != 0 for m in config.models.values()):
         raise ValueError("This screen requires three models, without retries")
-    cases, labels = build_cases()
+    if not 1 <= concurrency <= 12:
+        raise ValueError("Concurrency must be between 1 and 12")
+    cases, labels = build_cases() if dataset is None else build_footage_cases(dataset)
     p, plabel = probe()
     manifest = json.loads((out / "manifest.json").read_text())
     if (manifest["config_sha256"] != digest(config.public_dict())
-            or manifest["packets_sha256"] != fingerprint([p, *cases])):
-        raise ValueError("Config or packets changed since preparation")
+            or manifest["packets_sha256"] != fingerprint([p, *cases])
+            or manifest["labels_sha256"] != digest({"probe": plabel, **labels})):
+        raise ValueError("Config, packets or labels changed since preparation")
     previous = None
     if phase == "screen":
         previous = json.loads((out / "probe" / "receipt.json").read_text())
@@ -136,6 +146,7 @@ async def run_phase(config, out, phase, *, allow_network=False, transport=None):
 
     def receipt(status):
         value = {"phase": phase, "status": status, "config_sha256": manifest["config_sha256"],
+                 "concurrency": concurrency,
                  "packets_sha256": manifest["packets_sha256"],
                  "all_passed": len(rows) == len(cases) * len(config.models)
                  and all(r.get("score", {}).get("supported_correct", False) for r in rows),
@@ -143,15 +154,20 @@ async def run_phase(config, out, phase, *, allow_network=False, transport=None):
         write_json(phase_dir / "receipt.json", value)
         return value
 
-    async def model_worker(role):
-        for case in cases:
+    semaphore = asyncio.Semaphore(concurrency)
+
+    async def model_worker(role, case):
+        async with semaphore:
             row = {"role": role, "model": config.models[role].model,
                    "case_id": case.id, "category": case.category, "status": "error"}
             trace.emit("screen_dispatch", role=role, case_id=case.id)
             try:
                 result = await pool.call(role, case.request)
                 row.update(text=result.text, usage=result.usage, latency_s=result.latency_s,
-                           request_id=result.request_id)
+                           request_id=result.request_id, routing=result.routing)
+                if config.models[role].extra_body.get("provider", {}).get("only") == ["google-ai-studio/flex"]:
+                    if result.routing.get("provider") != "Google AI Studio" or result.routing.get("service_tier") != "flex":
+                        raise BackendError("Requested AI Studio Flex route was not confirmed by response")
                 row["score"] = score(result.json(), case, labels[case.id])
                 row["status"] = "ok"
             except (BackendError, BudgetExceeded) as exc:
@@ -163,7 +179,7 @@ async def run_phase(config, out, phase, *, allow_network=False, transport=None):
                   flush=True)
     receipt("running")
     try:
-        await asyncio.gather(*(model_worker(role) for role in config.models))
+        await asyncio.gather(*(model_worker(role, case) for case in cases for role in config.models))
     finally:
         await pool.close()
         receipt("interrupted")
@@ -196,7 +212,9 @@ def summarize(out):
                         "provider_reported_usd_including_probe": sum(costs) if known else None,
                         "failures": [r for r in rows if not r.get("score", {}).get("supported_correct")],
                         "rows": rows, "probes": probes}
-    return {"scope": "synthetic compatibility only; not a real-video or runtime benchmark",
+    return {"scope": ("synthetic compatibility only; not a real-video or runtime benchmark"
+                      if manifest["fixture"] == "synthetic-v1" else
+                      "exploratory real-footage QA; not a public benchmark or runtime policy evaluation"),
             "manifest": manifest, "ledger": second["ledger"], "models": models}
 
 
@@ -207,6 +225,8 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--allow-network", action="store_true")
     parser.add_argument("--report-out", type=Path)
+    parser.add_argument("--dataset", type=Path, help="Prepared real-footage root; omit for synthetic cases")
+    parser.add_argument("--concurrency", type=int, default=3)
     args = parser.parse_args()
     config = load_config(args.config)
     if args.phase == "report":
@@ -217,11 +237,12 @@ def main():
         print(json.dumps({k: {name: value for name, value in v.items() if name not in ("rows", "probes")}
                           for k, v in report["models"].items()}, indent=2))
     elif args.phase == "prepare":
-        prepare(config, args.out)
+        prepare(config, args.out, args.dataset)
     else:
         if any(not os.environ.get(m.api_key_env) for m in config.models.values()):
             parser.error("Required API credential environment variable is unset")
-        asyncio.run(run_phase(config, args.out, args.phase, allow_network=args.allow_network))
+        asyncio.run(run_phase(config, args.out, args.phase, allow_network=args.allow_network,
+                              dataset=args.dataset, concurrency=args.concurrency))
 
 
 if __name__ == "__main__":

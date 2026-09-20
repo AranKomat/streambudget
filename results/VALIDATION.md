@@ -1,5 +1,20 @@
 # Local validation receipt
 
+## Real-footage follow-up (2026-09-20)
+
+- **107 tests passed**, two dependency deprecation warnings; targeted Ruff and
+  `git diff --check` passed.
+- Added tests for real-packet cutoff/label separation/path confinement, nine-way
+  concurrent dispatch, returned provider/tier recording, and rejection of an
+  unconfirmed Gemini Flex route without dropping its cost.
+- Isolated no-key demo: `runs/real-screen-no-key-demo`, 25 mock attempts, $0,
+  2/2 toy answers and three toy events; plumbing only.
+- Five openly licensed real clips prepared with PyAV; 20 questions/model plus
+  three probes completed: **63 calls, $0.11700802** provider-reported cost, no
+  failures or unresolved reservations. All 21 Gemini responses confirmed AI Studio Flex.
+- [Report and limitations](../research/REAL_SCREEN_20260920.md), including the
+  narrow exploratory scope and the remaining citation-equivalence diagnostic issue.
+
 ## Hosted synthetic screening (2026-09-20)
 
 Real OpenRouter requests are now exercised against generated visual sequences; see

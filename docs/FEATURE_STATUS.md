@@ -9,6 +9,11 @@ generated-image sequences. This qualifies the image/JSON transport, not real-vid
 quality or end-to-end runtime performance. See the
 [screening report](../research/MODEL_SCREEN_20260920.md).
 
+Real-footage follow-up (2026-09-20): 20 exploratory questions across five openly
+licensed clips completed for all three models, with verified Google AI Studio Flex
+routing for Gemini. [Report](../research/REAL_SCREEN_20260920.md). This is matched
+image-packet QA, not a runtime-policy experiment or an official benchmark result.
+
 | Area | Delivered implementation | Local validation | Not established / remaining |
 |---|---|---|---|
 | Archive / causal replay | Original runner, explicit source availability, independent labels | Synthetic full flow and boundary tests | Real operational quality |
@@ -19,7 +24,7 @@ quality or end-to-end runtime performance. See the
 | Monitoring | Typed goals, freshness-aware sampled dwell, repeat/cooldown, scalar predicates | Dwell/old response/shared observation/sensor tests | Calibrated recall and production event semantics |
 | Observation scheduler | Fixed, motion/cue+periodic, adaptive/dwell/audit, recent-only | Synthetic ablations and queue tests | Learned policy; proof of semantic skip safety |
 | Agent | Bounded JSON tool loop; search, inspect, VLM OCR, state, sensors | Tool bounds, evidence IDs, full mock loop | Real model tool-following and answer faithfulness |
-| Chat backend | Configurable compatible HTTP, images/timestamps, roles, retries | HTTPX contracts plus three hosted-model synthetic screens | Real footage, self-hosting, provider/revision pinning |
+| Chat backend | Configurable compatible HTTP, images/timestamps, roles, retries, returned routing metadata | Three-model synthetic and exploratory real-footage QA; verified AI Studio Flex | Self-hosting, immutable model revisions, runtime-policy comparison |
 | Specialist APIs | Text embeddings and chunked WAV transcription | Mocked HTTP contracts and WAV duration | Real embedding/ASR endpoint; native AV/omni |
 | Detector/OCR/sensors | External structured observations + generic mapping | Schema/time mapping tests | Dedicated detector/OCR/segmentation engine deployments |
 | Live video bridge | Trusted local video / RTSP to REST using PyAV | Code present; optional PyAV test skipped locally | Actual PyAV/RTSP execution, reconnect, audio sync |
