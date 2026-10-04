@@ -79,7 +79,7 @@ def test_local_qwen_profiles_share_one_checkpoint():
     assert cfg.roles == {'extract': 'fast', 'act': 'fast', 'plan': 'plan', 'compile': 'plan'}
     assert fast.extra_body['chat_template_kwargs']['enable_thinking'] is False
     assert planner.extra_body['chat_template_kwargs']['enable_thinking'] is True
-    assert planner.reasoning_effort == 'medium'
+    assert planner.reasoning_effort == 'low'
     actions = {a.id: a for a in cfg.actions}
     assert actions['A'].press_frames == 4 and actions['A'].release_frames == 24
     assert actions['WAIT'].press_frames == actions['WAIT'].release_frames == 24

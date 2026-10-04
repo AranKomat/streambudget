@@ -25,7 +25,7 @@ endpoints:
       chat_template_kwargs: {enable_thinking: false}
   plan:
     <<: *qwen
-    reasoning_effort: medium
+    reasoning_effort: low
     extra_body:
       temperature: 1
       top_p: 0.95

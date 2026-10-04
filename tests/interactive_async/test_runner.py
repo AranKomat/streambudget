@@ -62,6 +62,50 @@ def test_local_ocr_is_source_bound_accounted_and_has_no_invented_geometry(tmp_pa
     db.close()
 
 
+@pytest.mark.parametrize("changing_pixels", [False, True])
+def test_repeated_local_ocr_deduplicates_only_unchanged_screen(tmp_path, changing_pixels):
+    class StationaryEnvironment(FixtureEnvironment):
+        def execute(self, action):
+            receipt = super().execute(action)
+            self.x, self.room = 12, 0
+            return receipt
+
+    out = tmp_path / "ocr-dedup"
+    c = config()
+    c.game.max_steps = 5
+    c.game.ocr_refresh_s = 0.001
+    env = FixtureEnvironment() if changing_pixels else StationaryEnvironment()
+    meta = asyncio.run(AsyncGameRunner(
+        c, env, out, transport=FixtureTransport(actor_delay=0.04),
+        ocr_reader=ReadingFixture(delay=0.001)).run())
+    db = sqlite3.connect(out / "memory.sqlite")
+    reads = db.execute("SELECT response FROM model_calls WHERE role='ocr'").fetchall()
+    packets = db.execute("SELECT payload FROM tm_ocr_packets").fetchall()
+    assert len(reads) > 1 and meta["clean_checkpoint"]
+    if changing_pixels:
+        assert len(packets) > 1 and meta["ocr_stats"]["deduplicated"] == 0
+        occurrences = [json.loads(p[0])["lines"][0]["occurrence"] for p in packets]
+        assert len(set(occurrences)) == len(occurrences)
+    else:
+        assert len(packets) == 1
+        assert meta["ocr_stats"]["deduplicated"] == len(reads) - 1
+        assert sum(json.loads(r[0]).get("memory_deduplicated", False) for r in reads) == len(reads) - 1
+        published = json.loads(packets[0][0])["source_frame_id"]
+        assert published == db.execute("SELECT id FROM evidence WHERE kind='frame' ORDER BY seq LIMIT 1").fetchone()[0]
+    db.close()
+
+
+def test_screen_return_starts_new_ocr_occurrence_even_without_intermediate_read(tmp_path):
+    runner = AsyncGameRunner(config(), FixtureEnvironment(), tmp_path / "return", transport=FixtureTransport())
+    original = runner.current
+    first = runner._ocr_screen_run
+    from types import SimpleNamespace
+    runner._observe_ocr_screen(SimpleNamespace(payload={"sha256": "different-screen"}))
+    runner._observe_ocr_screen(original)
+    assert runner._ocr_screen_run != first
+    asyncio.run(runner.run())
+
+
 def test_local_ocr_never_blocks_initial_actor(tmp_path):
     out = tmp_path / "overlap"
     c = config()

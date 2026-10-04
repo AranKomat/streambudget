@@ -131,9 +131,12 @@ class AsyncGameRunner:
         self._ocr_previous_frame = None
         self._ocr_previous_sha = None
         self._ocr_occurrence = None
+        self._ocr_screen_sha = None
+        self._ocr_screen_run = None
+        self._ocr_published_reading = None
         self._ocr_cache = TextRegionCache(max_age=config.game.ocr_refresh_s, threshold=0.001)
         self._text_tracker = TemporalTextTracker()
-        self.ocr_stats = {"submitted": 0, "coalesced": 0, "cache_hits": 0, "failed": 0}
+        self.ocr_stats = {"submitted": 0, "coalesced": 0, "cache_hits": 0, "deduplicated": 0, "failed": 0}
         try:
             if resume:
                 if not self.out.is_dir():
@@ -307,6 +310,7 @@ class AsyncGameRunner:
             },
         )
         self.last_frames.append(frame)
+        self._observe_ocr_screen(frame)
         a = np.asarray(screen.image.resize((64, 64)).convert("RGB"), dtype=float) / 255
         self._last_change = float(np.abs(a - self._thumbnail).mean()) if self._thumbnail is not None else 1.0
         if self._thumbnail is not None and self._last_change >= self.config.background.scene_change:
@@ -669,6 +673,12 @@ class AsyncGameRunner:
                 self.ocr_rejected += 1
                 self.log("ocr_rejected", reason=str(exc))
 
+    def _observe_ocr_screen(self, frame):
+        # A -> B -> A is a new occurrence even if OCR coalesced the intermediate frame.
+        if frame.payload["sha256"] != self._ocr_screen_sha:
+            self._ocr_screen_sha = frame.payload["sha256"]
+            self._ocr_screen_run = uuid.uuid4().hex
+
     def _load_ocr_reader(self):
         settings = self.config.background
         if settings.ocr_backend == "rapid":
@@ -698,6 +708,7 @@ class AsyncGameRunner:
         if self._ocr_previous_frame == self.current.id:
             return
         image = MediaStore.decode(self.last_notice.png_bytes)
+        self._observe_ocr_screen(self.current)
         loading = self._ocr_reader is None
         if not loading and not self._ocr_cache.needs_read("screen", image, self.now()):
             self.ocr_stats["cache_hits"] += 1
@@ -750,6 +761,7 @@ class AsyncGameRunner:
             "image": image,
             "start": self.now(),
             "loading": loading,
+            "screen_run": self._ocr_screen_run,
         }
         self._ocr_job = job
         try:
@@ -795,11 +807,13 @@ class AsyncGameRunner:
                 response = {"manifest": getattr(result, "manifest", {}), "model_id": result.model_id}
             else:
                 frame = job["frame"]
+                duplicate = False
                 if isinstance(result, TextReading):
                     if result.evidence_id != frame.id:
                         raise ContractError("OCR reading refers to the wrong source")
-                    if self._ocr_previous_sha != frame.payload["sha256"]:
-                        self._ocr_occurrence = uuid.uuid4().hex
+                    reading_key = (job["screen_run"], result.text)
+                    duplicate = reading_key == self._ocr_published_reading
+                    self._ocr_occurrence = job["screen_run"]
                     lines = (
                         [
                             {
@@ -841,7 +855,13 @@ class AsyncGameRunner:
                     sequence=self._ocr_sequence,
                     lines=lines,
                 )
-                self.memory.ingest_ocr(packet, now=self.now(), epoch=self.epoch)
+                if duplicate:
+                    self.ocr_stats["deduplicated"] += 1
+                    response["memory_deduplicated"] = True
+                else:
+                    self.memory.ingest_ocr(packet, now=self.now(), epoch=self.epoch)
+                    if isinstance(result, TextReading):
+                        self._ocr_published_reading = reading_key
                 self._ocr_sequence += 1
                 self._ocr_previous_frame, self._ocr_previous_sha = frame.id, frame.payload["sha256"]
                 self._ocr_cache.record("screen", job["image"], job["start"])

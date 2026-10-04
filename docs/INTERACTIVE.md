@@ -121,7 +121,16 @@ historical benchmark scores remain unchanged. Token-cap outputs fail and are ret
 without publishing partial readings. No dictionary, LLM repair or reference labels.
 
 Changed frames coalesce behind a single OCR request; cached reads keep their original
-source time. An external host worker can still use `FrameNotice` and `offer_ocr` with
+source time. Identical whole-screen readings within an uninterrupted identical-pixel
+run publish only once, even when the refresh deadline causes another OCR inference.
+Every read and its raw output remains ledger-accounted; deduplicated reads have
+`memory_deduplicated: true` and do not refresh the original memory timestamp.
+Changed text remains a revision; any intervening observed pixel change starts a new
+occurrence, including A -> B -> A when OCR never processed B. This conservative
+whole-screen rule does not deduplicate text across sprite/cursor animation or infer
+identity from matching words. Region-aware readers can use the existing tracker;
+selected generative readers have no boxes, so spatial continuity stays unqualified.
+An external host worker can still use `FrameNotice` and `offer_ocr` with
 source-linked typed packets. Empty packets do not imply disappearance. Shutdown drains
 HTTP/OCR before the checkpoint; unresolved local threads prevent clean resume, stay
 accounted, and never write to the closed store. This is not a worker-process supervisor.
@@ -336,7 +345,12 @@ billing is loopback-only; tunnel self-hosted remote inference.
 
 The existing local YAML selects `Qwen/Qwen3.8-27B-FP8` for both endpoint aliases
 at the same loopback URL: `fast` serves extraction/actions with thinking disabled;
-`plan` serves planning/initial compilation with thinking enabled and medium effort.
+`plan` serves planning/initial compilation with thinking enabled and **low** effort,
+as requested after the first async qualification. Earlier measurements used medium;
+low's latency/quality effect has not yet been measured. The client explicitly sends
+`reasoning_effort: low`; the serving model/template determines how it affects thinking.
+Low-effort configuration and OCR publication deduplication passed **500 CPU tests**
+and both no-key demos. These changes are not yet native latency/quality measurements.
 These are request profiles, not separate resident models. The author's thinking/
 non-thinking sampling parameters are explicit, with seed 0 for this trial profile.
 The actor remains one categorical ID with strict local validation, not generated code.
