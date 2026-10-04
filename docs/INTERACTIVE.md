@@ -115,8 +115,8 @@ These plain-transcription modes have **unknown confidence and no region boxes**.
 The bridge represents both as null, does not fabricate detections, and does not assign
 speakers. Whole-screen occurrence IDs are conservative pixel-based bookkeeping, not
 verified dialogue identity; changes elsewhere in a screen can split an occurrence.
-Raw response/case/accents/UI symbols are retained. Only the observed fixed Hunyuan
-preamble is explicitly removed for published text, with a formatting flag; strict
+Raw response/case/accents/UI symbols are retained. The observed fixed Hunyuan
+preamble and exact no-text status response are removed for published text, with a formatting flag; strict
 historical benchmark scores remain unchanged. Token-cap outputs fail and are retained
 without publishing partial readings. No dictionary, LLM repair or reference labels.
 
@@ -155,6 +155,55 @@ path plus `--resume`, verifies source/ROM/checkpoint/database provenance, and al
 only total-budget changes. Switching OCR/model/settings requires a new labelled run.
 Old runs are not automatically migrated; a supplied environment checkpoint starts
 new memory and must be disclosed.
+
+### Live Async Qualification (2026-10-04)
+
+The existing L40S/Qwen service was kept unchanged; no weights were downloaded to the
+Mac. Private receipts under `runs/async-*` were copied locally after completion and
+retain every failed response. These small development probes are not task scores.
+
+- `async-actor001`: 3/3 complete action responses, 0.671-0.713 s response wall time,
+  0.346-0.390 s first content, on the repeated retained Oak dialogue image.
+- `async-mixed001`: both actors completed (0.980-0.981 s); the second index failed
+  schema validation because it supplied pixel-coordinate boxes. The index prompt
+  now explicitly requires normalized bounds; validation was not relaxed.
+- `async-mixed002`: 3/3 actors and 3/3 indices completed with the revised prompt;
+  actor wall time 1.002-1.004 s, index 5.874-11.460 s. This run partially overlapped
+  the GLM qualification process, so it is a contention smoke check, not an isolated
+  actor-versus-mixed speed estimate or proof of sustained tail latency.
+- `async-hunyuan001` and `async-glm001`: separate processes successfully loaded
+  the selected reader alongside resident Qwen; both transcribed the frozen screen
+  as `My name is OAK`. All six concurrent actor probes completed. The private OCR
+  ledger's read elapsed time encloses the concurrent actor cohort, not pure OCR
+  latency; use the earlier diagnostic for isolated reader timings.
+- `async-native001`: 3/3 bounded A actions, 11 settled local calls, no failed calls,
+  37.67 s episode wall time, clean checkpoint and no outstanding holds. It started
+  new memory from the disclosed old operator checkpoint
+  `ec57121381385e0719d566d895354e85e4d464a28d165fcc16ec519c91b079df`.
+  Final pixels visibly read `First, what is your name?`; this is intro advancement,
+  not overworld/Gym progress. Actor response times were 0.789/1.374/1.065 s.
+  One index interpretation was rejected for unsupported identity reuse; no IDs were
+  merged by relaxing the identity gate. Two nodes and five memory revisions were
+  retained, including three source-bound OCR packets. All action dispatches were
+  source-bound; no stale actor was discarded.
+
+Native startup consumed about 29.3 s: an initial planner requested an empty-memory
+search, then planned again behind indexing. This is the current demonstrated latency
+overhead, not OCR needing to block the actor. Hunyuan also returned its fixed Chinese
+no-text status on the blank initial screen; that old response remains in the receipt.
+The formatter now suppresses that exact Hunyuan-only status while retaining raw text
+and tokens. An empty transcription is not evidence of disappearance. The final frame
+was not OCR-read during shutdown; final text above was visually inspected separately.
+The formatter fix is CPU-tested but not yet rerun in a new native episode.
+Continuation validation: **497 tests passed** with the same two existing warnings;
+targeted Ruff, whitespace checks, watch demo and background fixture demo passed.
+Local receipt copies matched remote checksums, and the stopped native database
+passed SQLite integrity checks with zero pending model calls.
+
+Next: a bounded continuation, checking avoidable planner retrievals and instruction
+applicability at the naming/menu boundary. Recurring identity, rich enrichment,
+route memory, sustained gameplay, independent grading and changing-scene latency
+remain unqualified; no architecture or OCR accuracy gain is claimed from this check.
 
 The supplied 73 focused tests passed against current reused interfaces before local
 OCR integration. Added regressions cover selected backends, raw formatting, null

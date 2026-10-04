@@ -20,6 +20,16 @@ def test_generative_ocr_formatting_preserves_raw_case_accents_and_ui_symbols():
     assert plain.text == "WELCOME TO THE" and not plain.formatting_removed
 
 
+def test_hunyuan_no_text_status_is_not_published_as_dialogue():
+    from streambudget.interactive.text import GenerativeTextReader
+    raw = "\u56fe\u7247\u4e2d\u6ca1\u6709\u6587\u5b57\u3002"
+    reading = GenerativeTextReader.format_reading("source", raw, 302, 5, backend="hunyuan")
+    assert reading.text == "" and reading.raw_text == raw and reading.formatting_removed
+    assert reading.generated_tokens == 5
+    assert GenerativeTextReader.format_reading("source", raw, 302, 5, backend="glm").text == raw
+    assert GenerativeTextReader.format_reading("source", raw + " more", 302, 6, backend="hunyuan").text
+
+
 def test_generative_ocr_requires_preprovisioned_local_weights(tmp_path):
     from streambudget.interactive.text import GenerativeTextReader
     with pytest.raises(ContractError, match="Provision OCR weights"):

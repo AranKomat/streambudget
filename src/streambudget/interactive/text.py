@@ -171,7 +171,8 @@ class GenerativeTextReader:
         continuation = ids[:, inputs["input_ids"].shape[1] :]
         raw = self.processor.batch_decode(continuation, skip_special_tokens=True)[0]
         reading = self.format_reading(
-            evidence_id, raw, int(inputs["input_ids"].shape[-1]), int(continuation.shape[-1])
+            evidence_id, raw, int(inputs["input_ids"].shape[-1]), int(continuation.shape[-1]),
+            backend=self.backend,
         )
         if reading.generated_tokens >= self.max_tokens:
             from dataclasses import asdict
@@ -182,12 +183,15 @@ class GenerativeTextReader:
         return reading
 
     @staticmethod
-    def format_reading(evidence_id, raw, input_tokens, generated_tokens):
+    def format_reading(evidence_id, raw, input_tokens, generated_tokens, *, backend=None):
         prefix = "\u56fe\u7247\u4e2d\u7684\u6587\u672c\u5185\u5bb9\u662f\uff1a"
         text = raw.strip()
         removed = text.startswith(prefix)
         if removed:
             text = text[len(prefix) :]
+        # This observed recognizer status is not a transcription or disappearance evidence.
+        if backend == "hunyuan" and text == "\u56fe\u7247\u4e2d\u6ca1\u6709\u6587\u5b57\u3002":
+            text, removed = "", True
         return TextReading(evidence_id, normalize(text), raw, input_tokens, generated_tokens, removed)
 
 

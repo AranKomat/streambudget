@@ -21,8 +21,11 @@ INDEX = (
     + """
 Build a SHORT index of only novel/changed, potentially useful places, entities or surfaces
 in the source frame. This is not an exhaustive scene description. Use at most four
-mentions, terse labels, and optional coarse boxes. Reuse an offered ID only with supported
-continuity/reidentification; similar sprites/appearance do not establish identity.
+mentions, terse labels, and optional coarse boxes.
+Boxes must be normalized [left, top, right, bottom] values in [0,1], not pixel
+coordinates; omit region when uncertain rather than inventing geometry.
+Reuse an offered ID only with supported continuity/reidentification;
+similar sprites/appearance do not establish identity.
 New instances use new:<short_handle>. Newly seen instances are not ontology additions.
 Set current_place only when grounded; otherwise omit it. enrich lists at most three
 mentioned/offered handles whose details would help future actions. Omit unneeded objects.

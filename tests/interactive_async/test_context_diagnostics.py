@@ -17,6 +17,17 @@ from streambudget.types import ContractError
 from conftest import config, add_frame, basis
 
 
+def test_index_prompt_states_normalized_geometry_and_keeps_pixel_boxes_invalid():
+    from streambudget.interactive.async_runtime.prompts import INDEX
+    from streambudget.interactive.async_runtime.contracts import SceneIndex
+
+    assert 'normalized [left, top, right, bottom]' in INDEX
+    with pytest.raises(ValueError):
+        SceneIndex.model_validate({'mentions': [{'ref': 'new:x', 'kind': 'entity',
+            'label': 'visible character', 'region': {'frame_id': 'frame',
+            'box': [170, 100, 290, 300]}}]})
+
+
 def test_context_preserves_focused_memory_and_exposes_provenance(mem):
     m, s, media = mem
     frame = add_frame(s, media, 0)
