@@ -103,8 +103,10 @@ Receipts count advanced frames, not task success. Uncertain actions are never re
 Inspect resulting pixels to establish their effect.
 
 PyBoy is GB/GBC (`.gb`, `.gbc`), not FireRed/GBA (`.gba`). Only rendered-screen,
-button, tick and operator-checkpoint APIs are used. Actual emulator boot, version,
-button timing and checkpoint behavior remain unqualified. Supply an authorized ROM;
+button, tick and operator-checkpoint APIs are used. PyBoy 2.7.0 boot/capture, bounded
+execution and save/load passed on its bundled demo ROM. That static screen does not
+qualify Pokemon menu/navigation timing or prove any button had a useful game effect.
+Supply an authorized ROM;
 none is bundled, downloaded or redistributed by this integration.
 
 Emulation pauses during inference. Exact frames and nominal frame/60 source time
@@ -136,6 +138,7 @@ Install the optional emulator when an authorized ROM is available:
 
 ```bash
 python -m pip install -e '.[gameboy]'
+python -m pip install 'pyboy==2.7.0'  # version actually smoke-tested here
 streambudget game capture --rom /absolute/path/owned.gb --out runs/capture-001
 streambudget game manual --rom /absolute/path/owned.gb \
   --load-state runs/capture-001/environment.state --button a \
@@ -163,10 +166,30 @@ streambudget game probe --config /path/to/local-config.yaml \
 ```
 
 Probes never actuate. Review grounding, not just JSON/HTTP success. Qualify image
-conventions, truncation, limits, thinking settings and latency. Generic Chat Completions
-does not implement provider-specific Flex routing. Keep the owner's GPT-6.1 Sol/medium/
-Flex-preferred preference when configuring such a route later; do not silently choose
-regular serving or a different model. No live endpoint, prices or ranking is qualified.
+conventions, truncation, limits, thinking settings and latency. The metered template now
+targets `gpt-6.1-sol`, explicit `reasoning_effort: medium` and `service_tier: flex` using
+Chat Completions. It is intentionally invalid until current tier-specific input/output
+rates are supplied. Credentials remain an `OPENAI_API_KEY` environment reference.
+
+The configured 900-second timeout accommodates Flex latency. `max_completion_tokens`
+includes hidden reasoning as well as visible JSON: the action cap is 2048, not the
+local-template 64. This is a preparation choice, not a measured sufficient cap.
+There is no automatic retry, tier fallback or model substitution. A separately reviewed
+standard trial must explicitly set `service_tier: default` and its own rates/budget;
+switching tiers is not an allowed same-run resume configuration edit.
+
+Requested and returned tiers can differ. When an explicit tier is configured, missing
+or mismatching returned tiers leave the charge unknown and its reservation held; do
+not price standard service at Flex rates. Capacity failures also remain held until
+review, rather than guessing that an arbitrary provider's HTTP 429 is free. Reported
+token totals include reasoning/cached tokens when present and flag incomplete usage.
+These requests and accounting paths passed mock tests only; no account access, exact
+route compatibility, live prices, visual competence or model ranking is qualified.
+
+Official OpenAI documentation fetched on 2026-10-04:
+- https://developers.openai.com/api/docs/models/gpt-6.1-sol (model ID and medium effort)
+- https://developers.openai.com/api/docs/guides/flex-processing (explicit Flex request)
+- https://developers.openai.com/api/docs/api-reference/chat/create (returned service tier)
 
 ## Loop, Accounting And Artifacts
 
@@ -211,6 +234,67 @@ streambudget game run --config /path/to/local-config.yaml \
 Only total step/call/estimated-budget and invocation wall caps may change explicitly.
 Counts/spend remain cumulative; total elapsed time is retained. This is not crash-safe
 exactly-once physical control or schema migration. Do not weaken fences for a demo.
+Clean checkpoints now also bind model inputs/calls and action receipts with a streaming
+digest, detecting same-count edits, and bind the retained current frame and emulator
+version/window. Older pre-digest checkpoints are review-only, not silently migrated.
+Historical reports remain readable. Digests detect inconsistency, not malicious edits
+to all data/manifests by an attacker with write access.
+
+## First Live Trial And Evaluation
+
+Use the metered template's three-decision ceiling, twelve-attempt ceiling, compilation
+disabled and 4-press/4-release-frame actions. Do not increase limits just to conceal a
+failed first trial. Run extraction/action probes first, then inspect every actual
+transition in the short loop. All four roles initially use the same model. No GPU is
+needed for PyBoy or a hosted endpoint; a GPU is only needed for local model serving.
+
+Preflight: authorized ROM and its digest; tested PyBoy version; visibly useful native
+screen; manually calibrated short button actions; configured image/JSON endpoint;
+current Flex rates/reservation and credential presence; explicit network/paid opt-in;
+fresh private output directory. Do not borrow another project's budget ledger.
+
+Independent review occurs after execution, outside model context. Record each reviewed
+decision/milestone with before/after evidence IDs, expected visible effect, actual
+visible effect, reviewer, and `passed`, `failed` or `unknown`. Category examples:
+grounding/OCR, button timing, wrong local action, stale belief/identity, missing planner
+intent, malformed output, transport/capacity, budget stop and uncertain execution.
+Do not reclassify a transport failure as a model-intelligence failure.
+
+First useful milestones are a correctly advanced dialogue/menu and a visibly reached
+local interaction target; later, retain useful state through a revisit and verify
+Gym progression from source frames. These are review criteria, not a route or hidden
+game-state grader. An ambiguous screen stays unknown. A model's claimed goal completion
+is neither a badge nor independently verified success.
+
+Read-only diagnostics and paired-condition checks:
+
+```bash
+streambudget game metrics --run runs/game-001
+streambudget game compare --runs runs/recent-001 runs/world-001
+```
+
+Metrics report attempts (including unresolved ones), executed-frame receipts, retained
+frames, unchanged-pixel transitions, per-role attempts/median latency, reported tokens,
+images, costs/holds and wall time. Unchanged pixels are not automatically a semantic
+stall: they can be dialogue waiting, animation, or a harmless action. True stalls,
+wrong identity links and meaningful progress require independent frame review.
+
+For a `recent`/`world` pair, copy the same configuration and change only `baseline`.
+Use the same ROM, emulator, disclosed starting state/screen, schema, action durations,
+model/effort/tier, planner/retrieval settings and total caps. Start fresh independent
+runs; never replay a successful condition's chosen actions into the other. The compare
+command refuses mismatched settings, initial screenshot hashes, native provenance or
+resume histories. It includes failed stopped runs but does not select a winner or
+compute success rates. `recent` hides the persistent world projection while retaining
+short text/image history and lexical retrieval: it is not a memoryless/direct-one-call
+baseline, and inference role counts remain comparable, not necessarily identical.
+
+First use one matched pair as an integration screen, not a benchmark. If there is a
+promising difference, repeat from several independently disclosed starts, alternate
+condition order and retain every attempt. Report milestones/progress and failure
+categories alongside calls/images/tokens/source frames/wall time/known cost/unknown
+holds. Report a success rate only when a common independent success criterion and
+enough repeated episodes exist; do not infer it from one run or a model narrative.
 
 ## Validation
 
@@ -241,6 +325,49 @@ The selective import adds 26 files, not the archive's 81 entries. Duplicate guid
 overlay installers, frozen-blob checks and generated previews are not maintained.
 No GPU, ROM download/execution, external model, benchmark scoring or training was used.
 Native qualification and cost/quality advantage remain unverified.
+
+Offline preparation after integration, 2026-10-04:
+- PyBoy 2.7.0 installed; its bundled `default_rom.gb` rendered a nonblank 160x144
+  `PyBoy / No ROM Found` screen at 120 boot frames. One manual A receipt advanced
+  eight frames. The native regression saved/loaded identical pixels and reproduced
+  the next bounded transition; no commercial ROM or useful game effect was tested.
+- Native outputs: `runs/pixel-offline-20261004-native-capture/` and
+  `runs/pixel-offline-20261004-native-manual/`. Bundled demo ROM SHA-256:
+  `d2c2627aa7167d58e5e0b0072d9173714de146821f43a9f45102dded191987f9`.
+- Failure regression coverage added for interrupted/uncertain press, boot failure,
+  partial checkpoint writes, constructor/final-write cleanup, stale frame numbers,
+  late actor results, compilation admission stops and same-count checkpoint edits.
+- Real loopback HTTP regression verifies cumulative call caps/usage over clean
+  budget-stop/resume; its responder is synthetic, not an LLM.
+- Both 14-decision fixture conditions completed and passed matched-setting checks:
+  `runs/pixel-offline-20261004-{recent,world}/`. Both used 34 synthetic role calls and
+  112 advanced frames. This is software evidence, not hierarchy/performance benefit.
+- Report checked in Chromium at 1440x900 and 375x812: before/after frames rendered,
+  navigation updated receipts, no horizontal overflow. Missing after frames remain
+  unknown; final records are explicit. Raw run artifacts remain private/ignored.
+- Final working-tree suite: 355 tests passed (221 retained plus 134 interactive).
+  Isolated staged public snapshot: 273 passed (139 committed retained plus 134
+  interactive). Both reported the same two Starlette/anyio deprecation warnings.
+- Ruff, compileall and whitespace checks passed. The public snapshot wheel built
+  and installed in an isolated environment; doctor, game/watch demos and matched
+  comparison commands passed outside repository imports. PyBoy remains optional
+  and was not installed in that core-only wheel-check environment.
+- No external model requests, paid calls, GPU provisioning, model weights, commercial
+  ROM downloads or training were performed. The code/guide publication is tracked in
+  Git on `codex/pixel-agent-integration` and https://github.com/AranKomat/streambudget/pull/1.
+
+### Offline Checklist Status
+
+| Item | Status |
+|---|---|
+| CPU emulator setup | Done for PyBoy bundled demo; Pokemon controls await authorized ROM |
+| Execution/resume audit | Fixes and failure regressions implemented; no stronger crash recovery claim |
+| GPT-6.1 Sol medium/Flex preparation | Explicit template and mock transport/accounting coverage; live route unqualified |
+| First short trial preparation | Three decisions/twelve attempts template and preflight defined; ROM/API/rates missing |
+| Evaluation definition | Source-review criteria and read-only metrics ready; independent gameplay grader absent |
+| Matched comparison preparation | Configuration/provenance checks and fixture pair done; real comparison not run |
+| Report usability | Before/after, source/action/model timing/usage and desktop/mobile checks done |
+| Consolidation/publication | Existing guide/modules/tests only; verification above and publication in Git/PR #1 |
 
 ## Next Sequence
 

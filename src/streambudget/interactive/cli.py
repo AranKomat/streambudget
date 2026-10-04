@@ -12,7 +12,7 @@ from ..types import ContractError
 from .contracts import ActionSpec, GameConfig, SchemaPatch
 from .environment import PyBoyEnvironment
 from .fixture import FixtureEnvironment
-from .report import export_transitions, make_report
+from .report import compare_runs, export_transitions, make_report, run_metrics
 from .runner import GameRunner, write_json
 from .locking import RunLock
 
@@ -62,6 +62,10 @@ def configure_parser(p):
         r.add_argument("--run", type=Path, required=True)
         if name == "export":
             r.add_argument("--output", type=Path, required=True)
+    m = sub.add_parser("metrics", help="Read-only run diagnostics; no automatic gameplay grader")
+    m.add_argument("--run", type=Path, required=True)
+    c = sub.add_parser("compare", help="Check matched recent/world runs and show descriptive metrics")
+    c.add_argument("--runs", type=Path, nargs=2, required=True)
     s = sub.add_parser("schema", help="Propose/approve a bounded schema patch on a STOPPED run")
     s.add_argument("--run", type=Path, required=True)
     s.add_argument("--patch", type=Path)
@@ -102,6 +106,7 @@ def run(args):
                 env.capture().image.save(args.out / "frame.png")
                 env.checkpoint(args.out / "environment.state")
                 write_json(args.out / "capture.json", {"rom_sha256": env.rom_sha256,
+                    "environment": getattr(env, "descriptor", None),
                     "initialization": env.initialization, "initial_state_sha256": env.initial_state_sha256,
                     "frame_number": env.frame_number, "model_calls": 0})
                 print(args.out / "frame.png")
@@ -124,6 +129,7 @@ def run(args):
                 env.checkpoint(args.out / "environment.state")
                 write_json(args.out / "manual.json", {"operator_controlled": True,
                     "model_calls": 0, "receipts": receipts, "rom_sha256": env.rom_sha256,
+                    "environment": getattr(env, "descriptor", None),
                     "initialization": getattr(env, "initialization", "unknown"),
                     "initial_state_sha256": getattr(env, "initial_state_sha256", None),
                     "note": "Manual qualification, not autonomous gameplay evidence."})
@@ -158,6 +164,10 @@ def run(args):
         elif args.cmd == "export":
             export_transitions(args.run, args.output)
             print(args.output)
+        elif args.cmd == "metrics":
+            print(json.dumps(run_metrics(args.run), indent=2))
+        elif args.cmd == "compare":
+            print(json.dumps(compare_runs(args.runs), indent=2))
         elif args.cmd == "schema":
             from ..store import EvidenceStore
             from .ontology import Ontology

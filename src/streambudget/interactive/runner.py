@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import dataclasses
+from contextlib import suppress
 import hashlib
 from io import BytesIO
 import json
@@ -43,16 +44,34 @@ def immutable_config(config):
     return hashlib.sha256(canonical(body).encode()).hexdigest()
 
 
+def attempt_digest(db):
+    # Counts alone cannot detect a changed charge, request, status or action receipt.
+    digest = hashlib.sha256()
+    for table, key in (("model_calls", "id"), ("model_inputs", "call_id"), ("game_actions", "id")):
+        digest.update((table + "\n").encode())
+        for row in db.execute(f"SELECT * FROM {table} ORDER BY {key}"):
+            digest.update((canonical(dict(row)) + "\n").encode())
+    return digest.hexdigest()
+
+
 class GameRunner:
     def __init__(self, config, env, out, **kwargs):
         self._lock = None
         try:
             self._initialize(config, env, out, **kwargs)
         except BaseException:
-            if hasattr(self, "store"):
-                self.store.close()
-            if self._lock:
-                self._lock.close()
+            with suppress(Exception):
+                env.close()
+            with suppress(Exception):
+                close = getattr(getattr(self, "backend", None), "close", None)
+                if close:
+                    close()
+            try:
+                if hasattr(self, "store"):
+                    self.store.close()
+            finally:
+                if self._lock:
+                    self._lock.close()
             raise
 
     def _initialize(self, config: GameConfig, env, out: Path, *, allow_network=False,
@@ -75,6 +94,10 @@ class GameRunner:
             meta = json.loads((self.out / "run.json").read_text())
             if meta.get("rom_sha256") and meta["rom_sha256"] != getattr(env, "rom_sha256", None):
                 raise ContractError("ROM digest differs from original run")
+            if meta.get("environment"):
+                current_env = getattr(env, "descriptor", None) or {}
+                if any(meta["environment"].get(k) != current_env.get(k) for k in ("adapter", "version", "window")):
+                    raise ContractError("Emulator version or window differs from original run")
             if meta["status"] not in ("step_limit", "wall_limit", "budget_limit", "goal_claimed", "blocked"):
                 raise ContractError("Run did not stop cleanly; automatic crash recovery is not implemented")
             if cp["config_fingerprint"] != immutable_config(config):
@@ -99,6 +122,7 @@ class GameRunner:
                 "initialization": getattr(env, "initialization", "unknown"),
                 "initial_state_sha256": getattr(env, "initial_state_sha256", None),
                 "rom_sha256": getattr(env, "rom_sha256", None),
+                "environment": getattr(env, "descriptor", None),
                 "fixture": config.backend == "fixture" or bool(getattr(env, "synthetic", False)), "status": "running",
                 "game_success": None, "timing": "stepped; emulator frozen while model calls run",
                 "source_time": "emulator_frame/60 nominal seconds; exact frame numbers also retained",
@@ -124,9 +148,14 @@ class GameRunner:
                 raise ContractError("Ledger changed after checkpoint; cannot resume automatically")
             if self.store.db.execute("SELECT COUNT(*) FROM game_actions").fetchone()[0] != cp["action_attempts"]:
                 raise ContractError("Actions changed after checkpoint; cannot resume automatically")
+            if cp.get("attempts_sha256") != attempt_digest(self.store.db):
+                raise ContractError("Attempt records changed or checkpoint lacks their digest; review required")
             if self.world.ontology.current["version"] != cp["ontology_version"]:
                 raise ContractError("Schema changed after checkpoint; create a reviewed continuation")
             self.current = self.store.get(cp["current_frame_id"])
+            if (self.current.payload.get("frame_number") != cp["environment_frame"] or
+                    self.current.payload.get("sha256") != cp["screen_sha256"]):
+                raise ContractError("Checkpoint does not identify the retained current screen")
             self.last_frames = self.store.frames(config.source, 0, self.current.end,
                 self.store.snapshot(self.current.end), config.history_frames)
         else:
@@ -352,14 +381,18 @@ class GameRunner:
             if (self.config.compile_at_start and self.completed_steps == 0
                     and not self.metadata.get("initial_compilation_complete")):
                 _, context = self.packet()
-                proposal = self.backend.complete("compile", prompts.COMPILE, context,
-                                                  [self.image(self.current)], SchemaPatch)
-                if proposal.properties or proposal.relations:
-                    id = self.world.ontology.propose(proposal)
-                    self.world.ontology.approve(id, initial_prior=True,
-                        review="Operator opted into one initial schema compilation; definitions are priors, not learned facts")
-                    self.log("initial_schema", candidate=id)
-                self.metadata["initial_compilation_complete"] = True
+                try:
+                    proposal = self.backend.complete("compile", prompts.COMPILE, context,
+                                                      [self.image(self.current)], SchemaPatch)
+                except BudgetExhausted:
+                    self.status = "budget_limit"
+                else:
+                    if proposal.properties or proposal.relations:
+                        id = self.world.ontology.propose(proposal)
+                        self.world.ontology.approve(id, initial_prior=True,
+                            review="Operator opted into one initial schema compilation; definitions are priors, not learned facts")
+                        self.log("initial_schema", candidate=id)
+                    self.metadata["initial_compilation_complete"] = True
             while self.completed_steps < self.config.max_steps and self.status == "running":
                 if time.monotonic() - self.start_wall > self.config.wall_limit_s:
                     self.status = "wall_limit"
@@ -374,15 +407,20 @@ class GameRunner:
                     break
             if self.status == "running":
                 self.status = "step_limit"
+            screen = self.env.capture()
+            if (screen.frame_number != self.current.payload["frame_number"] or
+                    hashlib.sha256(png(screen.image)).hexdigest() != self.current.payload["sha256"]):
+                raise ContractError("World changed before checkpoint; refusing a mismatched clean stop")
             self.env.checkpoint(self.out / "environment.state")
             write_json(self.out / "checkpoint.json", {
                 "config_fingerprint": immutable_config(self.config), "completed_steps": self.completed_steps,
-                "current_frame_id": self.current.id, "environment_frame": self.env.capture().frame_number,
-                "screen_sha256": hashlib.sha256(png(self.env.capture().image)).hexdigest(),
+                "current_frame_id": self.current.id, "environment_frame": screen.frame_number,
+                "screen_sha256": hashlib.sha256(png(screen.image)).hexdigest(),
                 "state_sha256": hashlib.sha256((self.out / "environment.state").read_bytes()).hexdigest(),
                 "intent": self.intent, "focus": self.focus,
                 "ledger_calls": self.store.db.execute("SELECT COUNT(*) FROM model_calls").fetchone()[0],
                 "action_attempts": self.store.db.execute("SELECT COUNT(*) FROM game_actions").fetchone()[0],
+                "attempts_sha256": attempt_digest(self.store.db),
                 "ontology_version": self.world.ontology.current["version"],
                 "note": "Only clean checkpoints may be resumed; no crash-time replay of actions."})
         except BaseException as exc:
@@ -390,23 +428,25 @@ class GameRunner:
             self.log("failure", error_type=type(exc).__name__)
             raise
         finally:
-            self.metadata.update(status=self.status, completed_steps=self.completed_steps,
-                elapsed_wall_s=self.previous_wall + time.monotonic()-self.start_wall,
-                current_frame_id=self.current.id, accounting=self.ledger.summary(),
-                ontology=self.world.ontology.current,
-                fixture_model_calls=getattr(self.backend, "calls", None),
-                final_world=self.world.view(self.store.snapshot(self.current.end)))
-            write_json(self.out / "run.json", self.metadata)
             try:
-                self.env.close()
+                self.metadata.update(status=self.status, completed_steps=self.completed_steps,
+                    elapsed_wall_s=self.previous_wall + time.monotonic()-self.start_wall,
+                    current_frame_id=self.current.id, accounting=self.ledger.summary(),
+                    ontology=self.world.ontology.current,
+                    fixture_model_calls=getattr(self.backend, "calls", None),
+                    final_world=self.world.view(self.store.snapshot(self.current.end)))
+                write_json(self.out / "run.json", self.metadata)
             finally:
                 try:
-                    close = getattr(self.backend, "close", None)
-                    if close:
-                        close()
+                    self.env.close()
                 finally:
                     try:
-                        self.store.close()
+                        close = getattr(self.backend, "close", None)
+                        if close:
+                            close()
                     finally:
-                        self._lock.close()
+                        try:
+                            self.store.close()
+                        finally:
+                            self._lock.close()
         return self.metadata

@@ -21,10 +21,14 @@ streambudget game demo --out runs/game-demo
 ```
 
 The demo is an original pixel-rule **software fixture**, not learned-model gameplay.
-Its report is `runs/game-demo/report.html`. Native PyBoy/ROM use, real model performance,
+Its report is `runs/game-demo/report.html`. PyBoy 2.7.0 passed a bundled-demo smoke check;
+Pokemon control, real model performance,
 cost advantage and badge acquisition remain unverified. Emulation pauses during inference;
 this is not yet real-time streaming action control. Optional emulator dependency:
 `python -m pip install -e '.[gameboy]'`. Supply your own authorized ROM; none is bundled.
+The metered template prepares GPT-6.1 Sol/medium/Flex but requires current rates and
+credentials. `streambudget game metrics` and `compare` provide offline receipts and
+matched-setting checks, not automatic gameplay grading.
 
 ## Retained Video Observation And Investigation
 

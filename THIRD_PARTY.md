@@ -14,6 +14,8 @@ interactive package was integrated from the owner's StreamBudget source delivery
 hash, reviewed base and consolidation boundary are recorded in `docs/INTERACTIVE.md`. Supply
 authorized GB/GBC ROMs privately and do not publish generated game observations or checkpoints
 without reviewing their rights. The synthetic interactive fixture uses original toy pixels.
+The optional native smoke test uses PyBoy's own installed bundled demo ROM without
+copying it into this repository. It is not a Pokemon experiment or commercial asset.
 
 StreamArena's public repository describes evaluation code separately from its CC-BY-NC annotations;
 underlying video rights are another layer. Its annotations are evaluation questions/reference

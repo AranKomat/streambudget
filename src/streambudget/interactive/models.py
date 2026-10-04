@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import os
 import sqlite3
 import time
@@ -70,7 +71,9 @@ class Ledger:
         usage = response.get("usage") if isinstance(response, dict) else None
         cost = 0.0 if endpoint.billing == "local" else None
         # Billing can be known even when JSON/schema validation subsequently fails.
-        if endpoint.billing == "metered" and isinstance(usage, dict):
+        reported_tier = response.get("service_tier") if isinstance(response, dict) else None
+        tier_matches = endpoint.service_tier is None or reported_tier == endpoint.service_tier
+        if endpoint.billing == "metered" and tier_matches and isinstance(usage, dict):
             inp, out = usage.get("prompt_tokens"), usage.get("completion_tokens")
             detail = usage.get("prompt_tokens_details") or {}
             cached = detail.get("cached_tokens", 0) if isinstance(detail, dict) else None
@@ -88,12 +91,38 @@ class Ledger:
 
     def summary(self):
         rows = list(self.db.execute("SELECT * FROM model_calls"))
+        tokens = {"prompt_tokens": 0, "completion_tokens": 0, "cached_tokens": 0, "reasoning_tokens": 0}
+        missing_usage = 0
+        tiers = {}
+        for row in rows:
+            usage = json.loads(row["usage"]) if row["usage"] else None
+            if not isinstance(usage, dict):
+                missing_usage += 1
+            else:
+                values = {"prompt_tokens": usage.get("prompt_tokens"),
+                    "completion_tokens": usage.get("completion_tokens"),
+                    "cached_tokens": (usage.get("prompt_tokens_details") or {}).get("cached_tokens")
+                        if isinstance(usage.get("prompt_tokens_details") or {}, dict) else None,
+                    "reasoning_tokens": (usage.get("completion_tokens_details") or {}).get("reasoning_tokens")
+                        if isinstance(usage.get("completion_tokens_details") or {}, dict) else None}
+                for key, value in values.items():
+                    if type(value) is int and value >= 0:
+                        tokens[key] += value
+                if any(type(values[k]) is not int or values[k] < 0
+                       for k in ("prompt_tokens", "completion_tokens")):
+                    missing_usage += 1
+            response = json.loads(row["response"]) if row["response"] else None
+            tier = response.get("service_tier") if isinstance(response, dict) else None
+            tier = tier if isinstance(tier, str) else "unreported"
+            tiers[tier] = tiers.get(tier, 0) + 1
         return {"calls": len(rows), "failed_calls": sum(r["status"] != "completed" for r in rows),
                 "known_provider_usd": sum(r["cost"] or 0 for r in rows),
                 "unknown_charge_calls": sum(r["cost"] is None for r in rows),
                 "outstanding_reserved_usd": sum(r["reserved"] for r in rows if r["cost"] is None),
                 "model_wall_s": sum(r["elapsed"] or 0 for r in rows),
                 "image_submissions": sum(r["images"] for r in rows),
+                "reported_tokens": tokens, "calls_without_complete_token_usage": missing_usage,
+                "reported_service_tiers": tiers,
                 "local_compute_cost": None,
                 "note": "Provider usage is observed when available. Local hosting, energy and storage are not free."}
 
@@ -141,6 +170,10 @@ class ChatBackend:
             {"role": "system", "content": system_packet},
             {"role": "user", "content": user}], ep.token_parameter: min(ep.max_output_tokens, self.config.role_output_limits[role]),
             **ep.extra_body}
+        if ep.service_tier is not None:
+            body["service_tier"] = ep.service_tier
+        if ep.reasoning_effort is not None:
+            body["reasoning_effort"] = ep.reasoning_effort
         if ep.response_format == "json_object":
             body["response_format"] = {"type": "json_object"}
         elif ep.response_format == "json_schema":

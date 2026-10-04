@@ -124,10 +124,12 @@ class Endpoint(Contract):
     output_per_million: float | None = Field(default=None, ge=0)
     cached_input_per_million: float | None = Field(default=None, ge=0)
     reservation_usd: float = Field(default=0.1, gt=0)
-    timeout_s: float = Field(default=90, gt=0, le=600)
+    timeout_s: float = Field(default=90, gt=0, le=900)
     max_output_tokens: int = Field(default=4096, ge=16, le=32768)
     token_parameter: Literal["max_tokens", "max_completion_tokens"] = "max_tokens"
     response_format: Literal["json_object", "json_schema", "none"] = "json_object"
+    service_tier: Literal["flex", "default"] | None = None
+    reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"] | None = None
     extra_body: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -145,6 +147,10 @@ class Endpoint(Contract):
             raise ValueError("api_key_env must be an environment variable name, not a key")
         if self.billing == "metered" and (self.input_per_million is None or self.output_per_million is None):
             raise ValueError("Metered endpoints need configured current input/output rates")
+        if self.service_tier is not None and self.billing != "metered":
+            raise ValueError("Service tiers require metered billing and tier-specific configured rates")
+        if self.reasoning_effort is not None and "reasoning_effort" in self.extra_body:
+            raise ValueError("Configure reasoning_effort once, not in both fields")
         allowed = {"temperature", "top_p", "seed", "reasoning_effort", "chat_template_kwargs"}
         if set(self.extra_body) - allowed:
             raise ValueError("extra_body can only configure decoding/reasoning; not request routing or messages")

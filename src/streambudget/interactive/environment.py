@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -52,18 +53,28 @@ class PyBoyEnvironment:
             except ImportError as exc:
                 raise ContractError("Install the optional gameboy extra: pip install -e '.[gameboy]'") from exc
             factory = PyBoy
-        self._device = factory(str(rom), window=window)
+            version = importlib.metadata.version("pyboy")
+        else:
+            version = "injected_test_device"
         self.frame_number = 0
         self.rom_sha256 = hashlib.sha256(rom.read_bytes()).hexdigest()
         self.initialization = "operator_state" if load_state else "rom_boot"
+        load_state = load_state.expanduser().resolve() if load_state else None
         self.initial_state_sha256 = hashlib.sha256(load_state.read_bytes()).hexdigest() if load_state else None
         self.closed = False
-        self._device.set_emulation_speed(0)
-        if load_state:
-            with load_state.expanduser().open("rb") as f:
-                self._device.load_state(f)
-        else:
-            self._advance(boot_frames)
+        self.descriptor = {"adapter": "pyboy", "version": version,
+                           "boot_frames": 0 if load_state else boot_frames, "window": window}
+        self._device = factory(str(rom), window=window)
+        try:
+            self._device.set_emulation_speed(0)
+            if load_state:
+                with load_state.open("rb") as f:
+                    self._device.load_state(f)
+            else:
+                self._advance(boot_frames)
+        except BaseException:
+            self.close()
+            raise
 
     def _advance(self, n):
         for _ in range(n):
@@ -81,9 +92,9 @@ class PyBoyEnvironment:
             raise ContractError("Emulator closed")
         start = self.frame_number
         pressed = action.button != "wait"
-        if pressed:
-            self._device.button_press(action.button)
         try:
+            if pressed:
+                self._device.button_press(action.button)
             self._advance(action.press_frames)
         finally:
             # Release even if model/controller execution is interrupted. No retry.

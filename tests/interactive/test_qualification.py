@@ -12,6 +12,7 @@ from streambudget.interactive.locking import RunLock
 from streambudget.interactive.models import ImageInput
 from streambudget.interactive.qualification import probe
 from streambudget.interactive.runner import GameRunner
+from streambudget.interactive.report import make_report
 from streambudget.types import ContractError
 
 def test_probe_has_no_executor(tmp_path):
@@ -88,6 +89,24 @@ def test_actual_loopback_http_game_loop(tmp_path):
         assert len({a['messages'][0]['content'] for a in actors}) == 1
         assert len({a['messages'][1]['content'][0]['text'] for a in actors}) == 4
         assert all((a['max_tokens'] == 64 for a in actors))
+        state_path = tmp_path / 'run' / 'environment.state'
+
+        def restored():
+            state = json.loads(state_path.read_text())
+            env = FixtureEnvironment()
+            env.x, env.room, env.frame_number = state['x'], state['room'], state['frame_number']
+            return env
+
+        cfg.max_steps = 6
+        cfg.max_calls = 9
+        capped = GameRunner(cfg, restored(), tmp_path / 'run', allow_network=True, resume=True).run()
+        assert capped['status'] == 'budget_limit' and capped['completed_steps'] == 4
+        assert capped['accounting']['calls'] == 9 and len(records) == 9
+        cfg.max_calls = 20
+        continued = GameRunner(cfg, restored(), tmp_path / 'run', allow_network=True, resume=True).run()
+        assert continued['completed_steps'] == 6 and continued['accounting']['calls'] == len(records)
+        assert continued['accounting']['reported_tokens']['prompt_tokens'] == 100 * len(records)
+        assert 'loopback-fixture' in make_report(tmp_path / 'run').read_text()
     finally:
         server.shutdown()
         server.server_close()

@@ -103,3 +103,90 @@ def test_loaded_operator_state_is_labelled(tmp_path):
     assert e.initialization == 'operator_state'
     assert e.initial_state_sha256 == hashlib.sha256(state.read_bytes()).hexdigest()
     e.close()
+
+
+def test_release_even_if_press_raises(tmp_path):
+    e = env(tmp_path)
+
+    def fail(button):
+        raise RuntimeError('press uncertain')
+
+    e._device.button_press = fail
+    with pytest.raises(RuntimeError):
+        e.execute(ActionSpec(id='A', button='a'))
+    assert e._device.events[-1] == ('release', 'a')
+    assert e.frame_number == 0
+    e.close()
+
+
+def test_release_on_keyboard_interrupt(tmp_path):
+    e = env(tmp_path)
+
+    def interrupt(n, render):
+        raise KeyboardInterrupt
+
+    e._device.tick = interrupt
+    with pytest.raises(KeyboardInterrupt):
+        e.execute(ActionSpec(id='A', button='a'))
+    assert e._device.events[-1] == ('release', 'a')
+    e.close()
+
+
+def test_failed_boot_closes_native_device(tmp_path):
+    devices = []
+
+    class FailedBoot(Device):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fail = True
+            devices.append(self)
+
+    rom = tmp_path / 'test.gb'
+    rom.write_bytes(b'not a playable ROM')
+    with pytest.raises(RuntimeError):
+        PyBoyEnvironment(rom, factory=FailedBoot)
+    assert devices[0].events[-1] == ('stop', False)
+
+
+def test_failed_checkpoint_keeps_previous_bytes(tmp_path):
+    e = env(tmp_path)
+    state = tmp_path / 'previous.state'
+    state.write_bytes(b'important previous checkpoint')
+
+    def partial(f):
+        f.write(b'partial state')
+        raise RuntimeError('save failed')
+
+    e._device.save_state = partial
+    with pytest.raises(RuntimeError):
+        e.checkpoint(state)
+    assert state.read_bytes() == b'important previous checkpoint'
+    e.close()
+
+
+def test_native_pyboy_bundled_demo_roundtrip(tmp_path):
+    """Optional real emulator smoke test, not Pokemon or a learned-model result."""
+    pyboy = pytest.importorskip('pyboy')
+    rom = Path(pyboy.__file__).parent / 'default_rom.gb'
+    if not rom.is_file():
+        pytest.skip('Installed PyBoy has no bundled demo ROM')
+    first = PyBoyEnvironment(rom)
+    try:
+        before = first.capture()
+        assert before.image.size == (160, 144) and before.frame_number == 120
+        assert before.image.getextrema() != ((255, 255), (255, 255), (255, 255))
+        state = tmp_path / 'native.state'
+        first.checkpoint(state)
+        receipt = first.execute(ActionSpec(id='A', button='a'))
+        assert receipt.end_frame - receipt.start_frame == 8
+        expected = first.capture().image.tobytes()
+    finally:
+        first.close()
+    second = PyBoyEnvironment(rom, load_state=state)
+    try:
+        assert second.capture().image.tobytes() == before.image.tobytes()
+        receipt = second.execute(ActionSpec(id='A', button='a'))
+        assert receipt.start_frame == 0 and receipt.end_frame == 8
+        assert second.capture().image.tobytes() == expected
+    finally:
+        second.close()

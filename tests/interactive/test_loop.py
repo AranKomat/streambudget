@@ -5,7 +5,7 @@ from streambudget.interactive.contracts import ActionChoice, GameConfig
 from streambudget.interactive.fixture import FixtureBackend, FixtureEnvironment
 from streambudget.interactive.models import BudgetExhausted
 from streambudget.interactive.runner import GameRunner
-from streambudget.interactive.report import make_report, export_transitions
+from streambudget.interactive.report import compare_runs, make_report, export_transitions, run_metrics
 from streambudget.types import ContractError
 
 def config(**kw):
@@ -211,3 +211,221 @@ def test_report_does_not_rescan_inserted_template_words(tmp_path):
     (out / 'run.json').write_text(json.dumps(meta))
     page = make_report(out).read_text()
     assert 'DATA WORLD SUMMARY TITLE' in page
+
+
+def test_init_failure_closes_environment_and_preserves_error(tmp_path):
+    env = FixtureEnvironment()
+    out = tmp_path / 'already-exists'
+    out.mkdir()
+    with pytest.raises(ContractError, match='already exists'):
+        GameRunner(config(), env, out)
+    assert env.closed
+
+
+def test_final_metadata_failure_still_closes_resources(tmp_path, monkeypatch):
+    from streambudget.interactive import runner as module
+    from streambudget.interactive.locking import RunLock
+    env = FixtureEnvironment()
+    out = tmp_path / 'run'
+    r = GameRunner(config(), env, out)
+    original = module.write_json
+
+    def fail(path, value):
+        if path.name == 'run.json':
+            raise OSError('disk full')
+        return original(path, value)
+
+    monkeypatch.setattr(module, 'write_json', fail)
+    with pytest.raises(OSError, match='disk full'):
+        r.run()
+    assert env.closed
+    with pytest.raises(sqlite3.ProgrammingError):
+        r.store.db.execute('SELECT 1')
+    with RunLock(out / '.interactive.lock'):
+        pass
+
+
+def test_stale_frame_number_rejects_action(tmp_path):
+    class FrameChanged(ChangeDuringDecision):
+        def complete(self, role, *args):
+            result = FixtureBackend.complete(self, role, *args)
+            if role == 'act':
+                self.env.frame_number += 1
+            return result
+
+    env = FixtureEnvironment()
+    out = tmp_path / 'run'
+    with pytest.raises(ContractError, match='stale action'):
+        GameRunner(config(), env, out, backend=FrameChanged(env)).run()
+    with sqlite3.connect(out / 'memory.sqlite') as db:
+        assert db.execute('SELECT COUNT(*) FROM game_actions').fetchone()[0] == 0
+
+
+def test_keyboard_interrupt_after_dispatch_cannot_resume(tmp_path):
+    class Interrupted(FixtureEnvironment):
+        def execute(self, action):
+            super().execute(action)
+            raise KeyboardInterrupt
+
+    out = tmp_path / 'run'
+    env = Interrupted()
+    with pytest.raises(KeyboardInterrupt):
+        GameRunner(config(), env, out).run()
+    assert env.closed and env.frame_number == 8
+    with sqlite3.connect(out / 'memory.sqlite') as db:
+        assert db.execute('SELECT status FROM game_actions').fetchone()[0] == 'dispatched'
+    meta = json.loads((out / 'run.json').read_text())
+    assert meta['status'] == 'failed'
+    assert not (out / 'checkpoint.json').exists()
+
+
+def test_initial_compile_budget_stop_is_clean_and_resumable(tmp_path):
+    from streambudget.interactive.contracts import SchemaPatch
+
+    class CompilePause(FixtureBackend):
+        def complete(self, role, *args):
+            if role == 'compile':
+                raise BudgetExhausted('admission cap')
+            return super().complete(role, *args)
+
+    class CompileOK(FixtureBackend):
+        def complete(self, role, *args):
+            if role == 'compile':
+                return SchemaPatch(parent_version=0, reason='No changes needed')
+            return super().complete(role, *args)
+
+    out = tmp_path / 'run'
+    cfg = config(compile_at_start=True)
+    first = GameRunner(cfg, FixtureEnvironment(), out, backend=CompilePause()).run()
+    assert first['status'] == 'budget_limit' and first['completed_steps'] == 0
+    second = GameRunner(cfg, restore(out / 'environment.state'), out, resume=True, backend=CompileOK()).run()
+    assert second['completed_steps'] == 3
+
+
+@pytest.mark.parametrize('sql', [
+    "UPDATE game_actions SET receipt='{}' WHERE rowid=1",
+    "INSERT INTO model_inputs VALUES('unknown','{}','','[]')"])
+def test_resume_detects_record_edits_without_count_change(tmp_path, sql):
+    out = tmp_path / 'run'
+    GameRunner(config(), FixtureEnvironment(), out).run()
+    with sqlite3.connect(out / 'memory.sqlite') as db:
+        db.execute(sql)
+    with pytest.raises(ContractError, match='Attempt records changed'):
+        GameRunner(config(), restore(out / 'environment.state'), out, resume=True)
+
+
+def test_pre_digest_checkpoint_requires_review_not_silent_upgrade(tmp_path):
+    out = tmp_path / 'run'
+    GameRunner(config(), FixtureEnvironment(), out).run()
+    cp_path = out / 'checkpoint.json'
+    cp = json.loads(cp_path.read_text())
+    cp.pop('attempts_sha256')
+    cp_path.write_text(json.dumps(cp))
+    with pytest.raises(ContractError, match='lacks their digest'):
+        GameRunner(config(), restore(out / 'environment.state'), out, resume=True)
+
+
+def test_world_change_before_checkpoint_fails_closed(tmp_path):
+    class ChangedAtStop(FixtureEnvironment):
+        captures = 0
+        def capture(self):
+            self.captures += 1
+            if self.captures == 4:
+                self.x += 1
+            return super().capture()
+
+    out = tmp_path / 'run'
+    with pytest.raises(ContractError, match='before checkpoint'):
+        GameRunner(config(max_steps=1), ChangedAtStop(), out).run()
+    assert json.loads((out / 'run.json').read_text())['status'] == 'failed'
+    assert not (out / 'checkpoint.json').exists()
+
+
+def test_metrics_are_read_only_and_do_not_invent_success(tmp_path):
+    out = tmp_path / 'run'
+    GameRunner(config(), FixtureEnvironment(), out).run()
+    before = (out / 'run.json').read_bytes(), (out / 'memory.sqlite').read_bytes()
+    metrics = run_metrics(out)
+    assert metrics['action_attempts'] == 3 and metrics['advanced_frames_from_receipts'] == 24
+    assert metrics['retained_frames'] == 4 and metrics['unchanged_pixel_transitions'] == 0
+    assert metrics['game_success'] is None and metrics['model_attempts_by_role'] == {}
+    assert before == ((out / 'run.json').read_bytes(), (out / 'memory.sqlite').read_bytes())
+
+
+def test_matched_fixture_comparison_is_not_a_benchmark(tmp_path):
+    paths = [tmp_path / name for name in ('recent', 'world')]
+    for out in paths:
+        GameRunner(config(baseline=out.name), FixtureEnvironment(), out).run()
+    result = compare_runs(paths)
+    assert result['settings_matched'] and result['fixture']
+    assert result['success_rate'] is None
+
+
+@pytest.mark.parametrize('change', ['goal', 'max_steps', 'model', 'initial_screen'])
+def test_comparison_rejects_unmatched_conditions(tmp_path, change):
+    paths = [tmp_path / name for name in ('recent', 'world')]
+    for out in paths:
+        GameRunner(config(baseline=out.name), FixtureEnvironment(), out).run()
+    meta_path = paths[1] / 'run.json'
+    meta = json.loads(meta_path.read_text())
+    if change == 'model':
+        meta['config']['endpoints']['main']['model'] = 'different-model'
+    elif change == 'initial_screen':
+        with sqlite3.connect(paths[1] / 'memory.sqlite') as db:
+            row = db.execute("SELECT seq,payload FROM evidence WHERE kind='frame' ORDER BY seq LIMIT 1").fetchone()
+            payload = json.loads(row[1])
+            payload['sha256'] = 'different'
+            db.execute('UPDATE evidence SET payload=? WHERE seq=?', (json.dumps(payload), row[0]))
+    else:
+        meta['config'][change] = 'different' if change == 'goal' else 9
+    meta_path.write_text(json.dumps(meta))
+    with pytest.raises(ContractError):
+        compare_runs(paths)
+
+
+def test_report_includes_after_evidence_and_receipts(tmp_path):
+    out = tmp_path / 'run'
+    GameRunner(config(), FixtureEnvironment(), out).run()
+    page = make_report(out).read_text()
+    assert 'after_evidence' in page and 'start_frame' in page and 'wall_s' in page
+    assert 'id="after"' in page
+    assert 'No retained after frame; outcome unknown.' in page
+
+
+def test_recent_baseline_hides_world_projection_but_keeps_recent_history(tmp_path):
+    r = GameRunner(config(baseline='recent', max_steps=1), FixtureEnvironment(), tmp_path / 'run')
+    r.step()
+    _, packet = r.packet()
+    assert packet['world']['entities'] == [] and packet['world']['current_place'] is None
+    assert packet['recent_evidence'] and r.last_frames
+    assert r.world.view(r.store.snapshot(r.current.end))['entities']
+    r.run()
+
+
+def test_late_actor_result_is_not_dispatched(tmp_path):
+    env = FixtureEnvironment()
+    r = GameRunner(config(), env, tmp_path / 'run')
+
+    class SlowActor(FixtureBackend):
+        def complete(self, role, *args):
+            value = super().complete(role, *args)
+            if role == 'act':
+                r.start_wall -= r.config.wall_limit_s + 1
+            return value
+
+    r.backend = SlowActor()
+    meta = r.run()
+    assert meta['status'] == 'wall_limit' and meta['completed_steps'] == 0
+    assert env.frame_number == 0 and env.closed
+
+
+def test_resume_rejects_changed_emulator_version(tmp_path):
+    out = tmp_path / 'run'
+    env = FixtureEnvironment()
+    env.descriptor = {'adapter': 'test-only', 'version': 'one', 'window': 'null'}
+    GameRunner(config(), env, out).run()
+    changed = restore(out / 'environment.state')
+    changed.descriptor = {'adapter': 'test-only', 'version': 'two', 'window': 'null'}
+    with pytest.raises(ContractError, match='Emulator version'):
+        GameRunner(config(), changed, out, resume=True)
+    assert changed.closed

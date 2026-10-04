@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 import sys
 import tomllib
+import pytest
+from pydantic import ValidationError
 
 from streambudget.cli import main, parser
 from streambudget.config import Config
@@ -56,3 +58,24 @@ def test_packaging_has_optional_emulator_and_no_duplicate_cli():
     assert project["scripts"] == {"streambudget": "streambudget.cli:main"}
     assert project["optional-dependencies"]["gameboy"] == ["pyboy>=2.3,<3"]
     assert not any("pyboy" in dependency for dependency in project["dependencies"])
+
+
+def test_metered_template_requires_rates_before_any_request():
+    from streambudget.interactive.cli import load_config
+    root = Path(__file__).resolve().parents[2]
+    with pytest.raises(ValidationError, match='current input/output rates'):
+        load_config(root / 'configs/interactive/pokemon-metered.template.yaml')
+
+
+def test_metrics_and_comparison_commands_do_not_load_emulator(tmp_path, monkeypatch, capsys):
+    from streambudget.interactive.contracts import GameConfig
+    from streambudget.interactive.fixture import FixtureEnvironment
+    from streambudget.interactive.runner import GameRunner
+    monkeypatch.setitem(sys.modules, 'pyboy', None)
+    paths = [tmp_path / name for name in ('recent', 'world')]
+    for out in paths:
+        GameRunner(GameConfig(backend='fixture', max_steps=2, baseline=out.name), FixtureEnvironment(), out).run()
+    assert main(['game', 'metrics', '--run', str(paths[0])]) == 0
+    assert json.loads(capsys.readouterr().out)['game_success'] is None
+    assert main(['game', 'compare', '--runs', *map(str, paths)]) == 0
+    assert json.loads(capsys.readouterr().out)['settings_matched']

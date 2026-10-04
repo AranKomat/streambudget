@@ -127,3 +127,84 @@ def test_duration_is_bounded_integer(n):
 def test_unknown_action_extra_fields_rejected():
     with pytest.raises(ValidationError):
         ActionChoice(action_id='A', stop_if='whatever')
+
+
+def test_flex_and_medium_are_explicit_request_fields(tmp_path):
+    book = ledger(tmp_path)
+    cfg = config(base_url='https://api.example.test/v1', billing='metered',
+                 input_per_million=1, output_per_million=2, service_tier='flex',
+                 reasoning_effort='medium', token_parameter='max_completion_tokens', timeout_s=900)
+    cfg.role_output_limits['act'] = 2048
+    seen = []
+
+    def handle(request):
+        seen.append(json.loads(request.content))
+        result = good_response(usage={'prompt_tokens': 100, 'completion_tokens': 200,
+            'completion_tokens_details': {'reasoning_tokens': 180}})
+        result['service_tier'] = 'flex'
+        return httpx.Response(200, json=result)
+
+    b = ChatBackend(cfg, book, allow_network=True, allow_paid=True,
+                    transport=httpx.MockTransport(handle))
+    try:
+        b.complete('act', '', {}, [], ActionChoice)
+    finally:
+        b.close()
+    assert seen[0]['service_tier'] == 'flex' and seen[0]['reasoning_effort'] == 'medium'
+    assert seen[0]['max_completion_tokens'] == 2048 and 'max_tokens' not in seen[0]
+    assert book.summary()['known_provider_usd'] == pytest.approx(0.0005)
+    assert book.summary()['reported_tokens']['reasoning_tokens'] == 180
+    assert book.summary()['reported_service_tiers'] == {'flex': 1}
+
+
+@pytest.mark.parametrize('reported', [None, 'default'])
+def test_unconfirmed_flex_tier_keeps_hold(tmp_path, reported):
+    book = ledger(tmp_path)
+    ep = Endpoint(base_url='https://example.test/v1', billing='metered', service_tier='flex',
+                  input_per_million=1, output_per_million=2)
+    call = book.reserve('act', ep, 'x', 0, 0)
+    book.finish(call, endpoint=ep, response={'service_tier': reported,
+        'usage': {'prompt_tokens': 100, 'completion_tokens': 10}})
+    assert book.summary()['known_provider_usd'] == 0
+    assert book.summary()['unknown_charge_calls'] == 1
+    assert book.summary()['outstanding_reserved_usd'] == ep.reservation_usd
+
+
+def test_flex_capacity_failure_has_no_tier_fallback(tmp_path):
+    book = ledger(tmp_path)
+    cfg = config(base_url='https://example.test/v1', billing='metered', service_tier='flex',
+                 input_per_million=1, output_per_million=2)
+    requests = []
+
+    def handle(request):
+        requests.append(json.loads(request.content))
+        return httpx.Response(429, json={'error': {'code': 'resource_unavailable'}})
+
+    b = ChatBackend(cfg, book, allow_network=True, allow_paid=True,
+                    transport=httpx.MockTransport(handle))
+    try:
+        with pytest.raises(ModelError, match='HTTP_429'):
+            b.complete('act', '', {}, [], ActionChoice)
+    finally:
+        b.close()
+    assert len(requests) == 1 and requests[0]['service_tier'] == 'flex'
+    assert book.summary()['unknown_charge_calls'] == 1
+
+
+@pytest.mark.parametrize('kwargs', [
+    {'service_tier': 'auto'}, {'service_tier': 'priority'},
+    {'service_tier': 'flex'}, {'reasoning_effort': 'invalid'},
+    {'reasoning_effort': 'medium', 'extra_body': {'reasoning_effort': 'low'}},
+    {'extra_body': {'service_tier': 'default'}}])
+def test_tier_and_reasoning_configuration_fails_closed(kwargs):
+    with pytest.raises(ValidationError):
+        Endpoint(**kwargs)
+
+
+def test_missing_token_usage_is_not_reported_as_measured_zero(tmp_path):
+    book = ledger(tmp_path)
+    ep = Endpoint(model='local-test')
+    call = book.reserve('act', ep, 'x', 0, 0)
+    book.finish(call, endpoint=ep, response=good_response())
+    assert book.summary()['calls_without_complete_token_usage'] == 1
+    assert book.summary()['reported_service_tiers'] == {'unreported': 1}
