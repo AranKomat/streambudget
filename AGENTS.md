@@ -16,7 +16,8 @@ watch/investigation application and its historical results.
   dispatch/checkpoint fences intact. Never retry uncertain actions or model attempts.
 * Model goal claims, mocked usage and fixtures are not gameplay success. Independent
   grading remains absent. PyBoy 2.7.0 has a bundled-demo smoke check only; Pokemon
-  controls, real models and real-time action control remain unqualified.
+  controls and real-time action control remain unqualified. OpenRouter Sol 6.1
+  has a bounded live qualification on synthetic pixels only; see the guide.
 * GPT trials default to 6.1 Sol/medium/explicit Flex; rates must match the served tier.
   Missing/mismatched tiers retain unknown charge holds. No implicit retry or fallback.
 * Run both applications' CPU tests and no-key demos after shared changes. Core regression

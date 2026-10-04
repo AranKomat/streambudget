@@ -31,6 +31,7 @@ def run_metrics(out: Path):
         by_role[role] = {'attempts': len(rows), 'failed_or_pending': sum(r['status'] != 'completed' for r in rows),
                          'wall_s': sum(latencies), 'median_wall_s': median(latencies) if latencies else None}
     return {'run_id': meta['run_id'], 'condition': meta['config']['baseline'], 'fixture': meta['fixture'],
+        'backend': meta['backend'],
         'status': meta['status'], 'completed_steps': meta['completed_steps'],
         'action_attempts': len(actions), 'action_statuses': dict(Counter(r['status'] for r in actions)),
         'advanced_frames_from_receipts': sum(r['end_frame'] - r['start_frame'] for r in receipts),
@@ -41,7 +42,8 @@ def run_metrics(out: Path):
         'accounting': meta.get('accounting'), 'fixture_model_calls': meta.get('fixture_model_calls'),
         'game_success': None,
         'note': 'Pixels unchanged is not a semantic stall. Milestones/errors need independent source review; '
-                'fixture calls are not measured inference. No success rate is computed.'}
+                'Synthetic environments are not native gameplay. Fixture-backend calls are not measured inference; '
+                'a chat endpoint alone does not certify a learned model. No success rate is computed.'}
 
 
 def compare_runs(paths: list[Path]):
@@ -110,7 +112,12 @@ def make_report(out: Path):
     store.close()
     data = json.dumps(records, ensure_ascii=False).replace("<", "\\u003c")
     summary = html.escape(json.dumps(run_metrics(out), indent=2))
-    title = "SOFTWARE FIXTURE — not a model or Pokémon result" if meta["fixture"] else "PIXELS-ONLY GAME RUN — ungraded"
+    if meta['backend'] == 'fixture':
+        title = "SOFTWARE FIXTURE — not a model or Pokémon result"
+    elif meta['fixture']:
+        title = "SYNTHETIC ENVIRONMENT - chat endpoint; not a Pokemon result"
+    else:
+        title = "PIXELS-ONLY GAME RUN — ungraded"
     page = """<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>StreamBudget Pixel Agent</title><style>
 body{font:16px system-ui,sans-serif;max-width:1100px;margin:3rem auto;padding:0 1.2rem;background:#f5f6f8;color:#17212b}

@@ -4,20 +4,26 @@ goal: "Play the game from pixels and progress toward its first two Gym Leaders."
 backend: chat
 endpoints:
   main:
-    base_url: https://api.openai.com/v1
-    model: gpt-6.1-sol
-    api_key_env: OPENAI_API_KEY
+    base_url: https://openrouter.ai/api/v1
+    model: openai/gpt-6.1-sol
+    api_key_env: OPENROUTER_API_KEY
     billing: metered
     input_per_million: null
     output_per_million: null
     cached_input_per_million: null
-    reservation_usd: 0.20
+    reservation_usd: 0.30
     timeout_s: 900
     max_output_tokens: 4096
-    token_parameter: max_completion_tokens
+    token_parameter: max_tokens
     response_format: json_object
     service_tier: flex
     reasoning_effort: medium
+    openrouter:
+      only: [openai/flex]
+      allow_fallbacks: false
+      require_parameters: true
+      # Dollars per million tokens; refresh these bounds with the endpoint catalog.
+      max_price: {prompt: 1.25, completion: 5}
 roles: {extract: main, plan: main, act: main, compile: main}
 # Completion caps include hidden reasoning, not just the tiny visible action JSON.
 role_output_limits: {extract: 4096, plan: 4096, act: 2048, compile: 4096}

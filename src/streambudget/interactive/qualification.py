@@ -11,7 +11,7 @@ from .context import bounded_context
 from .contracts import ActionChoice, ObservationPatch, Plan, SchemaPatch
 from .models import ChatBackend, ImageInput, Ledger
 from .ontology import Ontology
-from .runner import png, write_json
+from .runner import inference_png, write_json
 
 OUTPUTS = {"extract": ObservationPatch, "plan": Plan, "act": ActionChoice, "compile": SchemaPatch}
 SYSTEMS = {"extract": prompts.EXTRACT, "plan": prompts.PLAN, "act": prompts.ACT, "compile": prompts.COMPILE}
@@ -35,6 +35,7 @@ def probe(config, image_path: Path, out: Path, *, role="extract", intent=None,
     out.mkdir(parents=True)
     store = EvidenceStore(out / "memory.sqlite", config.source)
     backend = None
+    ledger = None
     try:
         media = MediaStore(out / "media")
         key, _ = media.put(raw)
@@ -50,7 +51,8 @@ def probe(config, image_path: Path, out: Path, *, role="extract", intent=None,
                                         "config": config.model_dump()})
         backend = ChatBackend(config, ledger, allow_network=allow_network,
                               allow_paid=allow_paid, transport=transport)
-        result = backend.complete(role, SYSTEMS[role], context, [ImageInput(frame.id, png(image))], OUTPUTS[role])
+        result = backend.complete(role, SYSTEMS[role], context,
+            [ImageInput(frame.id, inference_png(image, config.view_scale))], OUTPUTS[role])
         if role == "extract" and result.frame_id != frame.id:
             raise ContractError("Probe result refers to a different frame")
         if role == "act" and result.action_id not in {a.id for a in config.actions}:
@@ -60,11 +62,14 @@ def probe(config, image_path: Path, out: Path, *, role="extract", intent=None,
                   "note": "Schema success is not visual grounding or policy qualification."}
         write_json(out / "probe.json", record)
         return record
-    except Exception as exc:
+    except BaseException as exc:
         write_json(out / "probe.json", {"status": "failed", "role": role, "actuation": False,
-            "error_type": type(exc).__name__, "note": "No retries or actions were dispatched."})
+            "error_type": type(exc).__name__, "accounting": ledger.summary() if ledger else None,
+            "note": "No retries or actions were dispatched. Unknown attempts retain their charge holds."})
         raise
     finally:
-        if backend:
-            backend.close()
-        store.close()
+        try:
+            if backend:
+                backend.close()
+        finally:
+            store.close()

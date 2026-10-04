@@ -165,14 +165,23 @@ streambudget game probe --config /path/to/local-config.yaml \
   --out runs/probe-action-001 --allow-network
 ```
 
-Probes never actuate. Review grounding, not just JSON/HTTP success. Qualify image
-conventions, truncation, limits, thinking settings and latency. The metered template now
-targets `gpt-6.1-sol`, explicit `reasoning_effort: medium` and `service_tier: flex` using
-Chat Completions. It is intentionally invalid until current tier-specific input/output
-rates are supplied. Credentials remain an `OPENAI_API_KEY` environment reference.
+Probes never actuate. Review grounding, not just JSON/HTTP success. Probes and the
+live loop now share exactly the same nearest-neighbor pixel scaling; source evidence
+is unchanged. Qualify truncation, limits, thinking settings and latency. The metered
+template targets `openai/gpt-6.1-sol` on OpenRouter Chat Completions, with medium
+reasoning and explicit Flex. It is intentionally invalid until current tier-specific
+input/output rates are supplied. Credentials use `OPENROUTER_API_KEY`, never a key
+in YAML or source. Doctor checks key-variable presence without printing its value;
+its readiness flag is static configuration evidence, not endpoint qualification.
 
-The configured 900-second timeout accommodates Flex latency. `max_completion_tokens`
-includes hidden reasoning as well as visible JSON: the action cap is 2048, not the
+Typed `openrouter` configuration pins provider tags, prohibits fallback, requires
+parameter support and sets per-million price ceilings. It cannot override messages,
+actions or tools. The adapter maps medium to `reasoning: {effort: medium}`; direct
+OpenAI-compatible endpoints retain the `reasoning_effort` wire field. OpenRouter
+responses with an unexpected model or unconfirmed explicit tier stop before action.
+
+The configured 900-second timeout accommodates Flex latency. The selected route's
+`max_tokens` includes hidden reasoning as well as visible JSON: the action cap is 2048, not the
 local-template 64. This is a preparation choice, not a measured sufficient cap.
 There is no automatic retry, tier fallback or model substitution. A separately reviewed
 standard trial must explicitly set `service_tier: default` and its own rates/budget;
@@ -183,13 +192,22 @@ or mismatching returned tiers leave the charge unknown and its reservation held;
 not price standard service at Flex rates. Capacity failures also remain held until
 review, rather than guessing that an arbitrary provider's HTTP 429 is free. Reported
 token totals include reasoning/cached tokens when present and flag incomplete usage.
-These requests and accounting paths passed mock tests only; no account access, exact
-route compatibility, live prices, visual competence or model ranking is qualified.
+An initial live synthetic-pixel qualification is recorded below; native Pokemon
+competence and model ranking remain unqualified.
 
 Official OpenAI documentation fetched on 2026-10-04:
 - https://developers.openai.com/api/docs/models/gpt-6.1-sol (model ID and medium effort)
 - https://developers.openai.com/api/docs/guides/flex-processing (explicit Flex request)
 - https://developers.openai.com/api/docs/api-reference/chat/create (returned service tier)
+
+OpenRouter sources fetched on 2026-10-04:
+- https://openrouter.ai/docs/guides/routing/provider-selection (provider restrictions and price ceilings)
+- https://openrouter.ai/api/v1/models/openai/gpt-6.1-sol/endpoints (selected Flex route)
+
+The observed Flex catalog lists $1/M prompt, $5/M completion, $0.05/M cached read
+and $1.25/M cache write, with higher long-context prices at 272,000 prompt tokens.
+These are a dated catalog observation, not guaranteed future prices. No search,
+tools or plugins are enabled. Refresh rates, bounds and availability before a run.
 
 ## Loop, Accounting And Artifacts
 
@@ -206,12 +224,20 @@ Metered requests also require `--allow-paid`. All real requests, including local
 need network opt-in. Compilation/extraction/planning/retrieval/action requests share
 the run-wide attempt cap. Reserve before calls; unknown usage stays held. Malformed
 responses can cost money. No implicit retries, fallback models or scored resets.
-Each probe has a fresh separately authorized budget, not free campaign capacity.
+Each probe has a fresh local ledger, not free shared campaign capacity. Failed
+probes retain accounting in their report, including interrupted/unknown holds.
 Configured reservations are admission control, not a provider invoice guarantee.
 
-`known_provider_usd` is configured-rate usage, not invoice reconciliation. Local API
+`known_provider_usd` uses configured-rate token usage for ordinary endpoints and
+the observed `usage.cost` invoice for confirmed OpenRouter model/tier responses;
+missing or invalid invoices retain holds rather than guessing cache-write cost. Local API
 billing is zero, but rental/energy/storage cost is unmeasured, not free. Never reset
-or reuse another project's ledger implicitly. Use provider-side spend controls.
+or reuse another project's ledger implicitly. Use provider-side spend controls. The
+owner-authorized live qualification below also reserves in the existing shared
+paid ledger under its $95 ceiling and $3 trial cap, serializing against other
+campaigns with their existing lock. Historical uncertain charges are not released
+or retried. Generic CLI run ledgers do not enforce that private workspace-wide cap;
+use the shared admission guard for further owner-paid experiments.
 
 Each run has `run.json`, `memory.sqlite`, immutable `media/`, `trace.jsonl`, a clean
 checkpoint/state and `report.html`. Model inputs/responses, frames, dialogue and ROM
@@ -362,12 +388,75 @@ Offline preparation after integration, 2026-10-04:
 |---|---|
 | CPU emulator setup | Done for PyBoy bundled demo; Pokemon controls await authorized ROM |
 | Execution/resume audit | Fixes and failure regressions implemented; no stronger crash recovery claim |
-| GPT-6.1 Sol medium/Flex preparation | Explicit template and mock transport/accounting coverage; live route unqualified |
-| First short trial preparation | Three decisions/twelve attempts template and preflight defined; ROM/API/rates missing |
+| GPT-6.1 Sol medium/Flex preparation | OpenRouter live probes reviewed; one Flex capacity failure retained; separate standard toy loop completed |
+| First short trial preparation | Live three-decision toy loop done; native Pokemon trial awaits authorized ROM and button qualification |
 | Evaluation definition | Source-review criteria and read-only metrics ready; independent gameplay grader absent |
 | Matched comparison preparation | Configuration/provenance checks and fixture pair done; real comparison not run |
 | Report usability | Before/after, source/action/model timing/usage and desktop/mobile checks done |
 | Consolidation/publication | Existing guide/modules/tests only; verification above and publication in Git/PR #1 |
+
+### First Live Model Qualification
+
+2026-10-04, owner-selected OpenRouter `openai/gpt-6.1-sol`, medium. Credentials
+were loaded in-process from the owner-specified private `.env`, never printed,
+committed or included in request artifacts. No GPU or model weights were needed.
+
+Input was the original 160x144 software fixture, shown to inference as a 480x432
+nearest-neighbor PNG. This is deliberately simple synthetic pixel evidence, not
+a Pokemon task, native controller qualification or proof of a memory advantage.
+Only source frames, beliefs, intent and the fixed button manifest reached the model.
+
+| Stage | Result | Requests | Known Cost | Unknown Hold |
+|---|---|---:|---:|---:|
+| Flex extract/action probes | Correct text and blue-character/gate grounding; RIGHT selected; no actuation | 2 | $0.00700725 | $0 |
+| Flex closed loop | Extraction returned; planner received explicit provider-unavailable capacity error; zero actions, stopped without retry | 2 | $0.00253045 | $0.30 |
+| Separately authorized standard closed loop | Three RIGHT actions; clean step-limit stop; all returned model/tier checks passed | 7 | $0.05550180 | $0 |
+
+Totals: 11 attempts, ten validated responses, one capacity failure, $0.06503950
+observed provider charges plus the retained $0.30 hold. All attempts are in the
+existing workspace-wide ledger; shared spend plus historical/new holds was
+$89.154523494300 of $95 after this qualification. Reread it before more paid work.
+The standard trial used the owner's standing permission after explicit Flex
+unavailability, a fresh synthetic episode and standard pricing, not a silent
+same-run tier switch or automatic retry of an uncertain call. The failed Flex
+episode remains failed and is not automatically resumable.
+
+The standard loop used three extraction calls, one planner call and three actor
+calls, nine image submissions, 20,011 reported prompt tokens, 1,472 completion
+tokens and 3,848 cached tokens. Reported reasoning tokens were zero despite the
+medium request; do not infer an unreported thinking process. Wall time was 38.86s,
+with extraction consuming 26.66s, planning 3.18s and actors 8.92s. Emulation advanced
+24 frames (0.4 nominal seconds); model latency is not source/game time. The episode
+stopped after three decisions, not after task success.
+
+Independent before/final pixel review confirms the blue rectangle moved from the
+left toward the still-distant gate (left edge x=12 to x=48). No gate crossing,
+conversation, room revisit, ambiguous identity, recovery or native gameplay was
+tested. `game_success` remains null. The report distinguishes a synthetic environment
+using a chat endpoint from a synthetic rule-based model; an endpoint alone is not
+proof of a learned model, which was separately checked here through served identity.
+
+Private, ignored evidence on this workstation:
+- `runs/pixel-live-20261004-sol-flex-001/`: probes, failed loop, source image and wire receipts.
+- `runs/pixel-live-20261004-sol-standard-001/loop/`: clean checkpoint, source images,
+  per-role inputs/outputs, action receipts, usage and `report.html`.
+- `runs/pixel-live-20261004.py`: private shared-budget guarded qualification driver,
+  no embedded credentials. Do not rerun existing attempt IDs or reset these ledgers.
+
+Production code/tests remain in existing modules; no public overlay/status files
+were added. Probes now share runtime scaling, failure reports include charge holds,
+doctor separates placeholder/missing-key setup from static readiness, OpenRouter
+routing is typed and non-fallback, and billing uses its observed invoice rather than
+incorrectly ignoring cache writes. Nonfinite/mismatched responses cannot actuate.
+
+Working-tree CPU validation after these changes: 378 tests passed with the same
+two retained Starlette/anyio deprecation warnings. Isolated staged public snapshot:
+296 tests passed with those same warnings; both no-key demos passed. Ruff,
+compileall and Git whitespace checks passed. A wheel built from that snapshot
+installed outside the repository; static doctor and both installed no-key demos
+passed without repository imports (PyBoy remained optional/not installed there).
+Real native evaluation, recent/world
+comparison, sustained progress and model/latency optimization remain undone.
 
 ## Next Sequence
 

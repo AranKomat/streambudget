@@ -4,6 +4,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import math
 import os
 import sqlite3
 import time
@@ -73,7 +74,8 @@ class Ledger:
         # Billing can be known even when JSON/schema validation subsequently fails.
         reported_tier = response.get("service_tier") if isinstance(response, dict) else None
         tier_matches = endpoint.service_tier is None or reported_tier == endpoint.service_tier
-        if endpoint.billing == "metered" and tier_matches and isinstance(usage, dict):
+        model_matches = endpoint.openrouter is None or (isinstance(response, dict) and response.get("model") == endpoint.model)
+        if endpoint.billing == "metered" and tier_matches and model_matches and isinstance(usage, dict):
             inp, out = usage.get("prompt_tokens"), usage.get("completion_tokens")
             detail = usage.get("prompt_tokens_details") or {}
             cached = detail.get("cached_tokens", 0) if isinstance(detail, dict) else None
@@ -83,11 +85,20 @@ class Ledger:
                 if not cached or rate is not None:
                     cost = ((inp - cached) * endpoint.input_per_million +
                             cached * (rate or 0) + out * endpoint.output_per_million) / 1e6
+            if endpoint.openrouter is not None:
+                # OpenRouter's invoice includes provider/cache pricing dimensions.
+                actual = usage.get("cost")
+                cost = float(actual) if type(actual) in (int, float) and math.isfinite(actual) and actual >= 0 else None
+        try:
+            usage_json = canonical(usage) if usage is not None else None
+            response_json = canonical(response) if response is not None else None
+        except (ValueError, TypeError):
+            usage_json = response_json = None
+            cost, error = None, "InvalidResponseJSON"
         with self.db:
             self.db.execute("UPDATE model_calls SET status=?,cost=?,usage=?,elapsed=?,response=?,error=? WHERE id=?",
                 ("failed" if error else "completed", cost,
-                 canonical(usage) if usage is not None else None, elapsed,
-                 canonical(response) if response is not None else None, error, id))
+                 usage_json, elapsed, response_json, error, id))
 
     def summary(self):
         rows = list(self.db.execute("SELECT * FROM model_calls"))
@@ -173,7 +184,12 @@ class ChatBackend:
         if ep.service_tier is not None:
             body["service_tier"] = ep.service_tier
         if ep.reasoning_effort is not None:
-            body["reasoning_effort"] = ep.reasoning_effort
+            if ep.openrouter is not None:
+                body["reasoning"] = {"effort": ep.reasoning_effort}
+            else:
+                body["reasoning_effort"] = ep.reasoning_effort
+        if ep.openrouter is not None:
+            body["provider"] = ep.openrouter.model_dump()
         if ep.response_format == "json_object":
             body["response_format"] = {"type": "json_object"}
         elif ep.response_format == "json_schema":
@@ -199,6 +215,11 @@ class ChatBackend:
             if len(r.content) > 2_000_000:
                 raise ModelError("Oversized response")
             response = r.json()
+            canonical(response)  # Reject non-JSON numeric values before accepting an action.
+            if ep.openrouter is not None and response.get("model") != ep.model:
+                raise ModelError("Served model does not match requested model")
+            if ep.openrouter is not None and ep.service_tier is not None and response.get("service_tier") != ep.service_tier:
+                raise ModelError("Served tier is unconfirmed or mismatched")
             choice = response["choices"][0]
             if choice.get("finish_reason") not in (None, "stop"):
                 raise ModelError("Truncated, refused, or tool-only response")

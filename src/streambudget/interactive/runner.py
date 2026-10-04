@@ -31,6 +31,16 @@ def png(image):
     return b.getvalue()
 
 
+def inference_png(image, view_scale):
+    # Probes and the live loop must qualify the same view; originals stay immutable.
+    image = image.copy()
+    if max(image.size) <= 320:
+        image = image.resize((image.width * view_scale, image.height * view_scale), Image.Resampling.NEAREST)
+    else:
+        image.thumbnail((1024, 1024))
+    return png(image)
+
+
 def write_json(path: Path, value):
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8")
@@ -194,13 +204,7 @@ class GameRunner:
         raw = path.read_bytes()
         if hashlib.sha256(raw).hexdigest() != key.split(".")[0]:
             raise ContractError("Retained image content hash mismatch")
-        im = MediaStore.decode(raw)
-        # Nearest-neighbor helps preserve retro pixel boundaries. Original evidence is never resized.
-        if max(im.size) <= 320:
-            im = im.resize((im.width*self.config.view_scale, im.height*self.config.view_scale), Image.Resampling.NEAREST)
-        else:
-            im.thumbnail((1024, 1024))
-        return ImageInput(evidence.id, png(im), historical)
+        return ImageInput(evidence.id, inference_png(MediaStore.decode(raw), self.config.view_scale), historical)
 
     def packet(self, extra=None):
         snap = self.store.snapshot(self.current.end)

@@ -3,7 +3,7 @@ import sqlite3
 import httpx
 import pytest
 from pydantic import ValidationError
-from streambudget.interactive.contracts import ActionChoice, ActionSpec, Endpoint, GameConfig
+from streambudget.interactive.contracts import ActionChoice, ActionSpec, Endpoint, GameConfig, OpenRouterRouting
 from streambudget.interactive.models import ChatBackend, Ledger, ModelError, BudgetExhausted
 from streambudget.types import ContractError
 
@@ -25,6 +25,95 @@ def test_network_and_paid_opt_in(tmp_path):
     cfg = config(base_url='https://api.example.test/v1', billing='metered', input_per_million=1, output_per_million=1)
     with pytest.raises(ContractError):
         ChatBackend(cfg, book, allow_network=True)
+
+
+def router_config(**overrides):
+    fields = dict(base_url='https://openrouter.ai/api/v1', model='openai/gpt-6.1-sol',
+        billing='metered', input_per_million=1, output_per_million=5,
+        service_tier='flex', reasoning_effort='medium',
+        openrouter=OpenRouterRouting(only=['openai/flex'], max_price={'prompt': 1.25, 'completion': 5}))
+    fields.update(overrides)
+    return GameConfig(endpoints={'main': Endpoint(**fields)})
+
+
+@pytest.mark.parametrize('change', [dict(base_url='https://example.test/v1'),
+    dict(token_parameter='max_completion_tokens'), dict(extra_body={'reasoning_effort': 'high'})])
+def test_openrouter_configuration_fails_closed(change):
+    with pytest.raises(ValidationError):
+        router_config(**change)
+
+
+@pytest.mark.parametrize('change', [dict(allow_fallbacks=True), dict(require_parameters=False),
+    dict(only=['openai/flex', 'openai/flex']), dict(only=['bad?key=secret'])])
+def test_openrouter_no_implicit_provider_fallback(change):
+    fields = dict(only=['openai/flex'], max_price={'prompt': 1.25, 'completion': 5})
+    fields.update(change)
+    with pytest.raises(ValidationError):
+        OpenRouterRouting(**fields)
+
+
+def test_openrouter_request_and_observed_invoice(tmp_path):
+    book, seen = ledger(tmp_path), []
+    def handle(request):
+        body = json.loads(request.content)
+        seen.append(body)
+        raw = good_response(usage={'prompt_tokens': 1000, 'completion_tokens': 10, 'cost': 0.00125})
+        raw.update(model='openai/gpt-6.1-sol', service_tier='flex', provider='OpenAI')
+        return httpx.Response(200, json=raw)
+    b = ChatBackend(router_config(), book, allow_network=True, allow_paid=True,
+                    transport=httpx.MockTransport(handle))
+    try:
+        assert b.complete('act', '', {}, [], ActionChoice).action_id == 'A'
+    finally:
+        b.close()
+    assert seen[0]['provider']['only'] == ['openai/flex']
+    assert seen[0]['provider']['allow_fallbacks'] is False
+    assert seen[0]['reasoning'] == {'effort': 'medium'}
+    assert 'reasoning_effort' not in seen[0] and 'tools' not in seen[0]
+    assert book.summary()['known_provider_usd'] == pytest.approx(0.00125)
+
+
+@pytest.mark.parametrize('cost', [None, -1, True, '0.001', float('inf')])
+def test_openrouter_invalid_invoice_retains_hold(tmp_path, cost):
+    book = ledger(tmp_path)
+    ep = router_config().endpoints['main']
+    call = book.reserve('act', ep, 'x', 0, 0)
+    book.finish(call, endpoint=ep, response={'model': ep.model, 'service_tier': 'flex',
+        'usage': {'prompt_tokens': 10, 'completion_tokens': 10, 'cost': cost}})
+    assert book.summary()['unknown_charge_calls'] == 1
+
+
+def test_nonfinite_response_never_returns_an_action(tmp_path):
+    book = ledger(tmp_path)
+    raw = good_response(usage={'cost': float('inf')})
+    raw.update(model='openai/gpt-6.1-sol', service_tier='flex')
+    b = ChatBackend(router_config(), book, allow_network=True, allow_paid=True,
+        transport=httpx.MockTransport(lambda r: httpx.Response(200, content=json.dumps(raw).encode())))
+    try:
+        with pytest.raises(ModelError):
+            b.complete('act', '', {}, [], ActionChoice)
+    finally:
+        b.close()
+    assert book.summary()['failed_calls'] == 1 and book.summary()['unknown_charge_calls'] == 1
+
+
+@pytest.mark.parametrize('change', [dict(model='other'), dict(service_tier='default'), dict(service_tier=None)])
+def test_openrouter_unconfirmed_identity_stops_without_retry(tmp_path, change):
+    book, seen = ledger(tmp_path), []
+    raw = good_response(usage={'cost': 0.001})
+    raw.update(model='openai/gpt-6.1-sol', service_tier='flex')
+    raw.update(change)
+    def handle(request):
+        seen.append(1)
+        return httpx.Response(200, json=raw)
+    b = ChatBackend(router_config(), book, allow_network=True, allow_paid=True,
+                    transport=httpx.MockTransport(handle))
+    try:
+        with pytest.raises(ModelError):
+            b.complete('act', '', {}, [], ActionChoice)
+    finally:
+        b.close()
+    assert len(seen) == 1 and book.summary()['unknown_charge_calls'] == 1
 
 @pytest.mark.parametrize('url', ['file:///etc/passwd', 'http://key:pass@localhost/v1', 'https://x/v1?key=secret', 'https://x/v1#fragment'])
 def test_endpoint_rejects_credential_routes(url):

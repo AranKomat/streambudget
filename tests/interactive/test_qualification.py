@@ -2,6 +2,7 @@ import base64
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import threading
+from io import BytesIO
 import httpx
 import pytest
 from PIL import Image
@@ -11,8 +12,8 @@ from streambudget.interactive.fixture import FixtureBackend, FixtureEnvironment
 from streambudget.interactive.locking import RunLock
 from streambudget.interactive.models import ImageInput
 from streambudget.interactive.qualification import probe
-from streambudget.interactive.runner import GameRunner
-from streambudget.interactive.report import make_report
+from streambudget.interactive.runner import GameRunner, inference_png
+from streambudget.interactive.report import make_report, run_metrics
 from streambudget.types import ContractError
 
 def test_probe_has_no_executor(tmp_path):
@@ -28,6 +29,55 @@ def test_probe_has_no_executor(tmp_path):
     assert r['actuation'] is False and r['result'] == {'action_id': 'WAIT'}
     assert r['accounting']['calls'] == 1 and len(seen) == 1
     assert 'game_actions' not in (tmp_path / 'probe' / 'probe.json').read_text()
+    attached = seen[0]['messages'][1]['content'][-1]['image_url']['url']
+    pixels = base64.b64decode(attached.split(',', 1)[1])
+    assert pixels == inference_png(Image.open(image), cfg.view_scale)
+    assert Image.open(BytesIO(pixels)).size == (96, 96)
+    assert Image.open(image).size == (32, 32)
+
+
+@pytest.mark.parametrize('failure', ['timeout', 'json', 'interrupt'])
+def test_failed_probe_retains_accounting(tmp_path, failure):
+    image = tmp_path / 'i.png'
+    Image.new('RGB', (16, 16)).save(image)
+    cfg = GameConfig(endpoints={'main': Endpoint(model='mock', base_url='https://example.test/v1',
+        billing='metered', input_per_million=1, output_per_million=2)})
+    def handle(request):
+        if failure == 'timeout':
+            raise httpx.ReadTimeout('secret', request=request)
+        if failure == 'interrupt':
+            raise KeyboardInterrupt()
+        return httpx.Response(200, json={'choices': [{'message': {'content': 'bad'}}]})
+    with pytest.raises((RuntimeError, KeyboardInterrupt)):
+        probe(cfg, image, tmp_path / 'probe', role='act', allow_network=True,
+              allow_paid=True, transport=httpx.MockTransport(handle))
+    record = json.loads((tmp_path / 'probe/probe.json').read_text())
+    assert record['status'] == 'failed' and record['actuation'] is False
+    assert record['accounting']['calls'] == 1
+    assert record['accounting']['unknown_charge_calls'] == 1
+    assert record['accounting']['outstanding_reserved_usd'] == 0.1
+    assert 'secret' not in json.dumps(record)
+
+
+def test_probe_close_failure_still_closes_store(tmp_path, monkeypatch):
+    from streambudget.interactive import qualification
+    image = tmp_path / 'i.png'
+    Image.new('RGB', (16, 16)).save(image)
+    cfg = GameConfig(endpoints={'main': Endpoint(model='mock')})
+    closed = []
+    original = qualification.EvidenceStore.close
+    def close_store(self):
+        closed.append(True)
+        original(self)
+    def close_backend(self):
+        raise RuntimeError('close failed')
+    monkeypatch.setattr(qualification.EvidenceStore, 'close', close_store)
+    monkeypatch.setattr(qualification.ChatBackend, 'close', close_backend)
+    transport = httpx.MockTransport(lambda r: httpx.Response(200, json={
+        'choices': [{'message': {'content': '{"action_id":"WAIT"}'}}]}))
+    with pytest.raises(RuntimeError, match='close failed'):
+        probe(cfg, image, tmp_path / 'probe', role='act', allow_network=True, transport=transport)
+    assert closed == [True]
 
 def test_probe_requires_network_opt_in(tmp_path):
     image = tmp_path / 'i.png'
@@ -106,7 +156,11 @@ def test_actual_loopback_http_game_loop(tmp_path):
         continued = GameRunner(cfg, restored(), tmp_path / 'run', allow_network=True, resume=True).run()
         assert continued['completed_steps'] == 6 and continued['accounting']['calls'] == len(records)
         assert continued['accounting']['reported_tokens']['prompt_tokens'] == 100 * len(records)
-        assert 'loopback-fixture' in make_report(tmp_path / 'run').read_text()
+        report = make_report(tmp_path / 'run').read_text()
+        assert 'loopback-fixture' in report
+        assert 'SYNTHETIC ENVIRONMENT - chat endpoint' in report
+        metrics = run_metrics(tmp_path / 'run')
+        assert metrics['backend'] == 'chat' and metrics['fixture'] is True
     finally:
         server.shutdown()
         server.server_close()
@@ -117,6 +171,21 @@ def test_cli_doctor_never_calls_network(capsys):
     assert main(['doctor']) == 0
     result = json.loads(capsys.readouterr().out)
     assert result['network_called'] is False
+    assert result['request_configuration_ready'] is False
+
+
+@pytest.mark.parametrize('has_key', [False, True])
+def test_doctor_checks_key_presence_without_disclosure(capsys, monkeypatch, has_key):
+    from streambudget.interactive import cli
+    cfg = GameConfig(endpoints={'main': Endpoint(model='mock', api_key_env='TEST_PIXEL_KEY')})
+    monkeypatch.setattr(cli, 'load_config', lambda p: cfg)
+    monkeypatch.delenv('TEST_PIXEL_KEY', raising=False)
+    if has_key:
+        monkeypatch.setenv('TEST_PIXEL_KEY', 'do-not-disclose')
+    assert cli.main(['doctor']) == 0
+    raw = capsys.readouterr().out
+    assert 'do-not-disclose' not in raw
+    assert json.loads(raw)['request_configuration_ready'] == has_key
 
 def test_cli_manual_is_operator_only(tmp_path, monkeypatch):
     from streambudget.interactive import cli

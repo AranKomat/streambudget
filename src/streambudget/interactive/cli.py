@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import importlib.metadata
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -89,9 +90,18 @@ def run(args):
                     versions[pkg] = importlib.metadata.version(pkg)
                 except importlib.metadata.PackageNotFoundError:
                     versions[pkg] = "not installed"
+            issues = []
+            if cfg.backend != "chat":
+                issues.append("Fixture backend is not a real model route")
+            for name, endpoint in cfg.endpoints.items():
+                if endpoint.model.startswith("SET_"):
+                    issues.append(f"{name}: configure an exact model ID")
+                if endpoint.api_key_env and not os.environ.get(endpoint.api_key_env):
+                    issues.append(f"{name}: credential environment variable {endpoint.api_key_env} is unset")
             print(json.dumps({"config_valid": True, "versions": versions, "network_called": False,
                 "model_ids": {k: v.model for k, v in cfg.endpoints.items()},
-                "note": "Dependency check only; no checkpoint or game competence qualification"}, indent=2))
+                "request_configuration_ready": not issues, "request_setup_issues": issues,
+                "note": "Static check only: no ROM, endpoint transport, image grounding, authorization or game competence qualification"}, indent=2))
         elif args.cmd == "demo":
             cfg = GameConfig(backend="fixture", max_steps=args.steps, goal="Cross the toy gate.")
             runner = GameRunner(cfg, FixtureEnvironment(), args.out)

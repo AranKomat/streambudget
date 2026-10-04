@@ -115,6 +115,25 @@ class ActionSpec(Contract):
     release_frames: int = Field(default=4, ge=1, le=24, strict=True)
 
 
+class ProviderPrices(Contract):
+    prompt: float = Field(gt=0)
+    completion: float = Field(gt=0)
+
+
+class OpenRouterRouting(Contract):
+    only: list[str] = Field(min_length=1, max_length=8)
+    allow_fallbacks: Literal[False] = False
+    require_parameters: Literal[True] = True
+    max_price: ProviderPrices
+
+    @field_validator("only")
+    @classmethod
+    def provider_tags(cls, tags):
+        if len(set(tags)) != len(tags) or any(not re.fullmatch(r"[a-z0-9][a-z0-9_/-]{0,95}", t) for t in tags):
+            raise ValueError("Use unique exact OpenRouter provider tags")
+        return tags
+
+
 class Endpoint(Contract):
     base_url: str = "http://127.0.0.1:8000/v1"
     model: str = "SET_EXACT_MODEL_ID"
@@ -130,6 +149,7 @@ class Endpoint(Contract):
     response_format: Literal["json_object", "json_schema", "none"] = "json_object"
     service_tier: Literal["flex", "default"] | None = None
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh", "max"] | None = None
+    openrouter: OpenRouterRouting | None = None
     extra_body: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -151,6 +171,13 @@ class Endpoint(Contract):
             raise ValueError("Service tiers require metered billing and tier-specific configured rates")
         if self.reasoning_effort is not None and "reasoning_effort" in self.extra_body:
             raise ValueError("Configure reasoning_effort once, not in both fields")
+        if self.openrouter is not None:
+            if self.base_url.rstrip("/") != "https://openrouter.ai/api/v1" or self.billing != "metered":
+                raise ValueError("OpenRouter routing requires its HTTPS metered API")
+            if self.token_parameter != "max_tokens" or "reasoning_effort" in self.extra_body:
+                raise ValueError("OpenRouter uses max_tokens and the typed reasoning_effort field")
+            if self.service_tier == "flex" and self.openrouter.only != ["openai/flex"]:
+                raise ValueError("Explicit Flex requires only the openai/flex provider")
         allowed = {"temperature", "top_p", "seed", "reasoning_effort", "chat_template_kwargs"}
         if set(self.extra_body) - allowed:
             raise ValueError("extra_body can only configure decoding/reasoning; not request routing or messages")
