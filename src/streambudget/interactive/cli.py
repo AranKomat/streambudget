@@ -62,6 +62,16 @@ def configure_parser(p):
     q.add_argument("--intent")
     q.add_argument("--allow-network", action="store_true")
     q.add_argument("--allow-paid", action="store_true")
+    q = sub.add_parser("latency", help="Local frozen-screen capture-to-action timing; no selected buttons executed")
+    q.add_argument("--config", type=Path, required=True)
+    q.add_argument("--rom", type=Path, required=True)
+    q.add_argument("--load-state", type=Path)
+    q.add_argument("--boot-frames", type=int, default=1800)
+    q.add_argument("--out", type=Path, required=True)
+    q.add_argument("--count", type=int, default=20)
+    q.add_argument("--warmup", type=int, default=2)
+    q.add_argument("--intent", default="Choose one useful action for the currently visible screen.")
+    q.add_argument("--allow-network", action="store_true")
     for name in ("report", "export"):
         r = sub.add_parser(name)
         r.add_argument("--run", type=Path, required=True)
@@ -183,6 +193,18 @@ def run(args):
             result = probe(load_config(args.config), args.image, args.out, role=args.role,
                            intent=args.intent, allow_network=args.allow_network, allow_paid=args.allow_paid)
             print(json.dumps(result, indent=2))
+        elif args.cmd == "latency":
+            from .qualification import action_latency
+            cfg = load_config(args.config)
+            if not args.allow_network or any(e.billing != "local" for e in cfg.endpoints.values()):
+                raise ContractError("Latency requires local endpoints and --allow-network")
+            env = PyBoyEnvironment(args.rom, load_state=args.load_state, boot_frames=args.boot_frames)
+            try:
+                result = action_latency(cfg, env, args.out, count=args.count, warmup=args.warmup,
+                    intent=args.intent, allow_network=True)
+            finally:
+                env.close()
+            print(json.dumps({k: result[k] for k in ("status", "actuation", "measured", "accounting")}, indent=2))
         elif args.cmd == "run":
             cfg = load_config(args.config)
             if cfg.backend != "chat":

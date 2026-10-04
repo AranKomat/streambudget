@@ -11,7 +11,7 @@ from streambudget.interactive.contracts import ActionChoice, Endpoint, GameConfi
 from streambudget.interactive.fixture import FixtureBackend, FixtureEnvironment
 from streambudget.interactive.locking import RunLock
 from streambudget.interactive.models import ImageInput
-from streambudget.interactive.qualification import probe
+from streambudget.interactive.qualification import action_latency, probe
 from streambudget.interactive.runner import GameRunner, inference_png
 from streambudget.interactive.report import make_report, run_metrics
 from streambudget.types import ContractError
@@ -85,6 +85,57 @@ def test_probe_requires_network_opt_in(tmp_path):
     cfg = GameConfig(endpoints={'main': Endpoint(model='mock-model')})
     with pytest.raises(ContractError):
         probe(cfg, image, tmp_path / 'probe')
+
+
+def test_action_latency_counts_warmup_and_never_executes(tmp_path):
+    class Frozen(FixtureEnvironment):
+        def execute(self, action):
+            pytest.fail('Latency qualification must not dispatch actions')
+    seen = []
+    def handle(request):
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json={'choices': [{'finish_reason': 'stop',
+            'message': {'content': '{"action_id":"WAIT"}'}}]})
+    cfg = GameConfig(endpoints={'main': Endpoint(model='mock')})
+    result = action_latency(cfg, Frozen(), tmp_path / 'latency', count=3, warmup=2,
+        allow_network=True, transport=httpx.MockTransport(handle))
+    assert result['status'] == 'completed' and result['actuation'] is False
+    assert result['accounting']['calls'] == len(seen) == 5
+    assert result['measured']['count'] == 3
+    assert len({s['png_sha256'] for s in result['samples']}) == 1
+    assert [s['phase'] for s in result['samples']] == ['warmup'] * 2 + ['measured'] * 3
+    assert all(s['screenshot_to_usable_action_s'] >= s['capture_s'] >= 0 for s in result['samples'])
+    with pytest.raises(ContractError, match='destination exists'):
+        action_latency(cfg, Frozen(), tmp_path / 'latency', allow_network=True)
+
+
+def test_action_latency_stops_failed_call_without_retry(tmp_path):
+    from streambudget.interactive.models import ModelError
+    calls = []
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(200, json={'choices': [{'message': {'content': '{"action_id":"NOT_ALLOWED"}'}}]})
+    cfg = GameConfig(endpoints={'main': Endpoint(model='mock')})
+    with pytest.raises((ContractError, ModelError)):
+        action_latency(cfg, FixtureEnvironment(), tmp_path / 'latency', count=4,
+            allow_network=True, transport=httpx.MockTransport(handle))
+    record = json.loads((tmp_path / 'latency/latency.json').read_text())
+    assert len(calls) == record['accounting']['calls'] == 1
+    assert record['status'] == 'failed' and record['actuation'] is False
+    assert record['samples'][0]['status'] == 'failed'
+    assert 'measured' not in record
+
+
+def test_action_latency_rejects_paid_network_and_bad_counts_before_calls(tmp_path):
+    local = GameConfig(endpoints={'main': Endpoint(model='mock')})
+    paid = GameConfig(endpoints={'main': Endpoint(model='mock', billing='metered',
+        base_url='https://example.test/v1', input_per_million=1, output_per_million=2)})
+    for cfg, kwargs in [(paid, {'allow_network': True}), (local, {}),
+                        (local, {'allow_network': True, 'count': 101}),
+                        (local, {'allow_network': True, 'warmup': 6})]:
+        with pytest.raises(ContractError):
+            action_latency(cfg, FixtureEnvironment(), tmp_path / 'latency', **kwargs)
+        assert not (tmp_path / 'latency').exists()
 
 def test_run_lock_excludes_concurrent_writer(tmp_path):
     with RunLock(tmp_path / 'lock'):

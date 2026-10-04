@@ -1,5 +1,5 @@
 # One self-hosted Qwen checkpoint, two per-request thinking profiles; no Sol required.
-# Serving/overworld controls are not yet qualified. See docs/INTERACTIVE.md.
+# Local L40S action latency is qualified; full-loop speed/overworld are not. See docs/INTERACTIVE.md.
 source: game
 goal: >-
   Play the game from its current state and make progress toward defeating its

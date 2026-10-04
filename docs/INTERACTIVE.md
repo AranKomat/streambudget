@@ -14,8 +14,8 @@ demo is Pokemon Red/Blue progression from a fresh game toward Brock, then Misty.
 No native gameplay success is established yet.
 
 Current owner direction: Qwen for System 1, and Qwen may also serve System 2.
-The owner already screened the candidates through OpenRouter's web interface;
-do not repeat hosted comparisons. Self-hosting/cache measurements are the next
+The owner screened hosted Qwen variants through OpenRouter's web interface, but
+has not tested this 27B checkpoint. Do not repeat hosted comparisons. Self-hosting/cache measurements are the next
 serving task, not more Sol calls. Sol remains optional reference/fallback only.
 
 Use a sufficiently capable available VLM, not necessarily a tiny one. Extraction,
@@ -179,8 +179,9 @@ at the same loopback URL: `fast` serves extraction/actions with thinking disable
 These are request profiles, not separate resident models. The author's thinking/
 non-thinking sampling parameters are explicit, with seed 0 for this trial profile.
 The actor remains one categorical ID with strict local validation, not generated code.
-Native serving has not run yet; the owner supplied hosted model selection evidence,
-not a measured self-hosted speed or identical-checkpoint quality guarantee.
+The first serving qualification uses one L40S and the same host's CPU PyBoy,
+avoiding internet screenshot transfer. The owner supplied hosted selection evidence
+for other Qwen variants, not a 27B quality or speed guarantee.
 
 Official metadata/cards and vLLM recipe inspected on 2026-10-04 (metadata only;
 no weights downloaded to this Mac):
@@ -188,7 +189,7 @@ no weights downloaded to this Mac):
 | Checkpoint | Pinned Revision | Published Weight Files | Deployment Implication |
 |---|---|---:|---|
 | Qwen3.8-27B | `1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0` | 55.56 GB / 51.75 GiB | BF16 weights alone exceed 2x24 GiB |
-| Qwen3.8-27B-FP8 | `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a` | 30.87 GB / 28.75 GiB | Plausible on 2x4090 with short context; not yet runtime-qualified |
+| Qwen3.8-27B-FP8 | `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a` | 30.87 GB / 28.75 GiB | One L40S loaded the weights using 28.51 GiB; serving qualification below |
 | Qwen3.8-Flash-Next | `de4b8e4d43b917e7706784d8bb445c9af86a3540` | 360.00 GB / 335.28 GiB | Not a fully GPU-resident 2x4090 deployment |
 
 The FP8 checkpoint is mixed precision: roughly 24.70B FP8 and 3.08B BF16
@@ -202,22 +203,25 @@ the provider's production variant, not an immutable Flash-Next snapshot guarante
 
 Use the existing launcher on the **GPU host**, not this Mac. Pin the installed
 vLLM/Transformers/CUDA/driver versions in the run receipt before launch. This is
-a bounded starting configuration, not a claim these flags/this model fit or are
-optimal on an untested host; do not add MTP, 262k context or CPU offload by default.
+a bounded starting configuration for one L40S; do not add MTP, 262k context or CPU
+offload by default. The PyTorch Vast template is sufficient: use an isolated Python
+environment, not Docker-in-Docker, and do not modify the host driver. First deployment
+pins vLLM 0.23.0+cu129, torch 2.11.0+cu129 and Transformers 5.10.4; driver 575.57.08.
 
 ```bash
 MODEL_ID=Qwen/Qwen3.8-27B-FP8 \
 MODEL_REVISION=017b9c7af6b5689d5dd426a76e0bc077eb5ca20a \
 bash scripts/serve_vllm.sh \
   --served-model-name Qwen/Qwen3.8-27B-FP8 \
-  --tensor-parallel-size 2 --max-model-len 8192 --max-num-seqs 2 \
+  --tensor-parallel-size 1 --max-model-len 8192 --max-num-seqs 2 \
   --gpu-memory-utilization 0.90 --reasoning-parser qwen3 \
-  --enable-prefix-caching --mm-processor-cache-gb 2 \
-  --limit-mm-per-prompt '{"image":3}'
+  --no-enable-prefix-caching --mm-processor-cache-gb 2 \
+  --limit-mm-per-prompt '{"image":3}' \
+  --mm-processor-kwargs '{"max_pixels":262144}'
 ```
 
-Bind only to loopback and SSH-tunnel it. Pokemon/PyBoy remains CPU-only on this Mac;
-the two GPUs are for the model, not one simulation GPU plus one model GPU. Start
+Bind only to loopback and SSH-tunnel it for remote diagnostics. Pokemon/PyBoy is
+CPU-only and now runs on the inference host; no simulation GPU is required. Start
 with one agent/episode, not another batch-capacity project. The reduced 16k-character/
 three-image client caps are not an exact 8k token guarantee; overlength requests
 must fail explicitly rather than dropping essential task/schema/source evidence.
@@ -227,8 +231,82 @@ or prefill/vision work. Prefix caching still recomputes changed tails; roles, sc
 thinking profiles and images can change cache keys. Processor caching is not proof
 of GPU vision-encoder reuse. Measure cache hits/TTFT and end-to-end p50/p95 latency
 on repeated and changed frames; never infer KV reuse just from faster HTTP or
-report client wall time as GPU time. Dense-role fusion/text reuse can wait for those
-measurements. No serving or cache-speed claim has been established yet.
+report client wall time as GPU time. The engine warns that hybrid/Mamba prefix
+caching is experimental and that some L40S FP8 shapes lack tuned kernel configs.
+Neither warning alone establishes a failure or a speed gain. Dense-role fusion/text
+reuse can wait for measurements.
+
+The latency acceptance target is **under one second from capture to validated usable
+action**, not merely first-token latency. Use the local-only, non-actuating command:
+
+```bash
+streambudget game latency --config configs/interactive/pokemon-local.yaml \
+  --rom /private/owned.gb --boot-frames 1800 --count 20 --warmup 2 \
+  --out runs/latency-title-001 --allow-network
+```
+
+It times capture, image/evidence preparation and a validated categorical action;
+all warmup calls remain accounted for. The emulator does not advance and selected
+buttons are never dispatched, so this is a cache-friendly frozen-screen condition,
+not a full extractor/planner/actor cycle or autonomous success. Failed requests stop
+without retry and retain their ledger. Use fresh paths for separately labelled
+conditions, then check a short native loop with changing observations. Record warm
+p50/p95, the fraction below one second and failures. Short output does not imply
+short prefill, vision or reasoning time; speculation is not the first optimization.
+
+### First L40S Measurements
+
+One L40S (46,068 MiB usable), host-local CPU PyBoy, native Red pixels, FP8 and
+non-thinking categorical actions. No hosted API calls or additional models.
+The initial server used prefix caching, 8k context, two sequence slots and the
+launch limits above. Startup compilation/warmup is separate from these measurements.
+
+| Condition | Measured Calls | Warm p50 | Warm p95 | Under 1 s |
+|---|---:|---:|---:|---:|
+| Frozen title screen, capture through validated action | 20 + 2 accounted warmups | 0.516 s | 0.517 s | 20/20 |
+| Frozen opening dialogue, same action interface | 20 + 2 accounted warmups | 0.506 s | 0.507 s | 20/20 |
+| Frozen title, prefix caching disabled | 20 + 2 accounted warmups | 0.666 s | 0.668 s | 20/20 |
+
+These are repeated-image conditions with empty world context; every result was
+`A`, but no benchmark-selected button was executed. The first title request took
+4.528 s and remains recorded as warmup. Server metrics for its 22 requests reported
+16,464 / 28,644 prefix-token hits (57.5%); the usage API did not report cached-token
+details. Do not interpret the ledger's zero cached-token sum as proof of zero reuse.
+The server reserved about 41,219 MiB overall, including caches/workspaces, not just
+the 28.51 GiB loaded weights. Small auxiliary models are not yet loaded or qualified.
+
+A separately labelled **three-step native full-loop trial** started from the
+operator-prepared opening-dialogue checkpoint, not a fresh autonomous game. It
+completed seven calls and three `A` actions, advancing 84 emulated frames in
+128.197 wall seconds. Reviewed source pixels moved from the welcome dialogue to
+the professor introducing his name. This is opening-dialogue progress only, not
+overworld, gym, or independent task-success qualification.
+
+- Actor HTTP/validation time on changing observations: 0.677, 0.804, 0.995 s;
+  these exclude capture/preparation and are not a full-loop sub-second guarantee.
+- Extraction: 43.060, 22.691, 49.497 s for 787, 414, 908 output tokens.
+- One thinking planner call: 10.125 s, 180 reported completion tokens.
+- No failed/pending requests or uncertain action dispatches; three source images
+  changed, but pixel change alone is not a semantic effect certificate.
+
+Conclusion: small categorical output is fast enough in these warm conditions;
+the current synchronous rich extraction is **not** a sub-second decision path.
+Compact/delta extraction and a slower selective memory refresh are candidates,
+not implemented optimizations or matched quality gains. Do not buy a larger GPU,
+switch engines, or expand the ontology merely to address lengthy extraction output.
+The no-prefix condition used the same checkpoint, image, sampler, context and output
+interface after a separate server restart; it also returned `A` for every request.
+It remained sub-second without cross-request KV reuse, so the running service and
+recommended launch now disable experimental prefix caching. CPU multimodal processor
+caching remains enabled; this is not an entirely cache-free vision path. There were
+73 accounted local model calls across the three benchmarks and native loop, no paid
+API requests, and no request failures/retries. Startup included a readiness timeout
+while compilation progressed; no model request was submitted by that health check.
+Only one request was active at a time; `max_num_seqs=2` is an admission ceiling.
+Changing-observation full-loop sub-second behavior, larger contexts, cache correctness,
+tail latency under System 2 contention and sustained gameplay remain unqualified.
+Raw receipts, native PNGs and state checkpoints stay under ignored
+`runs/pixel-l40s-*`; only these aggregate results and code are public.
 
 Sources:
 - https://huggingface.co/Qwen/Qwen3.8-27B

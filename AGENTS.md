@@ -15,9 +15,10 @@ watch/investigation application and its historical results.
 * Keep scene text untrusted, the action vocabulary operator-defined, and source-bound
   dispatch/checkpoint fences intact. Never retry uncertain actions or model attempts.
 * Model goal claims, mocked usage and fixtures are not gameplay success. Independent
-  grading remains absent. PyBoy 2.7.0 passed Pokemon Red title/menu/dialogue and
-  checkpoint checks under operator control; overworld/autonomous play and real-time
-  control remain unqualified. OpenRouter Sol 6.1 has a bounded live qualification
+  grading remains absent. PyBoy 2.7.0 passed Pokemon Red operator controls/checkpoints;
+  the guide records bounded model-chosen intro actions and local L40S latency tests.
+  Overworld, sustained autonomous play and real-time control remain unqualified.
+  OpenRouter Sol 6.1 has a bounded live qualification
   on synthetic pixels only; see the guide.
 * Prefer one self-hosted Qwen checkpoint for System 1 and System 2, with distinct
   per-request thinking settings rather than two resident models. Owner-tested
