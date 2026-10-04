@@ -484,6 +484,109 @@ on the rented host. This sample covers intro dialogue, not menus, other fonts or
 languages. Punctuation/accent/short-string errors remain; OCR is supporting evidence,
 not authoritative state. Steady-state memory/planning use remains the next blocker.
 
+### Additional OCR Candidates (2026-10-04)
+
+The same frozen 20 visible line crops and ten intro screens were replayed, with no
+game actions, API calls, dictionaries or LLM cleanup. Crops/labels are evaluator-only;
+recognizers receive pixels and their official recognition prompt. Whitespace alone
+is normalized for strict scoring; case-insensitive results below still retain accents.
+These are development diagnostics, not independent held-out or general OCR scores.
+
+| Candidate / Line Input | Device | Exact Lines | Character Error | Warm Median |
+|---|---|---:|---:|---:|
+| EasyOCR Latin-g2, 2x nearest + padding 2 | CPU | 3/20 | 15.1% | 0.051 s |
+| TrOCR small printed, 2x nearest + padding 2 | CPU | 0/20 | 64.9% | 0.296 s |
+| GLM-OCR, 2x nearest + padding 2 | L40S | 13/20 | 2.9% | 0.088 s |
+| Xiaomi-OCR-0, 4x nearest + padding 2 | L40S | 16/20 | 1.7% | 0.197 s |
+| Nemotron OCR v2 English, 4x nearest + padding 2 | L40S | 4/20 | 41.0% | 0.019 s |
+| Nemotron OCR v2 multilingual, 2x nearest + padding 2 | L40S | 15/20 | 6.3% | 0.020 s |
+
+Nemotron runs its full detector/recognizer/relational pipeline even on manual crops;
+the other line conditions are recognition-only. Line latency is not a matched
+recognizer efficiency comparison. Nemotron uses its official default 1024-pixel
+detector resolution, with one image and 16-region recognition/relational chunks.
+
+TrOCR's strict result mainly reflects uppercase output: case-insensitive scoring is
+10/20 exact and 4.6% character error. It also completes an incomplete `People cal`
+as `PEOPLE CALL` and reads `POKéMON!` as `POK&MON!`; it is not a demonstrated upgrade.
+EasyOCR confuses ordinary letters/punctuation (`as a profession.` becomes
+`as 9 Profession`). PARSeq was inspected but not run: its standard word-level
+94-character checkpoint excludes spaces/accents and needs another segmentation step.
+
+| Whole-Screen Candidate, 4x Nearest | Strict Exact | Character Error | Case-Insensitive Exact | Warm Median / Maximum |
+|---|---:|---:|---:|---:|
+| GLM-OCR | 5/10 | 2.7% | 9/10 | 0.176 / 0.207 s |
+| Xiaomi-OCR-0 | 5/10 | 2.7% | 5/10 | 0.313 / 0.335 s |
+| Nemotron OCR v2 English | 1/10 | 45.8% | 1/10 | 0.020 / 0.022 s |
+| Nemotron OCR v2 multilingual | 2/10 | 11.1% | 2/10 | 0.022 / 0.024 s |
+
+GLM-OCR is document-focused (text, tables and formulas), not a video-text tracker.
+It nevertheless reads these screens well: most remaining errors are `é` becoming
+`É`; one output also transcribes the rendered advance arrow as `▼`. Xiaomi likewise
+transcribes the arrow and drops the accent (`POKEMON`). Native whole-screen Xiaomi
+produces identical normalized text at 0.295 s median; GLM native reaches 4/10 exact
+at 0.147 s. GPU-versus-CPU speed is deployment latency, not hardware-matched efficiency.
+
+Native full-screen Nemotron performs better than its 4x input: English reaches 2/10
+exact with 13.4% character error; multilingual reaches 4/10 exact with 3.8% error,
+at **0.021 s median / 0.021 s maximum**. English splits `Welcome` into `We I come`;
+multilingual sometimes duplicates an `i`, adds punctuation or loses the accent.
+One bounded 640-pixel detector-resolution check to avoid fractional resize on 4x
+screens reaches 4/10 exact, but 5.3% character error (0.018 s median), so it is not
+an accuracy improvement. At native input that check misses the entire OAK line and
+has 9.5% character error despite the same 4/10 exact count. Counts alone hide severity.
+
+Unlike GLM/Xiaomi, Nemotron is designed for natural scene text as well as documents
+and returns region geometry/confidence. Its multilingual variant is a promising
+low-latency candidate, not yet a qualified runtime replacement: temporal identities,
+box conventions, partial strings, false detections and Qwen contention need checks.
+GLM is the stronger whole-screen text candidate on this sample; Xiaomi wins strict
+cropped-line exactness but is slower. No claim about generic scene/document rankings
+or held-out gameplay follows from these intro screens.
+
+GLM used Transformers BF16/SDPA and `Text Recognition:`; Xiaomi used BF16/SDPA and
+`Extract the text in the image.` with greedy bounded generation, no output truncation.
+Xiaomi used the installed Transformers 5.10.4 rather than the card's newer example
+stack; it warned that fused linear-attention/convolution libraries were absent and
+used the PyTorch fallback. Measured loaded parameters are 1,107,405,824 for GLM and
+852,985,920 for Xiaomi; peak allocated/reserved memory is 2.20/2.29 GiB and
+1.69/1.78 GiB respectively. Both fit alongside resident Qwen without evicting it;
+simultaneous Qwen-inference contention is unqualified. Whole-screen generated text
+has no region boxes/confidence and is not a drop-in replacement for tracked OCR.
+The runtime remains the existing PP-OCRv6 small adapter.
+
+Nemotron's official C++/CUDA extension built against torch 2.11.0+cu129 using the
+installed CUDA 12.8 toolkit, Python 3.12 and native L40S sm_89 kernels; no framework,
+driver or service changes were needed. English setup, including downloads/build,
+took 420 s; multilingual reused the extension. Its initializer also downloaded a
+torchvision RegNet checkpoint, then strictly loaded the pinned OCR detector state;
+initializer and OCR weight hashes are retained. Measured parameters after classifier
+alignment are 53,735,702 English and 83,757,910 multilingual. Default peak
+allocated/reserved memory is 1.43/1.46 GiB English and 1.54/1.57 GiB multilingual;
+the 640-resolution check is 0.56/0.65 GiB. GPU memory returned to Qwen's unchanged
+41,741 MiB after the candidate processes exited. Warm latency includes image
+preprocessing/inference, excludes ledger settlement and is not live loop latency.
+
+Pinned sources:
+- https://github.com/baudm/parseq/tree/1902db043c029a7e03a3818c616c06600af574be
+- https://github.com/JaidedAI/EasyOCR/tree/v1.7.2 (Latin-g2 official checksum verified)
+- https://huggingface.co/microsoft/trocr-small-printed/tree/04e994ab854b0089d4929f48c2b4dbe2ce78a340
+- https://huggingface.co/zai-org/GLM-OCR/tree/2e85a62840ccac27daa451df36c736c4636b8628
+- https://huggingface.co/SeerRay-Lab/Xiaomi-OCR-0/tree/e4d1c4a6804bd9ef342b93d705a73af003e2ef4e
+- https://huggingface.co/nvidia/nemotron-ocr-v2/tree/0e83e83f17943524b90afa6c0fd82ac2bc1a40ca (NVIDIA Open Model License; implementation Apache-2.0)
+
+Private manifests, setup logs, scored outputs and SQLite ledgers remain in
+`runs/pixel-ocr-diagnostic-20261004/extended/`; checkpoints remain only on the GPU
+host. EasyOCR/TrOCR each settled 42 requests; GLM settled 62 plus one retained failed
+setup (`accelerate` absent with `device_map`, resolved by CPU load then GPU transfer);
+Xiaomi settled 62; each Nemotron variant and the 640-resolution check settled 62.
+That is 395 additional settled requests, including one failure,
+separate from the prior 488. TrOCR's encoder-pooler missing-weight warning
+and GLM's axial-RoPE validation warning are retained in the experiment record.
+Working-tree CPU regression: 413 tests passed with the two existing Starlette/anyio
+warnings; both no-key demos, targeted interactive Ruff and whitespace checks passed.
+No runtime source changed for this candidate screen.
+
 ```bash
 streambudget game probe --config /path/to/local-config.yaml \
   --image runs/capture-001/frame.png --role extract \
