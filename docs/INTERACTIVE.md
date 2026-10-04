@@ -540,7 +540,7 @@ Unlike GLM/Xiaomi, Nemotron is designed for natural scene text as well as docume
 and returns region geometry/confidence. Its multilingual variant is a promising
 low-latency candidate, not yet a qualified runtime replacement: temporal identities,
 box conventions, partial strings, false detections and Qwen contention need checks.
-GLM is the stronger whole-screen text candidate on this sample; Xiaomi wins strict
+Among these candidates GLM is the stronger whole-screen text candidate; Xiaomi wins strict
 cropped-line exactness but is slower. No claim about generic scene/document rankings
 or held-out gameplay follows from these intro screens.
 
@@ -586,6 +586,74 @@ and GLM's axial-RoPE validation warning are retained in the experiment record.
 Working-tree CPU regression: 413 tests passed with the two existing Starlette/anyio
 warnings; both no-key demos, targeted interactive Ruff and whitespace checks passed.
 No runtime source changed for this candidate screen.
+
+#### HunyuanOCR-1.5 Follow-Up
+
+The linked `tencent/HunyuanOCR` repository now hosts **1.5 at the root**, not the
+archived 1.0. Tested revision: `47644ecc4fc854efa4f505155158831f36773ee4`.
+Transformers 5.13.0 was installed without dependencies into a candidate-only package
+directory and prepended only in the test process; Qwen retains Transformers 5.10.4,
+torch 2.11.0+cu129 and its existing service. No vLLM upgrade, CUDA 13 installation,
+DFlash draft, archived weights, driver change or remote-code loading was needed.
+
+The first generic SDPA/torchvision path completed but was **unqualified**: 0/10 exact
+at native and 4x input, mostly unrelated text, and a warning that torchvision 0.26
+substituted bicubic for the configured Lanczos resize. The corrected official-style
+path uses the PIL processor, empty system message, explicit template/text/image
+processing, BF16 and greedy decoding with repetition penalty 1.08. Its prompt asks
+to extract image text (the card's Chinese transcription prompt), not document parsing.
+No cleanup, dictionary, prediction labels or game context enter inference.
+
+| Hunyuan 1.5 / PIL Condition | Exact Screens | Character Error | Warm Median / Maximum |
+|---|---:|---:|---:|
+| Native 160x144, eager attention | **8/10** | **1.5%** | 0.253 / 0.325 s |
+| Native 160x144, SDPA | **8/10** | **1.5%** | 0.216 / 0.278 s |
+| 4x nearest, eager attention | 3/10 | 19.1% | 0.298 / 0.339 s |
+| 4x nearest, SDPA | 4/10 | 17.9% | 0.231 / 0.267 s |
+
+Both native conditions produce identical normalized text. All words/case/accents
+match: the two exact-match failures are the rendered advance arrows transcribed as
+`▼`, excluded by the dialogue-only evaluator labels. Both also transcribe a generated
+ordinary-font printed control exactly. Native input is still internally resized by
+the model processor; do not interpret this as inference without resizing. The first
+bad condition changed multiple processing/wrapping settings, so its failure cannot
+be attributed solely to SDPA or solely to the interpolation fallback. The follow-up
+holds the PIL path fixed and establishes that SDPA works for these native screens.
+
+Narrow line crops are not ready for a direct plain-text adapter: eager/PIL reaches
+only 1/20 strict exact at 2x (84.1% character error), mainly because it adds a Chinese
+"text in the image is:" preamble to 18 outputs. A separately labeled post-hoc fixed
+preamble removal reaches 16/20 exact, but still 8.8% character error; the remaining
+errors include spacing, lost punctuation, and a single `I` represented as a LaTeX
+boxed Roman numeral. At 4x all 20 crops have the preamble (0/20 raw exact; 16/20 after
+fixed removal). These are formatting diagnostics, not silently corrected benchmark
+scores or a runtime parser. Full-screen 4x also introduces casing/spacing/preamble
+errors. The pixel-font native whole-screen result does not qualify menus/other fonts.
+
+Measured loaded parameters: 996,208,112. Peak allocated/reserved memory is
+2.22/2.64 GiB eager and 1.97/2.11 GiB SDPA. Both fit alongside Qwen; after all tests
+GPU use returned to the unchanged 41,741 MiB. Concurrent Qwen inference, actual
+asynchronous loop latency and region tracking remain unqualified. This tested plain
+transcription mode provides no geometry/confidence; the model's text-spotting modes
+were not tested. Hunyuan is now the strongest strict native whole-screen text result
+in this small development sample, while Nemotron multilingual remains much faster.
+The runtime has not switched from PP-OCRv6 small.
+
+Private runs `hunyuan`, `hunyuan002` and `hunyuan003` retain 62, 63 and 23 settled
+requests respectively (148 additional, no API calls or emulator actions), including
+both printed controls, all bad outputs and setup/package manifests. That brings the
+extended diagnostic to 543 settled requests (one earlier setup failure), separate
+from the initial 488. The 128-token generation cap was not reached. Weights stay on
+the Japan GPU host; only receipts/scripts/control images are backed up on the Mac.
+
+License is **Tencent Hunyuan Community**, not MIT/Apache: its terms exclude the EU,
+UK and South Korea and restrict using outputs to improve other AI models. The Japan
+evaluation does not establish permission for a worldwide product or weight redistribution.
+Official references:
+- https://huggingface.co/tencent/HunyuanOCR/tree/47644ecc4fc854efa4f505155158831f36773ee4
+- https://huggingface.co/tencent/HunyuanOCR/blob/47644ecc4fc854efa4f505155158831f36773ee4/LICENSE
+- https://github.com/Tencent-Hunyuan/HunyuanOCR/blob/1ef4179e53cf860f7e6fd8276a292e5d05b3e927/inference/transformers/infer_hf_8gpu.py
+- https://github.com/Tencent-Hunyuan/HunyuanOCR/blob/1ef4179e53cf860f7e6fd8276a292e5d05b3e927/docs/inference/archive/transformers.md
 
 ```bash
 streambudget game probe --config /path/to/local-config.yaml \
