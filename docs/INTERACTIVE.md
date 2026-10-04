@@ -347,7 +347,8 @@ newer episode. These conservative checks can discard useful plans and need longe
 qualification. Future visual/semantic applicability checks must not weaken dispatch fences.
 
 OCR uses RapidOCR 3.9.2 / ONNXRuntime 1.24.4, CPU, two intra-op threads, fourfold
-nearest-neighbor scaling. Explicit local ONNX files are required; the runtime does
+nearest-neighbor scaling and a two-native-pixel white border on recognition crops.
+Detection/source boxes are not expanded. Explicit local ONNX files are required; the runtime does
 not provision weights. All weights stay on the rented host. Install `.[ocr]` there
 and set `ocr_config_path` to a host-local parameter YAML, for example:
 
@@ -435,6 +436,53 @@ Official OCR sources:
 - https://github.com/RapidAI/RapidOCR/tree/v3.9.2/python/rapidocr
 - https://github.com/RapidAI/RapidOCR/blob/v3.9.2/python/rapidocr/default_models.yaml
 - https://github.com/PaddlePaddle/PaddleOCR
+
+### OCR Diagnostic And Correction (2026-10-04)
+
+Frozen-pixel diagnostic: 20 human-transcribed visible line crops, including incomplete
+typewriter strings, and ten full intro screens. Labels/crop coordinates are private
+evaluator inputs only; no labels, game memory, font tables or routes enter control.
+The detector stayed PP-OCRv6 small while recognizers/scaling/padding varied. Exact
+match below normalizes whitespace only; character error preserves case and accents.
+These are best settings selected on this small development sample, not held-out accuracy.
+
+| Recognition-Only Condition | Exact Lines | Character Error | Warm Median |
+|---|---:|---:|---:|
+| PP-OCRv6 small, 2x nearest, padding 2 | 13/20 | 3.8% | 0.029 s |
+| English PP-OCRv5 mobile, 2x nearest, padding 2 | 10/20 | 7.9% | 0.024 s |
+| Tesseract 5.3.4 English, single-line, 4x bicubic, padding 2 | 11/20 | 6.3% | 0.114 s |
+
+English v5 is not a demonstrated upgrade. Tesseract's whole-frame sparse-text mode
+was faster (about 0.17 s) but produced false sprite/border text and incorrect order;
+it is not integrated or an automatic fallback. Tesseract used Ubuntu's English
+traineddata, with version/hash retained. Its official guidance motivated borders,
+single-line segmentation and rescaling, not a game-specific dictionary:
+- https://tesseract-ocr.github.io/tessdoc/ImproveQuality.html
+- https://github.com/tesseract-ocr/tessdata_fast
+
+The actionable bug was reading order: sorting each box by its top edge placed shorter
+words after words to their right. Geometry-only row ordering reduced full-screen
+character error from **16.4% to 3.8%** without another inference; padded recognition
+reduced it to **3.1%**, with five of ten screens exactly transcribed. Rows use fixed
+anchors to avoid chaining neighboring lines. Individual boxes/identities remain
+separate; no words are merged, spell-corrected or completed by a dictionary. This is
+an upright-row heuristic, not general layout or learned video-text tracking.
+
+Selected runtime remains v6 small with 4x detector input, padded recognition and row
+ordering. The best 2x manual-crop result does not qualify a 2x full-frame detector.
+Three full-screen replay passes reproduced five exact screens per pass; warm median
+**0.502 s**, maximum **0.522 s**, with crop caching cleared throughout. One accounted
+cold full-pipeline warmup is excluded from warm latency. Preprocessing/order now enter
+the OCR fingerprint, so old incompatible OCR checkpoints fail clean resume validation.
+
+Private receipts/scripts/ledgers: `runs/pixel-ocr-diagnostic-20261004/`. All **488**
+local OCR requests settled, including a retained 162-request draft with incorrect
+evaluator frame indexing, excluded from quality comparisons. The corrected pass has
+an explicit lowercase-label revision and whitespace-normalized rescoring of retained
+outputs, not unlogged reruns. No paid calls or emulator actions; weights remain only
+on the rented host. This sample covers intro dialogue, not menus, other fonts or
+languages. Punctuation/accent/short-string errors remain; OCR is supporting evidence,
+not authoritative state. Steady-state memory/planning use remains the next blocker.
 
 ```bash
 streambudget game probe --config /path/to/local-config.yaml \
@@ -604,6 +652,13 @@ holds. Report a success rate only when a common independent success criterion an
 enough repeated episodes exist; do not infer it from one run or a model narrative.
 
 ## Validation
+
+OCR correction on 2026-10-04 adds checks for padded input with unchanged source boxes,
+row ordering without line bridging, distinct cached-region identities, bounded integer
+preprocessing and preprocessing-sensitive checkpoint fingerprints. Validation: 413
+working-tree tests and 331 isolated public-snapshot tests passed; both no-key demos,
+Ruff, compileall and whitespace checks passed. The same two existing Starlette/anyio
+warnings remain. Frozen native replay is an OCR diagnostic, not gameplay success.
 
 Asynchronous integration on 2026-10-04 adds regressions for owner-thread admission,
 in-flight budget enforcement, source-ordered late facts/place/relations/dialogue,

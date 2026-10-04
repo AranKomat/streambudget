@@ -114,6 +114,57 @@ def test_ocr_requires_preprovisioned_weights(tmp_path):
         RapidTextReader(cfg)
 
 
+def test_ocr_row_order_padding_and_source_geometry(tmp_path):
+    from types import SimpleNamespace
+    import numpy as np
+    import yaml
+    from streambudget.interactive.text import RapidTextReader
+    params = {}
+    for role in ('Det', 'Rec', 'Cls'):
+        path = tmp_path / (role + '.onnx')
+        path.write_bytes(b'test-not-real-weights')
+        params[role + '.model_path'] = str(path)
+    cfg = tmp_path / 'ocr.yaml'
+    cfg.write_text(yaml.safe_dump(params))
+    crops = []
+    class Engine:
+        def __call__(self, pixels, *, use_det, use_rec, use_cls):
+            if use_det:
+                return SimpleNamespace(boxes=np.array([
+                    [[0, 16], [10, 16], [10, 26], [0, 26]],
+                    [[20, 0], [30, 0], [30, 10], [20, 10]],
+                    [[0, 2], [10, 2], [10, 8], [0, 8]],
+                ]))
+            crops.append(pixels)
+            return SimpleNamespace(txts=[str(len(crops))], scores=[0.99])
+    reader = RapidTextReader(cfg, scale=1, engine=Engine())
+    observations = reader.read(Image.new('RGB', (40, 30), 'black'), 'source')
+    assert [o.box for o in observations] == [(0, 2/30, 0.25, 8/30),
+        (0.5, 0, 0.75, 10/30), (0, 16/30, 0.25, 26/30)]
+    assert all(o.evidence_id == 'source' for o in observations)
+    assert crops[0].shape == (10, 14, 3)
+    assert np.all(crops[0][:2] == 255) and np.all(crops[0][2:-2, 2:-2] == 0)
+    assert reader.model_id != RapidTextReader(cfg, scale=1, padding=0).model_id
+    assert reader.model_id != RapidTextReader(cfg, scale=2).model_id
+
+
+def test_ocr_row_anchor_does_not_bridge_neighboring_lines():
+    import numpy as np
+    from streambudget.interactive.text import _reading_order
+    quads = [np.array([[x, y], [x+10, y], [x+10, y+10], [x, y+10]])
+        for x, y in [(20, 0), (30, 4), (0, 8)]]
+    ordered = _reading_order(quads)
+    assert [q[0].tolist() for q in ordered] == [[20, 0], [30, 4], [0, 8]]
+
+
+@pytest.mark.parametrize('kwargs', [{'scale': 0}, {'scale': True}, {'scale': 1.5},
+    {'padding': -1}, {'padding': 17}, {'padding': 1.5}])
+def test_ocr_rejects_unbounded_preprocessing(tmp_path, kwargs):
+    from streambudget.interactive.text import RapidTextReader
+    with pytest.raises(ContractError, match='bounded integers'):
+        RapidTextReader(tmp_path / 'unused.yaml', **kwargs)
+
+
 def test_hot_text_context_is_bounded_with_explicit_omissions():
     c = bounded_context(goal='g', intent='i', schema={}, actions=[], world={}, recent=[],
         current_frame_id='f', max_chars=1000,

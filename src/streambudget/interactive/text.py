@@ -157,14 +157,35 @@ def estimate_vertical_scroll(previous: Image.Image, current: Image.Image, max_sh
     return scores[0][1], scores[0][0]
 
 
+def _reading_order(quads):
+    """Order upright text rows without merging boxes or asserting shared identity."""
+    rows = []
+    for quad in sorted(quads, key=lambda q: (float(q[:, 1].min()), float(q[:, 0].min()))):
+        y1, y2 = float(quad[:, 1].min()), float(quad[:, 1].max())
+        match = None
+        for row in rows:
+            a, b = float(row[0][:, 1].min()), float(row[0][:, 1].max())
+            # Compare with a fixed row anchor so successive boxes cannot bridge rows.
+            if abs((a+b)/2 - (y1+y2)/2) <= min(b-a, y2-y1)/2:
+                match = row
+                break
+        if match is None:
+            rows.append([quad])
+        else:
+            match.append(quad)
+    return [quad for row in rows for quad in sorted(row, key=lambda q: float(q[:, 0].min()))]
+
+
 class RapidTextReader:
     """Pinned optional OCR adapter. Explicit local weights; no implicit model downloads.
 
     Recognition caching saves computation, not identity: duplicate crops still return
     separate boxes, which the temporal tracker must associate independently.
     """
-    def __init__(self, config_path, *, scale=4, engine=None):
+    def __init__(self, config_path, *, scale=4, padding=2, engine=None):
         import yaml
+        if type(scale) is not int or not 1 <= scale <= 4 or type(padding) is not int or not 0 <= padding <= 16:
+            raise ContractError("OCR scale/padding must be bounded integers")
         self.path = Path(config_path).resolve()
         self.params = yaml.safe_load(self.path.read_text())
         if not isinstance(self.params, dict):
@@ -180,8 +201,10 @@ class RapidTextReader:
             "EngineConfig.onnxruntime.inter_op_num_threads": 1,
             "Global.log_level": "warning"})
         self.model_id = "rapidocr-3.9.2:" + hashlib.sha256(
-            json.dumps({"weights": self.models, "params": self.params}, sort_keys=True).encode()).hexdigest()[:16]
-        self.scale, self.engine, self.cache = scale, engine, OrderedDict()
+            json.dumps({"weights": self.models, "params": self.params,
+                "preprocessing": {"scale": scale, "padding": padding, "resize": "nearest", "order": "rows-v1"}},
+                sort_keys=True).encode()).hexdigest()[:16]
+        self.scale, self.padding, self.engine, self.cache = scale, padding, engine, OrderedDict()
         self.stats = {"detector_calls": 0, "recognizer_calls": 0, "recognition_cache_hits": 0}
 
     def read(self, image: Image.Image, evidence_id: str):
@@ -204,13 +227,16 @@ class RapidTextReader:
             return observations
         if len(detected.boxes) > 32:
             raise ContractError("OCR region cap exceeded; no silent dropping of text")
-        for quad in sorted(detected.boxes, key=lambda q: (float(q[:, 1].min()), float(q[:, 0].min()))):
+        for quad in _reading_order(detected.boxes):
             x1, y1 = np.floor(quad.min(axis=0)).astype(int)
             x2, y2 = np.ceil(quad.max(axis=0)).astype(int)
             x1, y1, x2, y2 = max(0, x1), max(0, y1), min(im.width, x2), min(im.height, y2)
             if x1 >= x2 or y1 >= y2:
                 continue
             crop = pixels[y1:y2, x1:x2].copy()
+            if self.padding:
+                border = self.padding * self.scale
+                crop = np.pad(crop, ((border, border), (border, border), (0, 0)), constant_values=255)
             key = hashlib.sha256(str(crop.shape).encode() + crop.tobytes()).hexdigest()
             cached = self.cache.get(key)
             if cached and time.monotonic() - cached[0] < 60:
