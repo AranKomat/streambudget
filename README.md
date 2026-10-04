@@ -1,6 +1,40 @@
 # StreamBudget
 
-**API-first, cost-aware, evidence-preserving runtime for continuous video agents.**
+**Evidence-preserving visual state, investigation, and bounded action.**
+
+## Active Project: Pixels To State To Action
+
+The current experiment adds persistent world beliefs and categorical game control to
+StreamBudget's existing evidence/media stores. It is a generic visual runtime, not a
+Pokémon-specific bot. The first intended game is Red/Blue through PyBoy, using rendered
+pixels and buttons only. No RAM, prebuilt map or route script is exposed.
+
+[Interactive Guide](docs/INTERACTIVE.md) is the single specification, progress record,
+validation receipt and next-agent handoff for this work. The original watch/investigation
+application and research history below remain available, not replaced by the supplied ZIP.
+
+```bash
+python -m pip install -e '.[dev]'
+pytest -q
+streambudget game doctor --config configs/interactive/pokemon-local.yaml
+streambudget game demo --out runs/game-demo
+streambudget game background demo --out runs/background-demo
+```
+
+Both demos are original pixel-rule **software fixtures**, not learned-model gameplay.
+New runs can use `game background` for actor-first execution and sparse asynchronous
+memory, with Hunyuan or GLM OCR. The existing runner remains the comparison baseline;
+commands, source/publication-time semantics and GPU qualification limits live in the guide.
+Its report is `runs/game-demo/report.html`. PyBoy 2.7.0 passed a bundled-demo smoke check;
+Pokemon title/menu/dialogue controls and bounded Qwen/OCR probes have been checked;
+sustained autonomous gameplay, cost advantage and badge acquisition remain unverified. Emulation pauses during inference;
+this is not yet real-time streaming action control. Optional emulator dependency:
+`python -m pip install -e '.[gameboy]'`. Supply your own authorized ROM; none is bundled.
+The metered template prepares GPT-6.1 Sol/medium/Flex but requires current rates and
+credentials. `streambudget game metrics` and `compare` provide offline receipts and
+matched-setting checks, not automatic gameplay grading.
+
+## Retained Video Observation And Investigation
 
 This is a working research implementation, not a trained model or a production surveillance product.
 Start with a hosted vision model; later point the same adapter at a compatible vLLM/SGLang endpoint.
@@ -28,6 +62,7 @@ accuracy or evidence that one provider is better than another.
 
 | File | Purpose |
 |---|---|
+| [docs/INTERACTIVE.md](docs/INTERACTIVE.md) | Active pixel-agent specification, status, commands and experiment sequence |
 | [SPEC.md](SPEC.md) | Self-contained product hypothesis, architecture, semantics, implementation scope, evaluation, and references |
 | [HANDOFF.md](HANDOFF.md) | Exact work remaining for a research agent with APIs/GPUs, commands, acceptance gates, and non-negotiable safeguards |
 | [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md) | Implemented vs contract-tested vs not implemented/externally validated |

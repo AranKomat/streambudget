@@ -17,6 +17,8 @@ from .replay import InputEvent, TaskEvent, prepare_video, read_jsonl, replay, wr
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="StreamBudget: API-first continuous perception research runtime")
     sub = p.add_subparsers(dest="command", required=True)
+    from .interactive.cli import configure_parser
+    configure_parser(sub.add_parser("game", help="Pixels-only state/action experiments; no physical hardware"))
     d = sub.add_parser("demo", help="Generate and run a synthetic, no-API integration fixture")
     d.add_argument("--out", type=Path, default=Path("runs/demo"))
     d.add_argument("--policy", choices=["adaptive", "fixed", "motion", "recent_only"], default="adaptive")
@@ -133,12 +135,15 @@ async def transcribe(args):
 
 def main(argv=None):
     args = parser().parse_args(argv)
+    if args.command == "game":
+        from .interactive.cli import run
+        return run(args)
     try:
         if args.command == "demo":
             events, tasks, labels = make_demo(args.out / "input")
             config = load_config()
             config.policy.mode = args.policy
-            data = asyncio.run(replay(events, tasks, config, args.out / "run", timing=args.timing))
+            asyncio.run(replay(events, tasks, config, args.out / "run", timing=args.timing))
             result = score(args.out / "run", labels)
             from .report import render
             result["report"] = str(render(args.out / "run"))
@@ -200,4 +205,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

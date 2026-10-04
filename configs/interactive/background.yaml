@@ -1,0 +1,41 @@
+# Settings for `streambudget game background ...`.
+# The existing --config owns exact Qwen/vLLM endpoint, thinking profiles and button timing.
+# OCR weights must already exist on the GPU host. One reader is loaded per run.
+total_slots: 2
+background_slots: 1
+max_queue: 12
+index_max_tokens: 256
+enrich_max_tokens: 256
+plan_max_tokens: 1024
+actor_max_tokens: 32
+max_fanout: 2
+index_every_actions: 4
+index_min_interval_s: 0.25
+index_refresh_s: 12
+thumbnail_change: 0.08
+scene_change: 0.5
+plan_max_age_frames: 180
+plan_max_age_actions: 6
+intent_max_actions: 12
+require_initial_plan: true
+background_drain_s: 95
+hot_entities: 16
+warm_entities: 128
+volatile_age_frames: 60
+actor_image_history: 2
+semantic_context_chars: 12000
+planner_context_chars: 16000
+actor_context_chars: 10000
+stream_responses: true
+require_returned_model: true
+ocr_backend: hunyuan
+ocr_model_paths:
+  hunyuan: /workspace/streambudget-ocr/hunyuan
+  glm: /workspace/streambudget-ocr/glm
+# Candidate-only Transformers installation; does not change the Qwen server environment.
+ocr_transformers_path: /workspace/streambudget-ocr/hunyuan-transformers-5.13.0
+ocr_device: cuda:0
+ocr_max_tokens: 128
+# Coarse pixel-change thresholds are starting hypotheses, not semantic change guarantees.
+# Increase client concurrency only after same-model actor tail-latency measurements;
+# changing this file does NOT change vLLM max_num_seqs or GPU residency.

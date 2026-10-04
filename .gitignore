@@ -14,3 +14,7 @@ data/
 *.sqlite*
 *.mp4
 *.wav
+*.gb
+*.gbc
+*.gba
+*.state
