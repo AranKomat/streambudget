@@ -1224,6 +1224,21 @@ implied by these software checks.
 
 ## Next Sequence
 
+### Instance Deletion Preparation (2026-10-05)
+
+The owner intends to delete the L40S rental. The complete selected small remote
+source/run snapshot and private setup/checkpoint receipts are saved locally under
+`runs/l40s-retirement-20261005/` (approximately 12 MB, ignored/private).
+Both transfers were checksum-verified. All 33 saved SQLite databases passed integrity
+checks with zero pending calls; the clean native checkpoint database digest matched.
+No experiment jobs were active. No model weights, environments, caches or ROM were
+downloaded. The private backup README records pinned versions and reconstruction
+settings. Source through `544cdcc` was already pushed before retirement preparation.
+No instance stop/delete action was issued by the agent; the owner can delete it.
+Do not assume this SSH endpoint will remain available afterward. A new host needs
+weights redownloaded; changing planner settings requires a labelled new run rather
+than silently resuming the old medium-profile memory checkpoint.
+
 1. Software integrity: both CPU suites, both no-key demos, CLI and installed packaging.
 2. Native controls: title/menu/dialogue/state checked on Red. Qualify overworld
    controls when reached; do not silently treat the manual setup as agent progress.
