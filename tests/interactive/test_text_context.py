@@ -7,6 +7,42 @@ from streambudget.types import ContractError
 def obs(text, box=(0.1, 0.1, 0.8, 0.3), confidence=0.9):
     return TextObservation('surface', box, text, confidence, 'frame')
 
+
+def test_generative_ocr_formatting_preserves_raw_case_accents_and_ui_symbols():
+    from streambudget.interactive.text import GenerativeTextReader
+    prefix = "\u56fe\u7247\u4e2d\u7684\u6587\u672c\u5185\u5bb9\u662f\uff1a"
+    raw = prefix + "\nPOK\u00e9MON!  \u25bc"
+    reading = GenerativeTextReader.format_reading("source", raw, 12, 9)
+    assert reading.raw_text == raw
+    assert reading.text == "POK\u00e9MON! \u25bc"
+    assert reading.formatting_removed
+    plain = GenerativeTextReader.format_reading("source", "WELCOME TO THE", 12, 9)
+    assert plain.text == "WELCOME TO THE" and not plain.formatting_removed
+
+
+def test_generative_ocr_requires_preprovisioned_local_weights(tmp_path):
+    from streambudget.interactive.text import GenerativeTextReader
+    with pytest.raises(ContractError, match="Provision OCR weights"):
+        GenerativeTextReader("hunyuan", tmp_path / "absent")
+
+
+def test_background_cli_and_ocr_selection_require_no_model_imports():
+    import argparse
+    from streambudget.interactive.cli import configure_parser
+    from streambudget.interactive.async_runtime.cli import load_config
+    from streambudget.interactive.async_runtime.contracts import AsyncSettings
+    from pathlib import Path
+    parser = configure_parser(argparse.ArgumentParser())
+    args = parser.parse_args(["background", "doctor", "--config", "configs/interactive/pokemon-local.yaml"])
+    assert args.background_cmd == "doctor"
+    root = Path(__file__).resolve().parents[2]
+    cfg = load_config(root / "configs/interactive/pokemon-local.yaml", root / "configs/interactive/background.yaml")
+    assert cfg.background.ocr_backend == "hunyuan"
+    cfg.background.ocr_backend = "glm"
+    assert cfg.background.ocr_model_paths["glm"].endswith("/glm")
+    with pytest.raises(ValueError, match="local model path"):
+        AsyncSettings(ocr_backend="glm")
+
 def test_stationary_text_recognized_once():
     t = TemporalTextTracker()
     assert t.update([obs('Hello')], 0)[0]['kind'] == 'text_appeared'

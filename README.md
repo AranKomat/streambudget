@@ -18,12 +18,16 @@ python -m pip install -e '.[dev]'
 pytest -q
 streambudget game doctor --config configs/interactive/pokemon-local.yaml
 streambudget game demo --out runs/game-demo
+streambudget game background demo --out runs/background-demo
 ```
 
-The demo is an original pixel-rule **software fixture**, not learned-model gameplay.
+Both demos are original pixel-rule **software fixtures**, not learned-model gameplay.
+New runs can use `game background` for actor-first execution and sparse asynchronous
+memory, with Hunyuan or GLM OCR. The existing runner remains the comparison baseline;
+commands, source/publication-time semantics and GPU qualification limits live in the guide.
 Its report is `runs/game-demo/report.html`. PyBoy 2.7.0 passed a bundled-demo smoke check;
-Pokemon control, real model performance,
-cost advantage and badge acquisition remain unverified. Emulation pauses during inference;
+Pokemon title/menu/dialogue controls and bounded Qwen/OCR probes have been checked;
+sustained autonomous gameplay, cost advantage and badge acquisition remain unverified. Emulation pauses during inference;
 this is not yet real-time streaming action control. Optional emulator dependency:
 `python -m pip install -e '.[gameboy]'`. Supply your own authorized ROM; none is bundled.
 The metered template prepares GPT-6.1 Sol/medium/Flex but requires current rates and

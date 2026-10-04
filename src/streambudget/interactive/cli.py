@@ -25,6 +25,8 @@ def load_config(path: Path | None):
 
 def configure_parser(p):
     sub = p.add_subparsers(dest="cmd", required=True)
+    from .async_runtime.cli import configure_parser as configure_background
+    configure_background(sub.add_parser("background", help="Actor-first execution and asynchronous memory"))
     d = sub.add_parser("doctor", help="Local dependency/config check; never calls a model")
     d.add_argument("--config", type=Path)
     d = sub.add_parser("demo", help="Original software fixture, no ROM/network/model needed")
@@ -95,6 +97,9 @@ def main(argv=None):
 
 
 def run(args):
+    if args.cmd == "background":
+        from .async_runtime.cli import run as run_background
+        return run_background(args)
     try:
         if args.cmd == "doctor":
             cfg = load_config(args.config)

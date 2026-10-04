@@ -15,8 +15,9 @@ No native gameplay success is established yet.
 
 Current owner direction: Qwen for System 1, and Qwen may also serve System 2.
 The owner screened hosted Qwen variants through OpenRouter's web interface, but
-has not tested this 27B checkpoint. Do not repeat hosted comparisons. Self-hosting/cache measurements are the next
-serving task, not more Sol calls. Sol remains optional reference/fallback only.
+has not separately screened this 27B checkpoint. Local L40S Qwen probes and bounded
+intro actions are recorded below. Do not repeat hosted comparisons. New work targets
+actor-first asynchronous memory, not more Sol calls. Sol remains optional reference/fallback only.
 
 Use a sufficiently capable available VLM, not necessarily a tiny one. Extraction,
 planning, action selection and initial schema compilation are operating roles;
@@ -32,11 +33,11 @@ can enter the actor interface. Game-specific goals belong in configuration.
 ## Architecture
 
 ```text
-pixels -> extraction -> shared evidence + world beliefs
-                                    |
-                       selective planning / retrieval
-                                    |
-latest frame + intent + beliefs -> one action ID -> bounded buttons -> new pixels
+latest pixels + intent + committed beliefs -> actor -> bounded buttons -> new pixels
+       |                                  ^
+       +-> sparse index -> enrichment ----+-> shared evidence + temporal memory
+       +-> asynchronous Hunyuan/GLM OCR --+              |
+                                             selective planning / retrieval
 ```
 
 One repository, one package distribution and one CLI: `streambudget game ...`.
@@ -49,13 +50,122 @@ tools in the watch agent/server; no physical hardware controller is exposed.
 | `interactive/contracts.py`, `ontology.py`, `world.py` | Wire contracts, reviewed schema, beliefs and conversations |
 | `interactive/runner.py`, `environment.py`, `locking.py` | Source-bound stepped execution, PyBoy, single-writer ownership |
 | `interactive/models.py`, `prompts.py`, `context.py` | Owner-thread admission/settlement, background HTTP, bounded relevant context |
-| `interactive/text.py` | Optional RapidOCR adapter, recognition cache and temporal text association |
+| `interactive/text.py` | Local Hunyuan/GLM transcription, optional RapidOCR baseline and text association |
+| `interactive/async_runtime/` | Actor-first coordinator, bounded async transport/jobs and publication-aware memory |
 | `interactive/qualification.py`, `report.py`, `fixture.py`, `cli.py` | Probes, reports, explicit test double and commands |
 
-Game actions remain stepped. The local Qwen profile now enables bounded asynchronous
-OCR, semantic memory writes and planning; the synchronous profile remains available
-for matched comparisons. The retained camera scheduler is a separate asynchronous
-application. Reuse storage without forcing both onto one runner/ledger.
+Game actions remain stepped. New trials should use `game background`; the existing
+`game run` path, including its earlier async-perception option, remains a labelled
+comparison baseline. Both share evidence/media, accounting, environment and OCR
+contracts. The retained camera scheduler remains a separate application.
+
+## Actor-First Async Memory
+
+Integrated from the owner's 2026-10-04 update targeting `77e05ef`; reused interfaces
+were reviewed against this checkout rather than overwritten. Source and focused tests
+live inside the existing package. The delivery installer, duplicate handoff/appendix,
+example report and validation copies were not added to the repository. This section
+owns the active direction; earlier experiment receipts below remain historical evidence.
+
+The actor reads current pixels without waiting for a rich scene caption. A sparse
+scene index proposes a few handles; the owner commits/mints canonical IDs before
+forming target-specific enrichment jobs. Index, enrichment and selective planning
+share one background HTTP slot; the actor has admission priority. Defaults are two
+total HTTP requests, one background request, two enrichment targets, and output caps
+of 32 actor / 256 index / 256 enrichment / 1,024 planner tokens. OCR has its own single
+local inference worker, so these HTTP slot counts do not include OCR or reserve GPU
+resources. All role calls, local OCR setup/inference, drops and failures are recorded.
+
+The main loop alone owns SQLite, capture, buttons and publication. Worker requests
+receive frozen inputs, never live database/emulator references. Semantic results have
+both source observation sequence and publication revision: late history can add an
+old name without rewinding newer location, and an earlier decision cannot retrieve
+knowledge that arrived afterward. Conflicting same-source facts stay marked; missing
+delta fields do not imply deletion. Identity remains a supported model belief, not
+certified re-identification.
+
+`tm_*` tables in the shared evidence database support entities/facts/relations,
+events, participant-scoped conversations, observed visits, directed exits/traversals,
+source-linked visual references and hot/warm/cold context selection. Mandatory pins
+and focus cannot silently vanish to meet context limits. Routes require offered
+action evidence; they are historical hints, not motion plans or proof of causality.
+Memory tools use the request's causal cutoff and exposed handles; there is no generated
+SQL, filesystem/URL lookup, hidden map or extra actuator. Schema compilation/evolution
+is disabled in background mode; ordinary facts/instances can accumulate.
+
+An initial valid plan is the default barrier, not rich extraction. Applicable intent
+can persist while a replacement plan runs; scene/place boundaries and age limits
+invalidate it. Complete validated JSON alone can dispatch, after exact source-frame,
+pixel-hash and intent checks. SSE records first token activity, first content and
+validated completion separately. Local/tunneled endpoints only; no hosted fallback
+or retries. Timeout/uncertain termination quarantines dispatch.
+
+### Selected OCR
+
+`configs/interactive/background.yaml` selects **HunyuanOCR 1.5**, native full-screen,
+PIL/SDPA/BF16, with the same plain-transcription prompt as the retained diagnostic.
+Use `--ocr-backend glm` to select **GLM-OCR**, 4x nearest full-screen/BF16/SDPA. Only
+one reader loads per run; both are not kept resident alongside Qwen. Existing weights
+remain in `/workspace/streambudget-ocr/{hunyuan,glm}` on the L40S, never the Mac.
+There are no implicit downloads, server restarts or dependency upgrades. Hunyuan uses
+the preprovisioned candidate-only Transformers 5.13.0 path in the client process;
+GLM keeps the client's existing installation. The Qwen serving process is unchanged.
+
+These plain-transcription modes have **unknown confidence and no region boxes**.
+The bridge represents both as null, does not fabricate detections, and does not assign
+speakers. Whole-screen occurrence IDs are conservative pixel-based bookkeeping, not
+verified dialogue identity; changes elsewhere in a screen can split an occurrence.
+Raw response/case/accents/UI symbols are retained. Only the observed fixed Hunyuan
+preamble is explicitly removed for published text, with a formatting flag; strict
+historical benchmark scores remain unchanged. Token-cap outputs fail and are retained
+without publishing partial readings. No dictionary, LLM repair or reference labels.
+
+Changed frames coalesce behind a single OCR request; cached reads keep their original
+source time. An external host worker can still use `FrameNotice` and `offer_ocr` with
+source-linked typed packets. Empty packets do not imply disappearance. Shutdown drains
+HTTP/OCR before the checkpoint; unresolved local threads prevent clean resume, stay
+accounted, and never write to the closed store. This is not a worker-process supervisor.
+PP/RapidOCR is still available explicitly as a baseline, not the selected new reader.
+Hunyuan's restrictive license remains documented in its diagnostic below.
+
+### Commands And Qualification
+
+```bash
+streambudget game background doctor --config configs/interactive/pokemon-local.yaml \
+  --background-config configs/interactive/background.yaml
+streambudget game background demo --out runs/background-fixture-001
+streambudget game background probe --config configs/interactive/pokemon-local.yaml \
+  --background-config configs/interactive/background.yaml --image /private/retained.png \
+  --mode mixed --count 3 --out runs/background-probe-001 --allow-network
+streambudget game background run --config configs/interactive/pokemon-local.yaml \
+  --background-config configs/interactive/background.yaml --rom /private/owned-red.gb \
+  --load-state /private/qualified.state --out runs/background-native-001 --allow-network
+# Select GLM for a separately labelled new run, without another configuration file:
+# add --ocr-backend glm to the run command.
+streambudget game background report --run runs/background-native-001
+streambudget game background metrics --run runs/background-native-001
+streambudget game background memory --run runs/background-native-001 --kind search --text remembered
+```
+
+Doctor performs static checks, not inference. The frozen-image probe exercises actor
+and index HTTP overlap only, **not local OCR or changing-scene control**. Demo/dummy-SSE
+tests are software fixtures, never VLM/GPU/gameplay results. Background reports and
+read-only memory queries take the existing run lock. Clean resume uses the same run
+path plus `--resume`, verifies source/ROM/checkpoint/database provenance, and allows
+only total-budget changes. Switching OCR/model/settings requires a new labelled run.
+Old runs are not automatically migrated; a supplied environment checkpoint starts
+new memory and must be disclosed.
+
+The supplied 73 focused tests passed against current reused interfaces before local
+OCR integration. Added regressions cover selected backends, raw formatting, null
+geometry/confidence, source mismatch, setup failures, actor/OCR overlap and unresolved
+shutdown. Working-tree integration validation: **495 tests passed**, with the two
+existing Starlette/anyio warnings. The isolated staged-public snapshot passed **413
+tests**, with the same warnings, independently of unrelated local edits. Both retained
+no-key demos and the new background fixture passed; interactive Ruff and Git whitespace
+checks passed. A wheel built and its installed background CLI fixture passed outside
+the checkout. No new
+GPU inference or native gameplay result is implied by this code integration.
 
 ## State And Evidence
 
@@ -553,7 +663,8 @@ used the PyTorch fallback. Measured loaded parameters are 1,107,405,824 for GLM 
 1.69/1.78 GiB respectively. Both fit alongside resident Qwen without evicting it;
 simultaneous Qwen-inference contention is unqualified. Whole-screen generated text
 has no region boxes/confidence and is not a drop-in replacement for tracked OCR.
-The runtime remains the existing PP-OCRv6 small adapter.
+At the time of this diagnostic, the runtime still used the PP-OCRv6 small adapter;
+the actor-first integration above subsequently selected Hunyuan/GLM.
 
 Nemotron's official C++/CUDA extension built against torch 2.11.0+cu129 using the
 installed CUDA 12.8 toolkit, Python 3.12 and native L40S sm_89 kernels; no framework,
@@ -637,7 +748,8 @@ asynchronous loop latency and region tracking remain unqualified. This tested pl
 transcription mode provides no geometry/confidence; the model's text-spotting modes
 were not tested. Hunyuan is now the strongest strict native whole-screen text result
 in this small development sample, while Nemotron multilingual remains much faster.
-The runtime has not switched from PP-OCRv6 small.
+At the time of this diagnostic, the runtime had not switched from PP-OCRv6 small;
+the actor-first integration above subsequently selected Hunyuan/GLM.
 
 Private runs `hunyuan`, `hunyuan002` and `hunyuan003` retain 62, 63 and 23 settled
 requests respectively (148 additional, no API calls or emulator actions), including
@@ -1041,12 +1153,15 @@ implied by these software checks.
    controls when reached; do not silently treat the manual setup as agent progress.
 3. Self-host one Qwen checkpoint: pinned revision/engine receipt, loopback/tunnel,
    bounded context and prefix cache. No repeat hosted model-selection screen.
-4. Qualify the asynchronous loop: inspect source-linked OCR/memory/plan/action results;
-   separate grounding, button timing, JSON, stale context, identity, place memory and intent failures.
+4. Qualify the new actor-first memory path: inspect identities, recurring dialogue,
+   similar rooms, blocked routes and out-of-order completion before speed claims.
+   Then measure actor-only versus mixed HTTP probes and one selected OCR reader on
+   the existing Qwen service; changing-scene tail latency remains unqualified.
 5. Sustained progress: adjacent-target precision, revisits, Brock then Misty. Independent
    source evidence, not the model's progress narrative, establishes success.
 6. Contribution test: matched models, source/control/start state and budgets;
-   `baseline: recent` versus `world`. Recent still has text/history; it is not memoryless.
+   recent context versus retained memory path versus new background memory. Recent
+   still has text/history; it is not memoryless. Do not merge old run schemas automatically.
    Include all failures and measure progress/stalls/calls/images/tokens/wall time/cost.
 7. Optimize measured repetition: extraction/action fusion, text caching, shared packets
    or actual prefix reuse. Do not build ontology/tracking/serving stacks before need.

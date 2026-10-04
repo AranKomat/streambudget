@@ -36,6 +36,161 @@ class TextObservation:
             raise ValueError("Invalid text observation geometry/confidence")
 
 
+@dataclass(frozen=True)
+class TextReading:
+    """Whole-screen transcription; no invented region geometry or confidence."""
+
+    evidence_id: str
+    text: str
+    raw_text: str
+    input_tokens: int
+    generated_tokens: int
+    formatting_removed: bool = False
+
+
+class OCRReadError(ContractError):
+    def __init__(self, message, response):
+        super().__init__(message)
+        self.response = response
+
+
+class GenerativeTextReader:
+    """Local-only Hunyuan/GLM OCR, loaded in the host's single inference worker.
+
+    Never fetches weights or supplies game context. The selected reader alone is
+    resident; optional Transformers isolation is limited to this client process.
+    """
+
+    def __init__(self, backend, model_path, *, device="cuda:0", max_tokens=128, transformers_path=None):
+        if backend not in ("hunyuan", "glm"):
+            raise ContractError("Unsupported generative OCR backend")
+        self.backend, self.path = backend, Path(model_path).resolve()
+        self.device, self.max_tokens = device, max_tokens
+        if not self.path.is_dir() or not (self.path / "config.json").is_file():
+            raise ContractError("Provision OCR weights on the GPU host before running")
+        files = sorted(
+            p
+            for p in self.path.rglob("*")
+            if p.is_file()
+            and ".cache" not in p.parts
+            and p.suffix in (".json", ".jinja", ".model", ".safetensors")
+        )
+        if not any(p.suffix == ".safetensors" for p in files):
+            raise ContractError("Local OCR checkpoint has no safetensors weights")
+        weights = {}
+        for path in files:
+            with path.open("rb") as source:
+                weights[str(path.relative_to(self.path))] = hashlib.file_digest(source, "sha256").hexdigest()
+        self.manifest = {
+            "backend": backend,
+            "weights": weights,
+            "device": device,
+            "max_tokens": max_tokens,
+            "attention": "sdpa",
+            "scale": 1 if backend == "hunyuan" else 4,
+        }
+        if transformers_path:
+            import sys
+
+            library = Path(transformers_path).resolve()
+            if not (library / "transformers" / "__init__.py").is_file():
+                raise ContractError("Configured candidate-only Transformers installation is missing")
+            if "transformers" in sys.modules:
+                loaded = Path(sys.modules["transformers"].__file__).resolve()
+                if not loaded.is_relative_to(library):
+                    raise ContractError("A different Transformers installation is already imported")
+            if str(library) not in sys.path:
+                sys.path.insert(0, str(library))
+        import torch
+        import transformers
+        from transformers import AutoProcessor
+
+        if not torch.cuda.is_available():
+            raise ContractError("Generative OCR requires the explicitly selected CUDA device")
+        self.torch = torch
+        if backend == "hunyuan":
+            from transformers import HunYuanVLForConditionalGeneration
+
+            model_class = HunYuanVLForConditionalGeneration
+        else:
+            from transformers import GlmOcrForConditionalGeneration
+
+            model_class = GlmOcrForConditionalGeneration
+        self.processor = AutoProcessor.from_pretrained(
+            self.path,
+            local_files_only=True,
+            trust_remote_code=False,
+            **({"use_fast": False} if backend == "hunyuan" else {}),
+        )
+        self.model = (
+            model_class.from_pretrained(
+                self.path,
+                local_files_only=True,
+                trust_remote_code=False,
+                dtype=torch.bfloat16,
+                attn_implementation="sdpa",
+            )
+            .to(device)
+            .eval()
+        )
+        self.manifest["packages"] = {"torch": torch.__version__, "transformers": transformers.__version__}
+        self.model_id = (
+            backend
+            + ":"
+            + hashlib.sha256(json.dumps(self.manifest, sort_keys=True).encode()).hexdigest()[:24]
+        )
+
+    def read(self, image, evidence_id):
+        image = image.convert("RGB")
+        if self.backend == "glm":
+            image = image.resize((image.width * 4, image.height * 4), Image.Resampling.NEAREST)
+        prompt = (
+            "\u8bf7\u63d0\u53d6\u56fe\u7247\u4e2d\u7684\u6587\u5b57\u5185\u5bb9\u3002"
+            if self.backend == "hunyuan"
+            else "Text Recognition:"
+        )
+        messages = [
+            {"role": "user", "content": [{"type": "image", "image": image}, {"type": "text", "text": prompt}]}
+        ]
+        if self.backend == "hunyuan":
+            messages.insert(0, {"role": "system", "content": ""})
+            text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            inputs = self.processor(text=[text], images=image, padding=True, return_tensors="pt")
+        else:
+            inputs = self.processor.apply_chat_template(
+                messages, tokenize=True, add_generation_prompt=True, return_dict=True, return_tensors="pt"
+            )
+        inputs = inputs.to(self.model.device)
+        with self.torch.inference_mode():
+            ids = self.model.generate(
+                **inputs,
+                max_new_tokens=self.max_tokens,
+                do_sample=False,
+                repetition_penalty=1.08 if self.backend == "hunyuan" else 1.0,
+            )
+        continuation = ids[:, inputs["input_ids"].shape[1] :]
+        raw = self.processor.batch_decode(continuation, skip_special_tokens=True)[0]
+        reading = self.format_reading(
+            evidence_id, raw, int(inputs["input_ids"].shape[-1]), int(continuation.shape[-1])
+        )
+        if reading.generated_tokens >= self.max_tokens:
+            from dataclasses import asdict
+
+            raise OCRReadError(
+                "OCR completion reached its token cap; no partial reading published", asdict(reading)
+            )
+        return reading
+
+    @staticmethod
+    def format_reading(evidence_id, raw, input_tokens, generated_tokens):
+        prefix = "\u56fe\u7247\u4e2d\u7684\u6587\u672c\u5185\u5bb9\u662f\uff1a"
+        text = raw.strip()
+        removed = text.startswith(prefix)
+        if removed:
+            text = text[len(prefix) :]
+        return TextReading(evidence_id, normalize(text), raw, input_tokens, generated_tokens, removed)
+
+
 @dataclass
 class TextTrack:
     id: str

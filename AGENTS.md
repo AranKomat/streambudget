@@ -24,8 +24,11 @@ watch/investigation application and its historical results.
   per-request thinking settings rather than two resident models. Owner-tested
   hosted Qwen selection need not be repeated. Sol is optional reference/fallback,
   not the required fast path. Download weights only on the chosen GPU host.
-* The local profile enables bounded background semantics/planning. OCR is optional,
-  explicit host-local PP-OCRv6 small ONNX via RapidOCR; files stay off the Mac.
+* Prefer `game background` for new actor-first memory runs; the old runner is the
+  retained comparison baseline. Hunyuan whole-screen OCR is selected in background.yaml;
+  GLM is selectable with --ocr-backend glm. Load only one reader per run, with explicit
+  host-local weights; no weights on the Mac or implicit download. PP/RapidOCR remains
+  an optional baseline. Transcriptions have unknown confidence/geometry, not fake boxes.
   Worker inference never writes SQLite. Keep admission/settlement and source-bound
   projections on the owner thread. Settle pending work before clean checkpoints;
   retain stale/failed interpretations and never rewind live facts by arrival order.

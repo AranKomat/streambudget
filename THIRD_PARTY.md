@@ -25,6 +25,12 @@ Machine-generated captions/OCR on customer data are runtime outputs, not copied 
 `tests/` and `demo.py` generate original synthetic media and answer keys solely for plumbing tests.
 No claimed visual-model accuracy result is derived from those fixtures.
 
+HunyuanOCR and GLM-OCR are optional, operator-provisioned local readers; their weights
+and upstream implementations are not redistributed. Hunyuan's Tencent Hunyuan Community
+license excludes the EU, UK and South Korea and restricts using outputs to improve other
+AI models. The Japan diagnostic is not worldwide product clearance. Model revisions,
+official license sources and qualification receipts remain in `docs/INTERACTIVE.md`.
+
 See `docs/REFERENCES.md` for the official Creative Commons terms and upstream source locations.
 
 The optional `scripts/prepare_footage.py` fetches five openly licensed Wikimedia Commons
