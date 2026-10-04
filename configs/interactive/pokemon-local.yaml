@@ -25,7 +25,7 @@ endpoints:
       chat_template_kwargs: {enable_thinking: false}
   plan:
     <<: *qwen
-    reasoning_effort: low
+    reasoning_effort: none
     extra_body:
       temperature: 1
       top_p: 0.95
@@ -34,7 +34,7 @@ endpoints:
       presence_penalty: 0
       repetition_penalty: 1
       seed: 0
-      chat_template_kwargs: {enable_thinking: true, preserve_thinking: true}
+      chat_template_kwargs: {enable_thinking: false}
 roles: {extract: fast, plan: plan, act: fast, compile: plan}
 role_output_limits: {extract: 4096, plan: 4096, act: 64, compile: 4096}
 max_steps: 10

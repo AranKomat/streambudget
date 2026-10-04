@@ -345,12 +345,25 @@ billing is loopback-only; tunnel self-hosted remote inference.
 
 The existing local YAML selects `Qwen/Qwen3.8-27B-FP8` for both endpoint aliases
 at the same loopback URL: `fast` serves extraction/actions with thinking disabled;
-`plan` serves planning/initial compilation with thinking enabled and **low** effort,
-as requested after the first async qualification. Earlier measurements used medium;
-low's latency/quality effect has not yet been measured. The client explicitly sends
-`reasoning_effort: low`; the serving model/template determines how it affects thinking.
-Low-effort configuration and OCR publication deduplication passed **500 CPU tests**
-and both no-key demos. These changes are not yet native latency/quality measurements.
+`plan` now serves planning/initial compilation with **thinking disabled** and
+`reasoning_effort: none`, at the owner's request. Earlier 12-13 s measurements used
+medium, not the briefly configured but unmeasured low profile. Both the model template
+flag and request effort are explicit; roles and output contracts remain distinct
+even when both use non-thinking inference. Decoding parameters otherwise stay unchanged.
+The earlier low configuration and OCR deduplication passed **500 CPU tests** and both
+no-key demos. The none configuration also passed 500 CPU tests. Native none
+latency/quality remains unmeasured, but a frozen planner probe is recorded below.
+
+`runs/async-plan-none001` replayed the retained first startup planner context and
+image once, with the same prompt/output cap and sampling settings except none effort
+and disabled thinking. No emulator action or returned query was executed. The call
+completed and settled: 49 output tokens, 3.003 s response wall time, 0.431 s first
+content, empty reasoning output and no requested memory search. It instructed the
+actor to wait for richer scene context, whereas the historical medium plan selected
+intro advancement. Speed did not establish equivalent behavior or gameplay progress.
+Approximate generation rate after first token was 18.7 tokens/s; the historical
+219/233-token medium plans gave 18.4/18.7 tokens/s using the same timing calculation.
+These are short client-observed generation intervals, not a server throughput test.
 These are request profiles, not separate resident models. The author's thinking/
 non-thinking sampling parameters are explicit, with seed 0 for this trial profile.
 The actor remains one categorical ID with strict local validation, not generated code.
