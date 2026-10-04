@@ -8,6 +8,13 @@ Python packages are declared in `pyproject.toml`; their separate licenses apply.
 configurations can affect codec/license obligations. This delivery is not a transitive legal audit.
 Generate an SBOM and review dependency/model/data/service terms before distributing a product.
 
+The optional `gameboy` extra installs PyBoy under its own terms. No emulator implementation,
+commercial ROM, game asset, walkthrough or privileged-state game harness is vendored. The
+interactive package was integrated from the owner's StreamBudget source delivery; its archive
+hash, reviewed base and consolidation boundary are recorded in `docs/INTERACTIVE.md`. Supply
+authorized GB/GBC ROMs privately and do not publish generated game observations or checkpoints
+without reviewing their rights. The synthetic interactive fixture uses original toy pixels.
+
 StreamArena's public repository describes evaluation code separately from its CC-BY-NC annotations;
 underlying video rights are another layer. Its annotations are evaluation questions/reference
 answers, not a deployment dependency. Use authorized footage and independently created labels.

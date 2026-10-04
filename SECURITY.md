@@ -1,8 +1,10 @@
 # Security and safety boundaries
 
-StreamBudget is a single-tenant research prototype for read-only observation, evidence retrieval,
-and alert emission. It is not a robot-control system, safety controller, police decision system,
-or authorization to monitor people without appropriate permissions.
+StreamBudget is a single-tenant research prototype. The watch/investigation application is
+read-only observation, evidence retrieval and alert emission. The separate, explicitly
+invoked `streambudget game` mode can execute bounded emulator buttons; no physical hardware
+controller is exposed. It is not a safety controller, enforcement system, or authorization
+to monitor people without appropriate permissions.
 
 ## Included protections
 
@@ -10,7 +12,8 @@ or authorization to monitor people without appropriate permissions.
 * Runtime tools are fixed, typed functions; model outputs cannot run Python, shell, arbitrary SQL,
   choose network destinations, modify policies silently, or read arbitrary local paths.
 * Scene text and retrieved observations are marked as untrusted. This reduces confusion but is not
-  a proof of prompt-injection resistance. No model-controlled operational actuation is provided.
+  a proof of prompt-injection resistance. Watch/server tools cannot actuate. Game actions
+  are limited to an operator-specified button manifest, not arbitrary code or tools.
 * Media path traversal is rejected. Uploaded images are size checked and decoded before use.
 * Source-time and availability-time filters, source-sequence snapshots, and transitive provenance
   block accidental future evidence exposure. These are correctness boundaries, not a sandbox for
@@ -25,8 +28,16 @@ or authorization to monitor people without appropriate permissions.
 No multi-tenant isolation across processes, encrypted database, key rotation, row-level access rules,
 retention/deletion policy, hardened reverse proxy, comprehensive rate limits, chunked-body limits,
 malicious-media sandbox, secret manager, distributed transaction semantics, or signed evidence store
-has been implemented. Use one isolated directory/process per trusted session. A new runtime refuses
-an existing DB because watch/budget resume is not implemented.
+has been implemented. Use one isolated directory/process per trusted session. A new watch
+runtime refuses an existing DB because watch/budget resume is not implemented. Game mode
+supports only validated clean checkpoints, not arbitrary crash recovery.
+
+Game mode records model contexts/responses and immutable frames in private run directories.
+Its clean-resume checks bind ROM/state/pixel hashes, configuration, schema and attempt counts.
+Ambiguous writes and pending inference cannot be replayed. Separate source time (stepped
+emulator frames) from model wall time; there is no real-time freshness guarantee yet.
+ROMs/checkpoints are ignored by Git. Obtain rights before use and never publish private
+observations, prompts or checkpoints merely because a report was generated.
 
 No statistical recall guarantee is implied by confidence values or cheap gates. Tiny/static/occluded
 or very short events can be missed. A camera-off trigger cannot recover what was never captured.

@@ -1,0 +1,37 @@
+# Operator owns the ROM and model server. No game-specific code or map is installed.
+source: game
+goal: >-
+  Play the game from its current state and make progress toward defeating its
+  first two Gym Leaders. Use only the available visual observations and controls.
+  Learn places, dialogue and useful mechanics as evidence-backed beliefs.
+backend: chat
+endpoints:
+  main:
+    base_url: http://127.0.0.1:8000/v1
+    model: SET_EXACT_MODEL_ID
+    billing: local
+    timeout_s: 90
+    max_output_tokens: 4096
+    response_format: json_object
+    extra_body:
+      temperature: 0
+      # Enable only if your exact serving backend supports it:
+      # chat_template_kwargs: {enable_thinking: false}
+roles: {extract: main, plan: main, act: main, compile: main}
+role_output_limits: {extract: 4096, plan: 2048, act: 64, compile: 2048}
+max_steps: 10
+max_calls: 40
+max_estimated_usd: 5
+wall_limit_s: 900
+history_frames: 3
+max_context_chars: 80000
+max_entities_in_context: 40
+max_images: 6
+view_scale: 3
+plan_every: 8
+compile_at_start: false
+baseline: world
+timing: stepped
+# Defaults expose UP/DOWN/LEFT/RIGHT/A/B/START/SELECT/WAIT.
+# Each is held for 4 emulator frames, then released for 4 frames.
+# A press is NOT one tile. Calibrate using pixels before increasing durations.

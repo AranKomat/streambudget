@@ -1,5 +1,20 @@
 # Research-agent handoff: StreamBudget
 
+## Active Direction: 2026-10-04
+
+Continue the pixels-only visual state/action project described in
+[docs/INTERACTIVE.md](docs/INTERACTIVE.md). That document consolidates the delivered
+game spec, status, validation and handoff; it supersedes the sequencing below for the
+current project. Start with native screen/button qualification, then model probes and
+a few closed-loop decisions, before sustained progression toward Brock and Misty.
+Do not start GPU provisioning or paid calls merely to integrate this code.
+
+Existing video tools, source fixes and research are retained. Their read-only constraint
+still applies to the watch/investigation runtime and server; only the explicitly invoked
+game mode can dispatch emulator buttons. No physical actuation is authorized.
+
+## Historical Watch/Investigation Handoff
+
 Version 0.1.0 • 2026-09-20
 
 ## Mission, without needing the prior conversation
