@@ -1,4 +1,5 @@
-# Operator owns the ROM and model server. No game-specific code or map is installed.
+# One self-hosted Qwen checkpoint, two per-request thinking profiles; no Sol required.
+# Serving/overworld controls are not yet qualified. See docs/INTERACTIVE.md.
 source: game
 goal: >-
   Play the game from its current state and make progress toward defeating its
@@ -6,32 +7,58 @@ goal: >-
   Learn places, dialogue and useful mechanics as evidence-backed beliefs.
 backend: chat
 endpoints:
-  main:
+  fast: &qwen
     base_url: http://127.0.0.1:8000/v1
-    model: SET_EXACT_MODEL_ID
+    model: Qwen/Qwen3.8-27B-FP8
     billing: local
     timeout_s: 90
     max_output_tokens: 4096
     response_format: json_object
     extra_body:
-      temperature: 0
-      # Enable only if your exact serving backend supports it:
-      # chat_template_kwargs: {enable_thinking: false}
-roles: {extract: main, plan: main, act: main, compile: main}
-role_output_limits: {extract: 4096, plan: 2048, act: 64, compile: 2048}
+      temperature: 0.7
+      top_p: 0.8
+      top_k: 20
+      min_p: 0
+      presence_penalty: 1.5
+      repetition_penalty: 1
+      seed: 0
+      chat_template_kwargs: {enable_thinking: false}
+  plan:
+    <<: *qwen
+    reasoning_effort: medium
+    extra_body:
+      temperature: 1
+      top_p: 0.95
+      top_k: 20
+      min_p: 0
+      presence_penalty: 0
+      repetition_penalty: 1
+      seed: 0
+      chat_template_kwargs: {enable_thinking: true, preserve_thinking: true}
+roles: {extract: fast, plan: plan, act: fast, compile: plan}
+role_output_limits: {extract: 4096, plan: 4096, act: 64, compile: 4096}
 max_steps: 10
 max_calls: 40
 max_estimated_usd: 5
 wall_limit_s: 900
-history_frames: 3
-max_context_chars: 80000
+history_frames: 2
+max_context_chars: 16000
 max_entities_in_context: 40
-max_images: 6
+max_images: 3
 view_scale: 3
 plan_every: 8
 compile_at_start: false
 baseline: world
 timing: stepped
-# Defaults expose UP/DOWN/LEFT/RIGHT/A/B/START/SELECT/WAIT.
-# Each is held for 4 emulator frames, then released for 4 frames.
-# A press is NOT one tile. Calibrate using pixels before increasing durations.
+# Menu DOWN/UP/A tested at 4+24; other controls still need qualification.
+# WAIT advances time without pressing a key, including during delayed transitions.
+actions:
+  - {id: UP, button: up, press_frames: 4, release_frames: 24}
+  - {id: DOWN, button: down, press_frames: 4, release_frames: 24}
+  - {id: LEFT, button: left, press_frames: 4, release_frames: 24}
+  - {id: RIGHT, button: right, press_frames: 4, release_frames: 24}
+  - {id: A, button: a, press_frames: 4, release_frames: 24}
+  - {id: B, button: b, press_frames: 4, release_frames: 24}
+  - {id: START, button: start, press_frames: 4, release_frames: 24}
+  - {id: SELECT, button: select, press_frames: 4, release_frames: 24}
+  - {id: WAIT, button: wait, press_frames: 24, release_frames: 24}

@@ -13,6 +13,11 @@ planning can consume those beliefs and request original images. The first intend
 demo is Pokemon Red/Blue progression from a fresh game toward Brock, then Misty.
 No native gameplay success is established yet.
 
+Current owner direction: Qwen for System 1, and Qwen may also serve System 2.
+The owner already screened the candidates through OpenRouter's web interface;
+do not repeat hosted comparisons. Self-hosting/cache measurements are the next
+serving task, not more Sol calls. Sol remains optional reference/fallback only.
+
 Use a sufficiently capable available VLM, not necessarily a tiny one. Extraction,
 planning, action selection and initial schema compilation are operating roles;
 the same checkpoint may serve all four. Do not add a second model just to preserve
@@ -103,11 +108,10 @@ Receipts count advanced frames, not task success. Uncertain actions are never re
 Inspect resulting pixels to establish their effect.
 
 PyBoy is GB/GBC (`.gb`, `.gbc`), not FireRed/GBA (`.gba`). Only rendered-screen,
-button, tick and operator-checkpoint APIs are used. PyBoy 2.7.0 boot/capture, bounded
-execution and save/load passed on its bundled demo ROM. That static screen does not
-qualify Pokemon menu/navigation timing or prove any button had a useful game effect.
-Supply an authorized ROM;
-none is bundled, downloaded or redistributed by this integration.
+button, tick and operator-checkpoint APIs are used. PyBoy 2.7.0 passed the bundled
+smoke test and now operator-controlled Pokemon Red title/menu/dialogue checks.
+No overworld/autonomous gameplay or badge completion is established. The owner
+supplied a local ROM; none is bundled, downloaded or redistributed by this integration.
 
 Emulation pauses during inference. Exact frames and nominal frame/60 source time
 are separate from model/wall latency. Boundary screenshots may miss transients inside
@@ -127,8 +131,9 @@ streambudget demo --out runs/watch-demo
 
 Without installation: `PYTHONPATH=src python -m streambudget.cli game ...`.
 `make game-demo` runs the interactive fixture; `make demo` retains the watch fixture.
-Use fresh output paths. Doctor makes no model calls; `SET_EXACT_MODEL_ID` deliberately
-means the template is not inference-ready. The toy game fixture uses a labelled
+Use fresh output paths. Doctor makes no model calls; its default config retains
+`SET_EXACT_MODEL_ID`, while the local YAML now names the selected Qwen FP8 checkpoint.
+Static readiness does not mean a GPU server exists or is qualified. The toy game fixture uses a labelled
 pixel-rule backend, not a learned model. Its report is a decision slideshow, not video.
 Regenerate outputs under ignored `runs/`; no static preview copies are maintained.
 
@@ -139,21 +144,98 @@ Install the optional emulator when an authorized ROM is available:
 ```bash
 python -m pip install -e '.[gameboy]'
 python -m pip install 'pyboy==2.7.0'  # version actually smoke-tested here
-streambudget game capture --rom /absolute/path/owned.gb --out runs/capture-001
+streambudget game capture --rom /absolute/path/owned.gb --boot-frames 1800 --out runs/capture-001
 streambudget game manual --rom /absolute/path/owned.gb \
   --load-state runs/capture-001/environment.state --button a \
-  --press-frames 4 --release-frames 4 --count 1 --out runs/manual-001
+  --press-frames 4 --release-frames 24 --count 1 --out runs/manual-001
 ```
 
 Inspect before/after images, release behavior and loading. Default boot is 120
 emulated frames, not a promise of a useful screen. Record package versions/ROM hash.
-Manual qualification is not autonomous evidence. Disclose any chosen starting state;
+Manual qualification is not autonomous evidence. Manual attempts are now journaled
+before dispatch; interruptions retain unresolved status and never retry. Completed
+receipts include before/after PNG hashes, local frame numbers and a changed-pixel
+bounding box. Changes may be passive animation, not a useful button effect.
+Disclose any chosen starting state;
 a fresh-game demo cannot silently start from a convenient late save.
 
-Configure a current exact image/JSON model in `configs/interactive/pokemon-local.yaml`.
+Boot remains 120 frames by default for compatibility; `--boot-frames` permits
+0..3600 on capture/manual/run, recorded in the environment descriptor. Loading an
+operator state performs no extra boot ticks and starts a local segment counter at
+zero; it is not a fresh-game provenance claim. For the supplied Red ROM, 120 frames
+were blank, 600 showed the intro, and 1800 showed the title. Do not call a blank
+early frame a perception failure or discard its source record.
+
+Configure the local endpoint in `configs/interactive/pokemon-local.yaml`.
 The metered template intentionally fails validation until current rates are supplied.
 Use credential environment-variable references, never keys in YAML/source. Local
 billing is loopback-only; tunnel self-hosted remote inference.
+
+### One Qwen Server, Two Profiles
+
+The existing local YAML selects `Qwen/Qwen3.8-27B-FP8` for both endpoint aliases
+at the same loopback URL: `fast` serves extraction/actions with thinking disabled;
+`plan` serves planning/initial compilation with thinking enabled and medium effort.
+These are request profiles, not separate resident models. The author's thinking/
+non-thinking sampling parameters are explicit, with seed 0 for this trial profile.
+The actor remains one categorical ID with strict local validation, not generated code.
+Native serving has not run yet; the owner supplied hosted model selection evidence,
+not a measured self-hosted speed or identical-checkpoint quality guarantee.
+
+Official metadata/cards and vLLM recipe inspected on 2026-10-04 (metadata only;
+no weights downloaded to this Mac):
+
+| Checkpoint | Pinned Revision | Published Weight Files | Deployment Implication |
+|---|---|---:|---|
+| Qwen3.8-27B | `1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0` | 55.56 GB / 51.75 GiB | BF16 weights alone exceed 2x24 GiB |
+| Qwen3.8-27B-FP8 | `017b9c7af6b5689d5dd426a76e0bc077eb5ca20a` | 30.87 GB / 28.75 GiB | Plausible on 2x4090 with short context; not yet runtime-qualified |
+| Qwen3.8-Flash-Next | `de4b8e4d43b917e7706784d8bb445c9af86a3540` | 360.00 GB / 335.28 GiB | Not a fully GPU-resident 2x4090 deployment |
+
+The FP8 checkpoint is mixed precision: roughly 24.70B FP8 and 3.08B BF16
+parameters, including unquantized components. Weight-file size is not peak VRAM:
+vision workspaces, hybrid recurrent/KV state, activations and server graphs need
+headroom, and tensor-parallel placement need not be perfectly balanced. Flash-Next's
+6B active language path does not imply 6B resident weights; its card lists 125B LM,
+51B n-gram embeddings and 4B MTP. CPU/expert offloading is a separate latency/
+correctness experiment, not the first deployment. Hosted `qwen/qwen3.8-flash` is
+the provider's production variant, not an immutable Flash-Next snapshot guarantee.
+
+Use the existing launcher on the **GPU host**, not this Mac. Pin the installed
+vLLM/Transformers/CUDA/driver versions in the run receipt before launch. This is
+a bounded starting configuration, not a claim these flags/this model fit or are
+optimal on an untested host; do not add MTP, 262k context or CPU offload by default.
+
+```bash
+MODEL_ID=Qwen/Qwen3.8-27B-FP8 \
+MODEL_REVISION=017b9c7af6b5689d5dd426a76e0bc077eb5ca20a \
+bash scripts/serve_vllm.sh \
+  --served-model-name Qwen/Qwen3.8-27B-FP8 \
+  --tensor-parallel-size 2 --max-model-len 8192 --max-num-seqs 2 \
+  --gpu-memory-utilization 0.90 --reasoning-parser qwen3 \
+  --enable-prefix-caching --mm-processor-cache-gb 2 \
+  --limit-mm-per-prompt '{"image":3}'
+```
+
+Bind only to loopback and SSH-tunnel it. Pokemon/PyBoy remains CPU-only on this Mac;
+the two GPUs are for the model, not one simulation GPU plus one model GPU. Start
+with one agent/episode, not another batch-capacity project. The reduced 16k-character/
+three-image client caps are not an exact 8k token guarantee; overlength requests
+must fail explicitly rather than dropping essential task/schema/source evidence.
+
+Self-hosting removes per-request provider/cache-read fees, not GPU rental, idle time
+or prefill/vision work. Prefix caching still recomputes changed tails; roles, schemas,
+thinking profiles and images can change cache keys. Processor caching is not proof
+of GPU vision-encoder reuse. Measure cache hits/TTFT and end-to-end p50/p95 latency
+on repeated and changed frames; never infer KV reuse just from faster HTTP or
+report client wall time as GPU time. Dense-role fusion/text reuse can wait for those
+measurements. No serving or cache-speed claim has been established yet.
+
+Sources:
+- https://huggingface.co/Qwen/Qwen3.8-27B
+- https://huggingface.co/Qwen/Qwen3.8-27B-FP8
+- https://huggingface.co/Qwen/Qwen3.8-Flash-Next
+- https://recipes.vllm.ai/Qwen/Qwen3.8-27B
+- https://docs.vllm.ai/en/latest/features/automatic_prefix_caching.html
 
 ```bash
 streambudget game probe --config /path/to/local-config.yaml \
@@ -386,10 +468,10 @@ Offline preparation after integration, 2026-10-04:
 
 | Item | Status |
 |---|---|
-| CPU emulator setup | Done for PyBoy bundled demo; Pokemon controls await authorized ROM |
+| CPU emulator setup | Done for supplied Red ROM title/menu/dialogue and checkpoint; overworld controls still pending |
 | Execution/resume audit | Fixes and failure regressions implemented; no stronger crash recovery claim |
 | GPT-6.1 Sol medium/Flex preparation | OpenRouter live probes reviewed; one Flex capacity failure retained; separate standard toy loop completed |
-| First short trial preparation | Live three-decision toy loop done; native Pokemon trial awaits authorized ROM and button qualification |
+| First short trial preparation | Live three-decision toy loop done; native Qwen loop awaits self-hosted endpoint, not a ROM |
 | Evaluation definition | Source-review criteria and read-only metrics ready; independent gameplay grader absent |
 | Matched comparison preparation | Configuration/provenance checks and fixture pair done; real comparison not run |
 | Report usability | Before/after, source/action/model timing/usage and desktop/mobile checks done |
@@ -458,12 +540,72 @@ passed without repository imports (PyBoy remained optional/not installed there).
 Real native evaluation, recent/world
 comparison, sustained progress and model/latency optimization remain undone.
 
+### Native Red Controls And Qwen Direction
+
+2026-10-04 continuation: owner supplied `Downloads/Pokemon - Red Version (USA,
+Europe).gb`. Original ROM SHA-256:
+`5ca7ba01642a3b27b0cc0b5349b52792795b62d3ed977e98a09390659af96b7b`.
+PyBoy 2.7.0, null window, no model calls, GPU use, paid calls, downloads or ROM
+redistribution. Original ROM bytes remained unchanged. ROM/state/screenshots stay
+private and ignored; the public guide records only commands/hashes and observations.
+
+| Check | Observed Result | Remaining Limit |
+|---|---|---|
+| Native boot | 120 frames blank; 600 Game Freak intro; 1800 Red title | These three checkpoints do not identify the earliest usable frame |
+| START 4+4 | Immediate screen unchanged; menu appeared after 240 neutral WAIT frames | This is delayed observation, not proof a 4-frame press failed |
+| START 24+24 | Immediate screen unchanged; menu appeared after 192 neutral WAIT frames | No demonstrated need for longer held START; waits were sampled, not exact latency |
+| DOWN then UP, each 4+24 | Cursor moved NEW GAME -> OPTION -> NEW GAME | Menu motion only, not overworld movement |
+| A on NEW GAME, 4+24 | White transition, then opening Professor dialogue after 192 neutral WAIT frames | Operator setup, not autonomous task progress |
+| A at dialogue, 4+24 then WAIT48 | Visible text scrolled and completed the next dialogue page | Text completion/deduplication still needs agent-loop validation |
+| Native checkpoint replay | Restored menu pixels matched; same DOWN transition reproduced byte-identical before/after PNGs | Only this state/action checked, not universal determinism |
+
+Evidence directories: `runs/pixel-native-20261004-red-*`, including blank/intro
+captures, both START cases, settling frames, menu DOWN/UP, the repeated DOWN
+transition and opening dialogue. The latest operator checkpoint is
+`runs/pixel-native-20261004-red-dialogue-settle48/environment.state`; using it
+for a diagnostic must be labeled an operator-prepared start. A fresh autonomous
+trial starts from the ROM boot/title, not silently from this dialogue checkpoint.
+
+Manual receipts now retain dispatch/failure status, frame numbers, before/after PNG
+hashes and changed-pixel bounds. UI animations can create those changes; independent
+image review, not the bounding box, established the menu/text effects above. Default
+4+4 actions were not silently redefined globally. The local Qwen profile uses 4+24
+buttons and WAIT24+24 to expose settling explicitly; every model choice remains one
+bounded categorical action, with no hidden wait-until-ready script.
+
+Native control qualification is **partial**: title/menu/dialogue/checkpoint passed,
+but B/SELECT, left/right, overworld tile timing, sustained movement, recovery,
+agent identity/room memory and badge progression remain untested. No gameplay
+success rate is computed. Do not require all speculative tests before the first
+short native agent loop; test further controls when that loop reaches them.
+
+Model direction changed by the owner: Qwen can perform both System 1 and System 2;
+Sol's earlier synthetic qualification remains reference evidence, not the selected
+execution stack. No Qwen paid comparison was performed here. The local YAML and
+existing vLLM launcher now prepare one pinned FP8 checkpoint with separate thinking
+profiles; unit tests validate configuration/request/launcher contracts only, not
+model quality, GPU fit, throughput or cache reuse. Next resource needed: a GPU
+host/SSH tunnel or already-running compatible Qwen API endpoint. No live self-hosted
+endpoint has been supplied for this phase yet, and no weights were downloaded here.
+
+Native CLI/config regression coverage includes bounded boot frames, forwarding the
+operator boot setting, interrupted manual dispatch without retry, source hash/frame
+chaining and one-checkpoint Qwen profiles. Validation: 388 working-tree tests and
+306 isolated staged-public tests passed, both with the same two retained
+Starlette/anyio warnings. Ruff, compileall, shell parsing and Git whitespace checks
+passed. Both no-key demos passed in the public snapshot and after wheel installation
+outside the repository; static doctor validated the two Qwen profiles without
+calling a model. No Qwen inference, GPU, cache-speed or autonomous-game result is
+implied by these software checks.
+
 ## Next Sequence
 
 1. Software integrity: both CPU suites, both no-key demos, CLI and installed packaging.
-2. Native controls: authorized ROM boot/capture and single-button/state qualification.
-3. Probes: menu/dialogue/room/navigation/ambiguous-target frames with a capable VLM.
-4. Three to ten decisions: inspect each interpretation/action; separate grounding,
+2. Native controls: title/menu/dialogue/state checked on Red. Qualify overworld
+   controls when reached; do not silently treat the manual setup as agent progress.
+3. Self-host one Qwen checkpoint: pinned revision/engine receipt, loopback/tunnel,
+   bounded context and prefix cache. No repeat hosted model-selection screen.
+4. First native three to ten decisions: inspect each interpretation/action; separate grounding,
    button timing, JSON, stale context, identity, place memory and intent failures.
 5. Sustained progress: adjacent-target precision, revisits, Brock then Misty. Independent
    source evidence, not the model's progress narrative, establishes success.

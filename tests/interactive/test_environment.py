@@ -148,6 +148,19 @@ def test_failed_boot_closes_native_device(tmp_path):
     assert devices[0].events[-1] == ('stop', False)
 
 
+@pytest.mark.parametrize('frames', [-1, 3601, True, '120', 1.5])
+def test_boot_frames_are_bounded_before_device_creation(tmp_path, frames):
+    rom = tmp_path / 'test.gb'
+    rom.write_bytes(b'test ROM')
+    devices = []
+    def factory(*a, **kw):
+        devices.append(True)
+        return Device()
+    with pytest.raises(ContractError, match='boot_frames'):
+        PyBoyEnvironment(rom, boot_frames=frames, factory=factory)
+    assert devices == []
+
+
 def test_failed_checkpoint_keeps_previous_bytes(tmp_path):
     e = env(tmp_path)
     state = tmp_path / 'previous.state'

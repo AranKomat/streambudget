@@ -201,3 +201,42 @@ def test_cli_manual_is_operator_only(tmp_path, monkeypatch):
     m = json.loads((out / 'manual.json').read_text())
     assert m['model_calls'] == 0 and m['operator_controlled']
     assert len(m['receipts']) == 2 and (out / 'after-001.png').exists()
+    assert m['status'] == 'completed'
+    assert all(a['status'] == 'completed' and a['changed_pixel_bbox'] for a in m['attempts'])
+    assert m['attempts'][1]['source_png_sha256'] == m['attempts'][0]['target_png_sha256']
+    assert m['attempts'][0]['receipt']['start_frame'] == m['initial_frame_number']
+    assert m['final_frame_number'] == m['receipts'][-1]['end_frame']
+
+
+def test_manual_failure_journals_uncertain_dispatch_without_retry(tmp_path, monkeypatch):
+    from streambudget.interactive import cli
+    class FailedEnvironment(FixtureEnvironment):
+        rom_sha256 = 'test-only'
+        attempts = 0
+        def execute(self, action):
+            self.attempts += 1
+            raise KeyboardInterrupt()
+    env = FailedEnvironment()
+    monkeypatch.setattr(cli, 'PyBoyEnvironment', lambda *a, **kw: env)
+    out = tmp_path / 'manual'
+    with pytest.raises(KeyboardInterrupt):
+        cli.main(['manual', '--rom', str(tmp_path / 'owned.gb'), '--out', str(out), '--button', 'right'])
+    record = json.loads((out / 'manual.json').read_text())
+    assert record['status'] == 'failed' and record['error_type'] == 'KeyboardInterrupt'
+    assert record['attempts'][0]['status'] == 'dispatched'
+    assert record['receipts'] == [] and env.attempts == 1 and env.closed
+    assert not (out / 'environment.state').exists()
+
+
+def test_native_cli_forwards_operator_boot_frames(tmp_path, monkeypatch):
+    from streambudget.interactive import cli
+    seen = []
+    class CaptureEnvironment(FixtureEnvironment):
+        rom_sha256 = 'test-only'
+        def __init__(self, *a, **kw):
+            super().__init__()
+            seen.append(kw['boot_frames'])
+    monkeypatch.setattr(cli, 'PyBoyEnvironment', CaptureEnvironment)
+    assert cli.main(['capture', '--rom', str(tmp_path / 'owned.gb'), '--out', str(tmp_path / 'capture'),
+        '--boot-frames', '600']) == 0
+    assert seen == [600]

@@ -47,6 +47,8 @@ class PyBoyEnvironment:
         rom = rom.expanduser().resolve()
         if rom.suffix.lower() not in (".gb", ".gbc") or not rom.is_file():
             raise ContractError("Provide your own .gb/.gbc ROM. PyBoy does not emulate FireRed (.gba)")
+        if type(boot_frames) is not int or not 0 <= boot_frames <= 3600:
+            raise ContractError("boot_frames must be an integer in 0..3600")
         if factory is None:
             try:
                 from pyboy import PyBoy

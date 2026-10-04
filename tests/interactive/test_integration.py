@@ -1,7 +1,9 @@
 """Installed-application contracts, not obsolete standalone-overlay blob locks."""
 import json
+import os
 from pathlib import Path
 import sys
+import subprocess
 import tomllib
 import pytest
 from pydantic import ValidationError
@@ -65,6 +67,41 @@ def test_metered_template_requires_rates_before_any_request():
     root = Path(__file__).resolve().parents[2]
     with pytest.raises(ValidationError, match='current input/output rates'):
         load_config(root / 'configs/interactive/pokemon-metered.template.yaml')
+
+
+def test_local_qwen_profiles_share_one_checkpoint():
+    from streambudget.interactive.cli import load_config
+    root = Path(__file__).resolve().parents[2]
+    cfg = load_config(root / 'configs/interactive/pokemon-local.yaml')
+    fast, planner = cfg.endpoints['fast'], cfg.endpoints['plan']
+    assert fast.model == planner.model == 'Qwen/Qwen3.8-27B-FP8'
+    assert fast.base_url == planner.base_url and fast.billing == planner.billing == 'local'
+    assert cfg.roles == {'extract': 'fast', 'act': 'fast', 'plan': 'plan', 'compile': 'plan'}
+    assert fast.extra_body['chat_template_kwargs']['enable_thinking'] is False
+    assert planner.extra_body['chat_template_kwargs']['enable_thinking'] is True
+    assert planner.reasoning_effort == 'medium'
+    actions = {a.id: a for a in cfg.actions}
+    assert actions['A'].press_frames == 4 and actions['A'].release_frames == 24
+    assert actions['WAIT'].press_frames == actions['WAIT'].release_frames == 24
+
+
+@pytest.mark.parametrize('revision', ['', '017b9c7af6b5689d5dd426a76e0bc077eb5ca20a'])
+def test_vllm_launcher_forwards_revision_without_starting_server(tmp_path, revision):
+    fake = tmp_path / 'vllm'
+    fake.write_text(f'#!{sys.executable}\nimport json,sys\nprint(json.dumps(sys.argv[1:]))\n')
+    fake.chmod(0o755)
+    root = Path(__file__).resolve().parents[2]
+    env = dict(os.environ, PATH=str(tmp_path) + os.pathsep + os.environ['PATH'],
+        MODEL_ID='Qwen/Qwen3.8-27B-FP8', MODEL_REVISION=revision)
+    result = subprocess.run(['bash', str(root / 'scripts/serve_vllm.sh'), '--enable-prefix-caching'],
+        env=env, capture_output=True, text=True, check=True)
+    args = json.loads(result.stdout)
+    assert args[:2] == ['serve', 'Qwen/Qwen3.8-27B-FP8']
+    assert args[args.index('--host') + 1] == '127.0.0.1'
+    assert args[-1] == '--enable-prefix-caching'
+    assert ('--revision' in args) == bool(revision)
+    if revision:
+        assert args[args.index('--revision') + 1] == revision
 
 
 def test_metrics_and_comparison_commands_do_not_load_emulator(tmp_path, monkeypatch, capsys):

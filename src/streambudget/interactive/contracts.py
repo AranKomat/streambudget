@@ -178,7 +178,8 @@ class Endpoint(Contract):
                 raise ValueError("OpenRouter uses max_tokens and the typed reasoning_effort field")
             if self.service_tier == "flex" and self.openrouter.only != ["openai/flex"]:
                 raise ValueError("Explicit Flex requires only the openai/flex provider")
-        allowed = {"temperature", "top_p", "seed", "reasoning_effort", "chat_template_kwargs"}
+        allowed = {"temperature", "top_p", "top_k", "min_p", "presence_penalty", "repetition_penalty",
+                   "seed", "reasoning_effort", "chat_template_kwargs"}
         if set(self.extra_body) - allowed:
             raise ValueError("extra_body can only configure decoding/reasoning; not request routing or messages")
         return self

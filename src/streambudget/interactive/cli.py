@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import os
@@ -14,7 +15,7 @@ from .contracts import ActionSpec, GameConfig, SchemaPatch
 from .environment import PyBoyEnvironment
 from .fixture import FixtureEnvironment
 from .report import compare_runs, export_transitions, make_report, run_metrics
-from .runner import GameRunner, write_json
+from .runner import GameRunner, png, write_json
 from .locking import RunLock
 
 
@@ -36,16 +37,19 @@ def configure_parser(p):
     r.add_argument("--load-state", type=Path)
     r.add_argument("--resume", action="store_true")
     r.add_argument("--window", choices=["null", "SDL2"], default="null")
+    r.add_argument("--boot-frames", type=int, default=120)
     r.add_argument("--allow-network", action="store_true")
     r.add_argument("--allow-paid", action="store_true")
     c = sub.add_parser("capture", help="Inspect rendered emulator screen without calling a model")
     c.add_argument("--rom", type=Path, required=True)
     c.add_argument("--out", type=Path, required=True)
     c.add_argument("--load-state", type=Path)
+    c.add_argument("--boot-frames", type=int, default=120)
     m = sub.add_parser("manual", help="Operator-only button qualification; no model calls")
     m.add_argument("--rom", type=Path, required=True)
     m.add_argument("--out", type=Path, required=True)
     m.add_argument("--load-state", type=Path)
+    m.add_argument("--boot-frames", type=int, default=120)
     m.add_argument("--button", choices=["up", "down", "left", "right", "a", "b", "start", "select", "wait"], required=True)
     m.add_argument("--press-frames", type=int, default=4)
     m.add_argument("--release-frames", type=int, default=4)
@@ -110,7 +114,7 @@ def run(args):
         elif args.cmd == "capture":
             if args.out.exists():
                 raise ContractError("Capture destination exists")
-            env = PyBoyEnvironment(args.rom, load_state=args.load_state)
+            env = PyBoyEnvironment(args.rom, load_state=args.load_state, boot_frames=args.boot_frames)
             try:
                 args.out.mkdir(parents=True)
                 env.capture().image.save(args.out / "frame.png")
@@ -124,26 +128,54 @@ def run(args):
                 env.close()
         elif args.cmd == "manual":
             import dataclasses
+            from PIL import ImageChops
             if args.out.exists() or not 1 <= args.count <= 100:
                 raise ContractError("Use a fresh destination and count in 1..100")
             action = ActionSpec(id=args.button.upper(), button=args.button,
                                 press_frames=args.press_frames, release_frames=args.release_frames)
-            env = PyBoyEnvironment(args.rom, load_state=args.load_state)
+            env = PyBoyEnvironment(args.rom, load_state=args.load_state, boot_frames=args.boot_frames)
+            record = None
             try:
                 args.out.mkdir(parents=True)
-                env.capture().image.save(args.out / "before.png")
-                receipts = []
-                for i in range(args.count):
-                    receipts.append(dataclasses.asdict(env.execute(action)))
-                    env.capture().image.save(args.out / f"after-{i:03}.png")
-                env.checkpoint(args.out / "environment.state")
-                write_json(args.out / "manual.json", {"operator_controlled": True,
-                    "model_calls": 0, "receipts": receipts, "rom_sha256": env.rom_sha256,
+                before = env.capture()
+                before.image.save(args.out / "before.png")
+                record = {"status": "running", "operator_controlled": True, "model_calls": 0,
+                    "receipts": [], "attempts": [], "rom_sha256": env.rom_sha256,
                     "environment": getattr(env, "descriptor", None),
                     "initialization": getattr(env, "initialization", "unknown"),
                     "initial_state_sha256": getattr(env, "initial_state_sha256", None),
-                    "note": "Manual qualification, not autonomous gameplay evidence."})
+                    "initial_frame_number": before.frame_number,
+                    "note": "Manual qualification, not autonomous gameplay evidence. Pixel change is not a verified button effect or success."}
+                write_json(args.out / "manual.json", record)
+                for i in range(args.count):
+                    attempt = {"index": i, "status": "dispatched", "action": action.model_dump(),
+                        "before_image": "before.png" if i == 0 else f"after-{i-1:03}.png",
+                        "source_frame_number": before.frame_number,
+                        "source_png_sha256": hashlib.sha256(png(before.image)).hexdigest()}
+                    record["attempts"].append(attempt)
+                    write_json(args.out / "manual.json", record)
+                    receipt = dataclasses.asdict(env.execute(action))
+                    record["receipts"].append(receipt)
+                    after = env.capture()
+                    after_path = f"after-{i:03}.png"
+                    after.image.save(args.out / after_path)
+                    box = ImageChops.difference(before.image.convert("RGB"), after.image.convert("RGB")).getbbox()
+                    attempt.update(status="completed", after_image=after_path,
+                        target_frame_number=after.frame_number,
+                        target_png_sha256=hashlib.sha256(png(after.image)).hexdigest(),
+                        changed_pixel_bbox=list(box) if box else None, receipt=receipt)
+                    write_json(args.out / "manual.json", record)
+                    before = after
+                env.checkpoint(args.out / "environment.state")
+                record.update(status="completed", final_frame_number=before.frame_number,
+                    checkpoint_sha256=hashlib.sha256((args.out / "environment.state").read_bytes()).hexdigest())
+                write_json(args.out / "manual.json", record)
                 print(args.out / "manual.json")
+            except BaseException as exc:
+                if record is not None:
+                    record.update(status="failed", error_type=type(exc).__name__)
+                    write_json(args.out / "manual.json", record)
+                raise
             finally:
                 env.close()
         elif args.cmd == "probe":
@@ -160,7 +192,7 @@ def run(args):
             if args.resume and args.load_state:
                 raise ContractError("Resume and arbitrary --load-state are mutually exclusive")
             state = args.out / "environment.state" if args.resume else args.load_state
-            env = PyBoyEnvironment(args.rom, load_state=state, window=args.window)
+            env = PyBoyEnvironment(args.rom, load_state=state, window=args.window, boot_frames=args.boot_frames)
             try:
                 runner = GameRunner(cfg, env, args.out, allow_network=args.allow_network,
                                     allow_paid=args.allow_paid, resume=args.resume)
