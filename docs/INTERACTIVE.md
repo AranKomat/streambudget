@@ -48,13 +48,14 @@ tools in the watch agent/server; no physical hardware controller is exposed.
 | Existing `store.py`, `media.py`, `types.py` | Shared immutable evidence, hashes, snapshots and lineage |
 | `interactive/contracts.py`, `ontology.py`, `world.py` | Wire contracts, reviewed schema, beliefs and conversations |
 | `interactive/runner.py`, `environment.py`, `locking.py` | Source-bound stepped execution, PyBoy, single-writer ownership |
-| `interactive/models.py`, `prompts.py`, `context.py` | Synchronous role calls, accounting, bounded relevant context |
-| `interactive/text.py` | Standalone text association/change/scroll utilities |
+| `interactive/models.py`, `prompts.py`, `context.py` | Owner-thread admission/settlement, background HTTP, bounded relevant context |
+| `interactive/text.py` | Optional RapidOCR adapter, recognition cache and temporal text association |
 | `interactive/qualification.py`, `report.py`, `fixture.py`, `cli.py` | Probes, reports, explicit test double and commands |
 
-The game coordinator is synchronous/stepped; the retained camera scheduler is
-asynchronous. Their execution and ledger semantics differ. Reuse storage, but do
-not force one runner/ledger onto both merely to reduce file count.
+Game actions remain stepped. The local Qwen profile now enables bounded asynchronous
+OCR, semantic memory writes and planning; the synchronous profile remains available
+for matched comparisons. The retained camera scheduler is a separate asynchronous
+application. Reuse storage without forcing both onto one runner/ledger.
 
 ## State And Evidence
 
@@ -83,9 +84,10 @@ source-linked crops aid retrieval but are not segmentation/identity certificates
 Historical images remain historical; entity inspection falls back to full frames.
 
 Conversation threads permit unknown speakers. Text occurrence heuristics distinguish
-persistent text from repeated messages but may overcount or miss events. The general
-VLM extracts text today. Temporal text/cache/scroll utilities are fixture-tested,
-not connected to a dedicated OCR engine in the live loop.
+persistent text from repeated messages but may overcount or miss events. Optional OCR
+now feeds source-linked text tracks into the actor and semantic extractor. The general
+VLM still interprets dialogue and can read ambiguous pixels itself; OCR does not assign
+speakers or semantic object identity. Tracking is heuristic, not a video-text spotter.
 
 `compile_at_start: true` permits one small schema initialization, labelled a prior,
 not learned facts. Later additive proposals require evidence, matching parent version,
@@ -113,7 +115,7 @@ smoke test and now operator-controlled Pokemon Red title/menu/dialogue checks.
 No overworld/autonomous gameplay or badge completion is established. The owner
 supplied a local ROM; none is bundled, downloaded or redistributed by this integration.
 
-Emulation pauses during inference. Exact frames and nominal frame/60 source time
+Emulation pauses during each actor decision, not background inference. Exact frames and nominal frame/60 source time
 are separate from model/wall latency. Boundary screenshots may miss transients inside
 an action interval. This is not dense video/audio recording or real-time control.
 Doom needs an independent source clock, bounded fresh queues, interruption and
@@ -289,10 +291,10 @@ overworld, gym, or independent task-success qualification.
 - No failed/pending requests or uncertain action dispatches; three source images
   changed, but pixel change alone is not a semantic effect certificate.
 
-Conclusion: small categorical output is fast enough in these warm conditions;
-the current synchronous rich extraction is **not** a sub-second decision path.
-Compact/delta extraction and a slower selective memory refresh are candidates,
-not implemented optimizations or matched quality gains. Do not buy a larger GPU,
+Conclusion at that revision: small categorical output was fast enough in these warm conditions;
+synchronous rich extraction was **not** a sub-second decision path.
+The asynchronous change below removes rich extraction from each action's critical path;
+matched quality gains and compact semantic output remain unproven. Do not buy a larger GPU,
 switch engines, or expand the ontology merely to address lengthy extraction output.
 The no-prefix condition used the same checkpoint, image, sampler, context and output
 interface after a separate server restart; it also returned `A` for every request.
@@ -314,6 +316,125 @@ Sources:
 - https://huggingface.co/Qwen/Qwen3.8-Flash-Next
 - https://recipes.vllm.ai/Qwen/Qwen3.8-27B
 - https://docs.vllm.ai/en/latest/features/automatic_prefix_caching.html
+
+### Asynchronous OCR And Memory (2026-10-04)
+
+`async_perception: true` makes the actor use the latest image, last committed world
+state and available OCR tracks without awaiting rich extraction or planning. One
+background Qwen request and one OCR request may be active; observations are coalesced
+to the latest retained frame rather than queued indefinitely. Coalescing counts are
+reported. Raw boundary frames remain retained, but transient semantic events can be
+missed; this is not full stream coverage or real-time gameplay.
+
+Cold start gives semantic extraction the first background turn; subsequent planning
+and due semantic refreshes alternate when both need service. Text-track events and
+`semantic_refresh_steps` gate memory refresh. This is a simple baseline scheduler,
+not learned relevance detection. Long generation can still contend with the actor
+on the same GPU; asynchronous dispatch does not guarantee priority/preemption.
+
+Only HTTP/inference runs in workers. Admission, budgets, SQLite writes, world updates
+and action dispatch remain on the owner thread. All admitted work is settled before
+a clean checkpoint; shutdown drain time is reported separately. Failures are retained,
+not retried. A failed background result prevents a clean checkpoint. No new jobs are
+launched during shutdown. Clean resume also checks the OCR model/config fingerprint.
+
+World observations retain their original frame/time and all consumed parents. Delayed
+interpretations enrich history; facts, mentions, current place and relations project
+by source-frame order instead of arrival order. Historical dialogue cannot replace
+the active dialogue cache. Async plans require matching source pixels, unchanged intent
+and bounded step age before adoption; stale plans are discarded, never used to stop a
+newer episode. These conservative checks can discard useful plans and need longer-run
+qualification. Future visual/semantic applicability checks must not weaken dispatch fences.
+
+OCR uses RapidOCR 3.9.2 / ONNXRuntime 1.24.4, CPU, two intra-op threads, fourfold
+nearest-neighbor scaling. Explicit local ONNX files are required; the runtime does
+not provision weights. All weights stay on the rented host. Install `.[ocr]` there
+and set `ocr_config_path` to a host-local parameter YAML, for example:
+
+```yaml
+Det.model_path: /workspace/streambudget-ocr/PP-OCRv6_det_small.onnx
+Det.ocr_version: PP-OCRv6
+Det.model_type: small
+Det.lang_type: multi
+Rec.model_path: /workspace/streambudget-ocr/PP-OCRv6_rec_small.onnx
+Rec.ocr_version: PP-OCRv6
+Rec.model_type: small
+Rec.lang_type: ch
+Cls.model_path: /workspace/streambudget-ocr/ch_ppocr_mobile_v2.0_cls_mobile.onnx
+```
+
+`ch` is RapidOCR's recognition enum for this multilingual checkpoint, not a claim
+that its output is Chinese-only. The orientation model is provisioned because the
+adapter initializes it, but upright-screen inference skips orientation classification.
+The checked ONNX manifests pin model SHA-256 hashes. Doctor validates local files
+without loading models or making requests.
+
+Whole-frame identity/refresh gating avoids unchanged rereads. Changed frames run text
+detection; byte-identical crops reuse recognition for up to 60 seconds. Cache reuse
+does not merge identities: two boxes carrying identical text remain separate sightings.
+Geometry/text association and confidently estimated vertical scrolling preserve tracks
+where supported. Arbitrary perspective motion, reflow and semantic re-identification
+remain unqualified. Only tracks detected in the source frame enter hot context;
+old OCR carries source time/hash and an explicit freshness flag. Missing OCR is not
+proof that a screen contains no text.
+
+Bounded frozen-screen comparison: five unique native title/intro frames, three passes
+per model, with crop-recognition caches cleared before every sample. First sample
+per model is retained as warmup, not silently removed from accounting.
+
+| CPU OCR | Warm Median | Warm Maximum | Qualification |
+|---|---:|---:|---|
+| PP-OCRv6 small | 0.511 s | 0.542 s | Some clean dialogue; pixel-font/case errors and false detections |
+| PP-OCRv6 medium | 7.428 s | 9.743 s | Better on some text, but still case/punctuation errors and false detections |
+
+Small is the selected CPU starting point, not a proven accuracy winner. The sample
+is not enough for aggregate character-error rates or multilingual claims. There were
+30 completed OCR attempts plus one retained configuration-stage failure before model
+inference. An earlier parameter-type setup failure is recorded separately; fixing
+setup did not retry an uncertain action. No paid API calls. Private receipts/configs/
+model manifests are in `runs/pixel-l40s-async-20261004/` (weights are remote only).
+
+Initial native async trial `pixel-l40s-dialogue-async001`: 12 actions in 16.538 s,
+including 1.699 s shutdown drain, 24 accounted local calls, 11 OCR submissions, one
+whole-frame reuse and one crop-recognition hit. The planner occupied the background
+slot throughout; no rich extraction was submitted. Its shutdown result was retained
+but not activated, so this trial does not qualify semantic memory or planning.
+
+The longer `pixel-l40s-dialogue-async002` stopped after 16 actions / 18.205 s when
+the planner used a frame evidence ID as an entity focus ID. All 31 local attempts
+settled; no uncertain actions or automatic retry. HTTP/JSON accounting reports zero
+request failures, but the runtime result is **failed** due to contextual validation.
+The focus schema now enumerates offered entity handles, explicitly requiring an empty
+list when none exist. This failed trial remains in the evidence set.
+
+Corrected, semantic-first `pixel-l40s-dialogue-async003`: 32 completed actions
+(29 A, three WAIT), 956 emulated frames, 65 local calls (32 actor, 32 OCR, one rich
+extractor). Action-loop wall time was approximately 33.316 s; total clean-stop time
+was 55.211 s including 21.895 s background drain. Retained-frame decision preparation
+through fresh-source validation measured approximately 1.02 s median / 1.08 s p95
+(0.867-1.340 s range), excluding native capture and dispatch/journal/execution. This
+does **not** establish the requested sub-second screenshot-to-action target.
+
+The rich extractor took 54.961 s and committed its source-frame-zero interpretation
+at shutdown; actors did not yet consume that memory. It retained two source-linked
+entities and unknown-speaker dialogue. OCR had seven crop-recognition hits; every
+changed observation still required detection. All calls/actions settled, no pending
+holds or uncertain actions; no planner request was made in this semantic-first trial.
+Initial/final pixels show intro dialogue progressing to a player-character transition,
+not overworld or independently verified game success. The 12/16/32-action conditions
+are development runs with different scheduler revisions, **not** matched quality
+ablations. The rich memory writer remains slow, and its first commit was late; compact
+semantic updates, steady-state memory use and applicable async plans are next to qualify.
+
+All three native run directories, including the failed condition, plus OCR receipts
+and weight hashes are backed up locally without model weights. Source PNGs, ROM,
+checkpoints and model traces remain private/ignored. Qwen's inference service remains
+running; no agent loop continues automatically after these bounded trials.
+
+Official OCR sources:
+- https://github.com/RapidAI/RapidOCR/tree/v3.9.2/python/rapidocr
+- https://github.com/RapidAI/RapidOCR/blob/v3.9.2/python/rapidocr/default_models.yaml
+- https://github.com/PaddlePaddle/PaddleOCR
 
 ```bash
 streambudget game probe --config /path/to/local-config.yaml \
@@ -483,6 +604,17 @@ holds. Report a success rate only when a common independent success criterion an
 enough repeated episodes exist; do not infer it from one run or a model narrative.
 
 ## Validation
+
+Asynchronous integration on 2026-10-04 adds regressions for owner-thread admission,
+in-flight budget enforcement, source-ordered late facts/place/relations/dialogue,
+nonblocking extraction, stale-plan rejection, bounded/coalesced jobs, failed-work
+drain, clean resume, OCR provenance/crop caching and bounded hot text. These software
+tests do not establish OCR accuracy, perception coverage or autonomous gameplay.
+Validation: 405 working-tree tests and 323 tests with imports explicitly routed to
+the isolated staged public snapshot passed, with the same two pre-existing
+Starlette/anyio warnings. Both game/watch no-key demos passed in both trees. Ruff,
+compileall and Git whitespace checks passed. No unrelated dirty watch/research
+changes or private run evidence are included in this integration commit.
 
 The supplied archive reported 98 CPU tests, fake-device emulator checks and a localhost
 socket exchange against a synthetic responder. Its packaging tests froze source blobs
@@ -683,8 +815,8 @@ implied by these software checks.
    controls when reached; do not silently treat the manual setup as agent progress.
 3. Self-host one Qwen checkpoint: pinned revision/engine receipt, loopback/tunnel,
    bounded context and prefix cache. No repeat hosted model-selection screen.
-4. First native three to ten decisions: inspect each interpretation/action; separate grounding,
-   button timing, JSON, stale context, identity, place memory and intent failures.
+4. Qualify the asynchronous loop: inspect source-linked OCR/memory/plan/action results;
+   separate grounding, button timing, JSON, stale context, identity, place memory and intent failures.
 5. Sustained progress: adjacent-target precision, revisits, Brock then Misty. Independent
    source evidence, not the model's progress narrative, establishes success.
 6. Contribution test: matched models, source/control/start state and budgets;
@@ -698,7 +830,7 @@ implied by these software checks.
    independently and keep cross-domain holdouts.
 
 These are dependency gates, not reasons to run every speculative ablation before a demo.
-Automatic ontology evaluation, independent identity verification, learned tracking/OCR,
+Automatic ontology evaluation, independent identity verification, robust learned video tracking,
 dense audiovisual recording, real-time async control, GBA/Doom, physical actuation,
 Agmina integration, KV/encoder sharing, compaction, GPU/energy measurement, production
 service and independent gameplay grading remain absent. They are not all prerequisites.

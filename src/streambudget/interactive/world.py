@@ -50,6 +50,13 @@ class World:
         columns = {r[1] for r in self.db.execute("PRAGMA table_info(world_dialogue)")}
         if "occurrence" not in columns:
             self.db.execute("ALTER TABLE world_dialogue ADD COLUMN occurrence TEXT NOT NULL DEFAULT ''")
+        for table in ("world_mentions", "world_relations", "world_places", "world_messages"):
+            columns = {r[1] for r in self.db.execute(f"PRAGMA table_info({table})")}
+            if "frame_seq" not in columns:
+                self.db.execute(f"ALTER TABLE {table} ADD COLUMN frame_seq INTEGER NOT NULL DEFAULT 0")
+                self.db.execute(f"""UPDATE {table} SET frame_seq=COALESCE(
+                    (SELECT e.seq FROM world_applied a JOIN evidence e ON e.id=a.frame_id
+                     WHERE a.evidence_id={table}.evidence),0)""")
         self.db.commit()
 
     def _visible(self, id, snapshot):
@@ -76,9 +83,8 @@ class World:
             if prev["patch_hash"] != body_hash:
                 raise ContractError("Conflicting second interpretation; use a new explicit review, not overwrite")
             return ApplyResult(prev["evidence_id"], json.loads(prev["id_map"]), False, False)
-        latest = self.db.execute("SELECT MAX(frame_seq) FROM world_facts").fetchone()[0]
-        if latest is not None and frame.seq < latest:
-            raise ContractError("Late perception cannot rewind the current belief store")
+        latest = self.db.execute("SELECT MAX(e.seq) FROM world_applied a JOIN evidence e ON e.id=a.frame_id").fetchone()[0]
+        late = latest is not None and frame.seq < latest
         parents = sorted(set([patch.frame_id, *consumed_evidence]))
         for p in parents:
             self.evidence.get(p, snapshot)
@@ -147,14 +153,32 @@ class World:
         record = self.evidence.derive(source=frame.source, kind="world_observation", text=search_text,
             parents=parents, snapshot=snapshot, payload={"interpretation": patch.model_dump(),
             "ontology_version": self.ontology.current["version"], "id_map": ids,
+            "observed_frame_id": frame.id, "observed_frame_seq": frame.seq,
+            "observed_at": frame.end,
             "epistemic_status": "model_interpretation_not_ground_truth"})
+        # Compare dialogue to its predecessor in source order, not the last worker to finish.
+        predecessor = self.db.execute("""SELECT a.evidence_id FROM world_applied a
+            JOIN evidence e ON e.id=a.frame_id WHERE e.seq<? ORDER BY e.seq DESC LIMIT 1""",
+            (frame.seq,)).fetchone()
+        previous_dialogue = {}
+        if predecessor:
+            prior = self.evidence.get(predecessor[0]).payload
+            mapping = prior["id_map"]
+            for u in prior["interpretation"].get("utterances", []):
+                speaker = mapping.get(u["speaker"], u["speaker"])
+                partners = sorted(mapping.get(p, p) for p in u["partners"])
+                surface = mapping.get(u["surface"], u["surface"])
+                previous_dialogue[canonical([speaker, partners, surface])] = (u["text"], u["occurrence"])
         with self.db:
             for id, m in fresh:
                 self.db.execute("INSERT INTO world_entities VALUES(?,?,?,?,?)",
                                 (id, m.kind, m.label, record.id, record.id))
             for m in patch.mentions:
-                self.db.execute("INSERT INTO world_mentions(entity,evidence) VALUES(?,?)", (ids[m.ref], record.id))
-                self.db.execute("UPDATE world_entities SET latest_evidence=? WHERE id=?", (record.id, ids[m.ref]))
+                self.db.execute("INSERT INTO world_mentions(entity,evidence,frame_seq) VALUES(?,?,?)",
+                                (ids[m.ref], record.id, frame.seq))
+                newest = self.db.execute("SELECT MAX(frame_seq) FROM world_mentions WHERE entity=?", (ids[m.ref],)).fetchone()[0]
+                if frame.seq == newest:
+                    self.db.execute("UPDATE world_entities SET latest_evidence=? WHERE id=?", (record.id, ids[m.ref]))
             for id, f in facts:
                 if f.confidence < self.fact_threshold:
                     continue  # Full low-confidence interpretation remains in immutable evidence.
@@ -163,38 +187,41 @@ class World:
             for a, b, r in rels:
                 if r.confidence < self.fact_threshold:
                     continue
-                self.db.execute("INSERT INTO world_relations(subject,predicate,target,confidence,evidence) "
-                    "VALUES(?,?,?,?,?)", (a, r.predicate, b, r.confidence, record.id))
+                self.db.execute("INSERT INTO world_relations(subject,predicate,target,confidence,evidence,frame_seq) "
+                    "VALUES(?,?,?,?,?,?)", (a, r.predicate, b, r.confidence, record.id, frame.seq))
             if place:
-                self.db.execute("INSERT INTO world_places(place,evidence) VALUES(?,?)", (place, record.id))
+                self.db.execute("INSERT INTO world_places(place,evidence,frame_seq) VALUES(?,?,?)", (place, record.id, frame.seq))
             active = set()
             for speaker, partners, surface, u in messages:
                 thread = canonical([speaker, partners, surface])
                 active.add(thread)
-                old = self.db.execute("SELECT text,occurrence FROM world_dialogue WHERE key=?", (thread,)).fetchone()
-                if old is None or old[0] != u.text or old[1] != u.occurrence:
-                    self.db.execute("INSERT INTO world_messages(thread,speaker,text,evidence,attribution) "
-                        "VALUES(?,?,?,?,?)", (thread, speaker, u.text, record.id, u.attribution_confidence))
-                self.db.execute("INSERT OR REPLACE INTO world_dialogue VALUES(?,?,?,?)",
+                if previous_dialogue.get(thread) != (u.text, u.occurrence):
+                    self.db.execute("INSERT INTO world_messages(thread,speaker,text,evidence,attribution,frame_seq) "
+                        "VALUES(?,?,?,?,?,?)", (thread, speaker, u.text, record.id, u.attribution_confidence, frame.seq))
+                if not late:
+                    self.db.execute("INSERT OR REPLACE INTO world_dialogue VALUES(?,?,?,?)",
                                 (thread, u.text, patch.frame_id, u.occurrence))
-            for r in self.db.execute("SELECT key FROM world_dialogue").fetchall():
+            for r in ([] if late else self.db.execute("SELECT key FROM world_dialogue").fetchall()):
                 if r[0] not in active:
                     self.db.execute("DELETE FROM world_dialogue WHERE key=?", (r[0],))
             self.db.execute("INSERT INTO world_applied VALUES(?,?,?,?)",
                             (patch.frame_id, body_hash, record.id, canonical(ids)))
-        return ApplyResult(record.id, ids, True, patch.needs_planning)
+        return ApplyResult(record.id, ids, True, patch.needs_planning and not late)
+
+    def observed_at(self, evidence_id):
+        e = self.evidence.get(evidence_id)
+        return e.payload.get("observed_at", e.end)
 
     def view(self, snapshot: Snapshot, *, focus=(), max_entities=40) -> dict[str, Any]:
         rows = [dict(r) for r in self.db.execute("SELECT * FROM world_entities")
                 if self._visible(r["created_evidence"], snapshot)]
         for r in rows:
             visible_mentions = [self.evidence.get(m[0]) for m in self.db.execute(
-                "SELECT evidence FROM world_mentions WHERE entity=?", (r["id"],))
+                "SELECT evidence FROM world_mentions WHERE entity=? ORDER BY frame_seq DESC,seq DESC", (r["id"],))
                 if self._visible(m[0], snapshot)]
-            last = max(visible_mentions, key=lambda e: (e.end, e.seq),
-                       default=self.evidence.get(r["created_evidence"]))
-            r["visible_last_time"], r["visible_last_evidence"] = last.end, last.id
-        place_row = next((dict(r) for r in self.db.execute("SELECT * FROM world_places ORDER BY seq DESC")
+            last = next(iter(visible_mentions), self.evidence.get(r["created_evidence"]))
+            r["visible_last_time"], r["visible_last_evidence"] = self.observed_at(last.id), last.id
+        place_row = next((dict(r) for r in self.db.execute("SELECT * FROM world_places ORDER BY frame_seq DESC,seq DESC")
                           if self._visible(r["evidence"], snapshot)), None)
         current_place = place_row["place"] if place_row else None
         rows.sort(key=lambda r: (0 if r["id"] == current_place else 1 if r["id"] in focus else 2,
@@ -204,26 +231,26 @@ class World:
         output = []
         for r in selected:
             facts = {}
-            for f in self.db.execute("SELECT * FROM world_facts WHERE entity=? ORDER BY seq DESC", (r["id"],)):
+            for f in self.db.execute("SELECT * FROM world_facts WHERE entity=? ORDER BY frame_seq DESC,seq DESC", (r["id"],)):
                 if f["key"] not in facts and self._visible(f["evidence"], snapshot):
                     facts[f["key"]] = {"value": json.loads(f["value"]), "confidence": f["confidence"],
                         "basis": f["basis"], "evidence_id": f["evidence"],
-                        "observed_at": self.evidence.get(f["evidence"]).end}
+                        "observed_at": self.observed_at(f["evidence"])}
             output.append({"id": r["id"], "kind": r["kind"], "label": r["label"], "facts": facts,
                            "last_mentioned_at": r["visible_last_time"], "evidence_id": r["visible_last_evidence"]})
         rels, seen = [], set()
-        for r in self.db.execute("SELECT * FROM world_relations ORDER BY seq DESC"):
+        for r in self.db.execute("SELECT * FROM world_relations ORDER BY frame_seq DESC,seq DESC"):
             key = ((r["subject"], r["predicate"]) if r["predicate"] == "located_in"
                    else (r["subject"], r["predicate"], r["target"]))
             if r["subject"] in selected_ids and key not in seen and self._visible(r["evidence"], snapshot):
                 rels.append({k: r[k] for k in ("subject", "predicate", "target", "confidence", "evidence")})
                 seen.add(key)
         place = current_place
-        messages = [dict(r) for r in self.db.execute("SELECT * FROM world_messages ORDER BY seq DESC")
+        messages = [dict(r) for r in self.db.execute("SELECT * FROM world_messages ORDER BY frame_seq DESC,seq DESC")
                     if self._visible(r["evidence"], snapshot)][:12]
         return {"entities": output, "relations": rels[:80], "current_place": place,
                 "current_place_evidence": place_row["evidence"] if place_row else None,
-                "current_place_observed_at": self.evidence.get(place_row["evidence"]).end if place_row else None,
+                "current_place_observed_at": self.observed_at(place_row["evidence"]) if place_row else None,
                 "recent_conversations": list(reversed(messages)), "omitted_entities": omitted,
                 "warning": "All world facts are beliefs with provenance. Old positions/visibility may be stale."}
 

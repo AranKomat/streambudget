@@ -6,12 +6,14 @@ from ..types import ContractError
 
 
 def bounded_context(*, goal, intent, schema, actions, world, recent, current_frame_id,
-                    max_chars, extra=None):
+                    max_chars, extra=None, hot_text=None):
     base = {"goal": goal, "intent": intent, "ontology": schema, "actions": actions,
             "current_frame_id": current_frame_id,
             "world": world, "recent_evidence": recent, "retrieved": extra or [],
             "omissions": {"entities": 0, "recent_evidence": 0, "retrieved": 0,
-                          "recent_conversations": 0, "relations": 0}}
+                          "recent_conversations": 0, "relations": 0, "text_tracks": 0}}
+    if hot_text is not None:
+        base["hot_text"] = hot_text
     # Trimming never silently removes current task or action grammar. Explicit cap is
     # characters, not guessed tokenizer counts; provider usage is recorded separately.
     while len(canonical(base)) > max_chars:
@@ -30,6 +32,9 @@ def bounded_context(*, goal, intent, schema, actions, world, recent, current_fra
         elif base["world"].get("entities"):
             base["world"]["entities"].pop()
             base["omissions"]["entities"] += 1
+        elif base.get("hot_text", {}).get("tracks"):
+            base["hot_text"]["tracks"].pop()
+            base["omissions"]["text_tracks"] += 1
         else:
             raise ContractError("Essential context does not fit. Increase budget rather than truncate the goal")
     return base

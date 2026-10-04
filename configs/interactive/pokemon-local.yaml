@@ -49,6 +49,10 @@ view_scale: 3
 plan_every: 8
 compile_at_start: false
 baseline: world
+async_perception: true
+semantic_refresh_steps: 8
+# Set ocr_config_path to a host-local RapidOCR parameter YAML with explicit ONNX paths.
+# No OCR weights are downloaded implicitly; keep them off the operator's Mac.
 timing: stepped
 # Menu DOWN/UP/A tested at 4+24; other controls still need qualification.
 # WAIT advances time without pressing a key, including during delayed transitions.

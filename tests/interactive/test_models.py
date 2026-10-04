@@ -280,6 +280,41 @@ def test_flex_capacity_failure_has_no_tier_fallback(tmp_path):
     assert book.summary()['unknown_charge_calls'] == 1
 
 
+def test_background_request_admitted_and_settled_on_owner_thread(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    book = ledger(tmp_path, max_calls=1)
+    release = Event()
+    def handle(request):
+        assert release.wait(2)
+        return httpx.Response(200, json=good_response())
+    b = ChatBackend(config(), book, allow_network=True, transport=httpx.MockTransport(handle))
+    with ThreadPoolExecutor(max_workers=1) as worker:
+        pending = b.submit(worker, 'act', '', {}, [], ActionChoice)
+        assert book.summary()['calls'] == 1
+        assert book.db.execute('SELECT status FROM model_calls').fetchone()[0] == 'pending'
+        with pytest.raises(BudgetExhausted):
+            b.complete('act', '', {}, [], ActionChoice)
+        release.set()
+        assert pending.result().action_id == 'A'
+        with pytest.raises(ContractError, match='already settled'):
+            pending.result()
+    assert book.summary()['failed_calls'] == 0
+    b.close()
+
+
+def test_planner_schema_distinguishes_entity_focus_from_frame_ids(tmp_path):
+    from streambudget.interactive.contracts import Plan
+    seen = []
+    def respond(request):
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json=good_response('{"intent":"observe","focus_ids":[]}'))
+    b = ChatBackend(config(), ledger(tmp_path), allow_network=True, transport=httpx.MockTransport(respond))
+    b.complete('plan', '', {'current_frame_id': 'frame-not-entity', 'world': {'entities': []}}, [], Plan)
+    assert '"maxItems":0' in seen[0]['messages'][0]['content']
+    b.close()
+
+
 @pytest.mark.parametrize('kwargs', [
     {'service_tier': 'auto'}, {'service_tier': 'priority'},
     {'service_tier': 'flex'}, {'reasoning_effort': 'invalid'},

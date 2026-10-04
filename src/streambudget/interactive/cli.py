@@ -99,12 +99,20 @@ def run(args):
         if args.cmd == "doctor":
             cfg = load_config(args.config)
             versions = {}
-            for pkg in ("pydantic", "httpx", "numpy", "Pillow", "pyboy"):
+            for pkg in ("pydantic", "httpx", "numpy", "Pillow", "pyboy", "rapidocr", "onnxruntime"):
                 try:
                     versions[pkg] = importlib.metadata.version(pkg)
                 except importlib.metadata.PackageNotFoundError:
                     versions[pkg] = "not installed"
             issues = []
+            if cfg.ocr_config_path:
+                from .text import RapidTextReader
+                try:
+                    RapidTextReader(cfg.ocr_config_path, scale=cfg.ocr_scale)
+                except (OSError, ContractError, ValueError):
+                    issues.append("OCR needs a valid host-local config and preprovisioned ONNX weights")
+                if versions["rapidocr"] == "not installed" or versions["onnxruntime"] == "not installed":
+                    issues.append("Install the optional OCR dependencies on the inference host")
             if cfg.backend != "chat":
                 issues.append("Fixture backend is not a real model route")
             for name, endpoint in cfg.endpoints.items():

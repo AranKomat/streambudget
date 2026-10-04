@@ -77,3 +77,46 @@ def test_context_budget_explicit_omissions():
 def test_essential_context_not_silently_cut():
     with pytest.raises(ContractError):
         bounded_context(goal='x' * 5000, intent='i', schema={}, actions=[], world={}, recent=[], current_frame_id='f', max_chars=1000)
+
+
+def test_ocr_crop_cache_reuses_read_without_merging_two_regions(tmp_path):
+    from types import SimpleNamespace
+    import numpy as np
+    import yaml
+    from streambudget.interactive.text import RapidTextReader
+    params = {}
+    for role in ('Det', 'Rec', 'Cls'):
+        path = tmp_path / (role + '.onnx')
+        path.write_bytes(b'test-not-real-weights')
+        params[role + '.model_path'] = str(path)
+    cfg = tmp_path / 'ocr.yaml'
+    cfg.write_text(yaml.safe_dump(params))
+    class Engine:
+        def __call__(self, pixels, *, use_det, use_rec, use_cls):
+            if use_det:
+                return SimpleNamespace(boxes=np.array([[[0, 0], [10, 0], [10, 10], [0, 10]],
+                    [[20, 0], [30, 0], [30, 10], [20, 10]]]))
+            return SimpleNamespace(txts=['OPEN'], scores=[0.99])
+    reader = RapidTextReader(cfg, scale=1, engine=Engine())
+    observations = reader.read(Image.new('RGB', (40, 20), 'white'), 'f')
+    assert len(observations) == 2 and observations[0].box != observations[1].box
+    assert reader.stats['recognizer_calls'] == 1 and reader.stats['recognition_cache_hits'] == 1
+    tracker = TemporalTextTracker()
+    assert len(tracker.update(observations, 0)) == 2
+    assert len(tracker.tracks) == 2
+
+
+def test_ocr_requires_preprovisioned_weights(tmp_path):
+    from streambudget.interactive.text import RapidTextReader
+    cfg = tmp_path / 'ocr.yaml'
+    cfg.write_text('{}')
+    with pytest.raises(ContractError, match='explicit local ONNX'):
+        RapidTextReader(cfg)
+
+
+def test_hot_text_context_is_bounded_with_explicit_omissions():
+    c = bounded_context(goal='g', intent='i', schema={}, actions=[], world={}, recent=[],
+        current_frame_id='f', max_chars=1000,
+        hot_text={'source_frame': 'old', 'tracks': [{'text': 'x'*500} for _ in range(8)]})
+    assert c['hot_text']['source_frame'] == 'old'
+    assert c['omissions']['text_tracks'] > 0

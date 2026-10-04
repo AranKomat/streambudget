@@ -10,6 +10,7 @@ import sqlite3
 import time
 import uuid
 from dataclasses import dataclass
+from concurrent.futures import Executor, Future
 from typing import Protocol, TypeVar
 
 import httpx
@@ -35,6 +36,28 @@ class ImageInput:
     id: str
     data: bytes
     historical: bool = False
+
+
+@dataclass
+class PendingCompletion:
+    """Only HTTP/validation runs in the worker; ledger writes stay on its owner thread."""
+    future: Future
+    backend: object
+    call: str
+    endpoint: Endpoint
+    role: str
+    settled: bool = False
+
+    def result(self):
+        if self.settled:
+            raise ContractError("Inference attempt already settled")
+        response, value, elapsed, error = self.future.result()
+        self.backend.ledger.finish(self.call, endpoint=self.endpoint, response=response,
+                                   elapsed=elapsed, error=error)
+        self.settled = True
+        if error:
+            raise ModelError(f"{self.role} failed ({error}); no retry dispatched; inspect model_calls ledger")
+        return value
 
 
 class Backend(Protocol):
@@ -154,7 +177,7 @@ class ChatBackend:
     def close(self):
         self.client.close()
 
-    def complete(self, role, system, context, images, output):
+    def _prepare(self, role, system, context, images, output):
         ep = self.config.endpoints[self.config.roles[role]]
         if len(images) > self.config.max_images:
             raise ContractError("Too many image attachments")
@@ -164,6 +187,13 @@ class ChatBackend:
         schema = output.model_json_schema()
         if role == "act":
             schema["properties"]["action_id"]["enum"] = [a.id for a in self.config.actions]
+        elif role == "plan":
+            offered = {e["id"] for e in context.get("world", {}).get("entities", [])}
+            offered |= {e["id"] for r in context.get("retrieved", []) for e in r.get("entities", [])}
+            if offered:
+                schema["properties"]["focus_ids"]["items"]["enum"] = sorted(offered)
+            else:
+                schema["properties"]["focus_ids"]["maxItems"] = 0
         # Stable definitions precede dynamic state so compatible providers have an
         # opportunity for prefix reuse. This does NOT implement or guarantee KV reuse.
         stable_keys = ("goal", "ontology", "actions")
@@ -206,6 +236,9 @@ class ChatBackend:
             self.ledger.db.execute("INSERT INTO model_inputs VALUES(?,?,?,?)", (call, text, system,
                 canonical([{"id": i.id, "historical": i.historical, "sha256": hashlib.sha256(i.data).hexdigest()}
                            for i in images])))
+        return call, ep, body, headers
+
+    def _request(self, ep, body, headers, output):
         start = time.monotonic()
         response = None
         try:
@@ -232,8 +265,20 @@ class ChatBackend:
             error = type(exc).__name__
             if isinstance(exc, httpx.HTTPStatusError):
                 error += ":HTTP_" + str(exc.response.status_code)
-            self.ledger.finish(call, endpoint=ep, response=response,
-                               elapsed=time.monotonic() - start, error=error)
-            raise ModelError(f"{role} failed ({error}); no retry dispatched; inspect model_calls ledger") from None
-        self.ledger.finish(call, endpoint=ep, response=response, elapsed=time.monotonic() - start)
-        return value
+            return response, None, time.monotonic() - start, error
+        return response, value, time.monotonic() - start, None
+
+    def submit(self, executor: Executor, role, system, context, images, output):
+        call, ep, body, headers = self._prepare(role, system, context, images, output)
+        try:
+            future = executor.submit(self._request, ep, body, headers, output)
+        except Exception as exc:
+            self.ledger.finish(call, endpoint=ep, error=type(exc).__name__)
+            raise
+        return PendingCompletion(future, self, call, ep, role)
+
+    def complete(self, role, system, context, images, output):
+        call, ep, body, headers = self._prepare(role, system, context, images, output)
+        future = Future()
+        future.set_result(self._request(ep, body, headers, output))
+        return PendingCompletion(future, self, call, ep, role).result()

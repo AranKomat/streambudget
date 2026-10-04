@@ -179,3 +179,43 @@ def test_current_place_is_pinned_before_unrelated_new_entities(setup):
     assert view['entities'][0]['id'] == r.ids['new:p']
     assert view['current_place_observed_at'] == 1
     assert view['omitted_entities'] == 1
+
+
+def test_late_interpretation_enriches_history_without_rewinding_live_state(setup):
+    s, w = setup
+    first = frame(s, 1)
+    r = apply(s, w, first, ObservationPatch(frame_id=first.id, summary='at A', mentions=[
+        Mention(ref='new:x', kind='entity', label='x'), Mention(ref='new:a', kind='place', label='A'),
+        Mention(ref='new:b', kind='place', label='B')], current_place='new:a'))
+    ids = r.ids
+    old, new = frame(s, 2), frame(s, 3)
+    apply(s, w, new, ObservationPatch(frame_id=new.id, summary='new', facts=[
+        Fact(subject=ids['new:x'], key='status', value='new', confidence=1)], relations=[
+        Relation(subject=ids['new:x'], predicate='located_in', target=ids['new:b'], confidence=1)],
+        current_place=ids['new:b'], utterances=[Utterance(text='New dialogue', occurrence='new')]), set(ids.values()))
+    late = apply(s, w, old, ObservationPatch(frame_id=old.id, summary='old', facts=[
+        Fact(subject=ids['new:x'], key='status', value='old', confidence=1),
+        Fact(subject=ids['new:x'], key='role', value='helper', confidence=1)], relations=[
+        Relation(subject=ids['new:x'], predicate='located_in', target=ids['new:a'], confidence=1)],
+        current_place=ids['new:a'], needs_planning=True,
+        utterances=[Utterance(text='Old dialogue', occurrence='old')]), set(ids.values()))
+    view = w.view(s.snapshot(3))
+    x = next(e for e in view['entities'] if e['id'] == ids['new:x'])
+    assert x['facts']['status']['value'] == 'new'
+    assert x['facts']['role']['observed_at'] == 2
+    assert view['relations'][0]['target'] == ids['new:b']
+    assert view['current_place'] == ids['new:b']
+    assert [m['text'] for m in view['recent_conversations']] == ['Old dialogue', 'New dialogue']
+    assert not late.needs_planning
+    assert s.get(late.evidence_id).payload['observed_frame_id'] == old.id
+    assert w.db.execute('SELECT text FROM world_dialogue').fetchone()[0] == 'New dialogue'
+
+
+def test_late_dialogue_does_not_duplicate_preceding_occurrence(setup):
+    s, w = setup
+    a, b, c = frame(s, 1), frame(s, 2), frame(s, 3)
+    apply(s, w, a, ObservationPatch(frame_id=a.id, summary='text', utterances=[Utterance(text='Hello', occurrence='one')]))
+    apply(s, w, c, ObservationPatch(frame_id=c.id, summary='gone'))
+    apply(s, w, b, ObservationPatch(frame_id=b.id, summary='same', utterances=[Utterance(text='Hello', occurrence='one')]))
+    assert w.db.execute('SELECT COUNT(*) FROM world_messages').fetchone()[0] == 1
+    assert w.db.execute('SELECT COUNT(*) FROM world_dialogue').fetchone()[0] == 0

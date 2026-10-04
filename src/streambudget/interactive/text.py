@@ -6,12 +6,19 @@ objects just because they carry the same text. Full-frame evidence remains exter
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from collections import OrderedDict
 from difflib import SequenceMatcher
+import hashlib
+import json
+from pathlib import Path
 import re
+import time
 import uuid
 
 import numpy as np
 from PIL import Image
+
+from ..types import ContractError
 
 
 @dataclass(frozen=True)
@@ -24,7 +31,8 @@ class TextObservation:
 
     def __post_init__(self):
         a, b, c, d = self.box
-        if not (0 <= a < c <= 1 and 0 <= b < d <= 1 and 0 <= self.confidence <= 1):
+        if not (0 <= a < c <= 1 and 0 <= b < d <= 1 and 0 <= self.confidence <= 1
+                and isinstance(self.text, str) and len(self.text) <= 4000):
             raise ValueError("Invalid text observation geometry/confidence")
 
 
@@ -147,3 +155,78 @@ def estimate_vertical_scroll(previous: Image.Image, current: Image.Image, max_sh
     if len(scores)>1 and abs(scores[1][0]-scores[0][0]) < 0.01:
         return None, scores[0][0]
     return scores[0][1], scores[0][0]
+
+
+class RapidTextReader:
+    """Pinned optional OCR adapter. Explicit local weights; no implicit model downloads.
+
+    Recognition caching saves computation, not identity: duplicate crops still return
+    separate boxes, which the temporal tracker must associate independently.
+    """
+    def __init__(self, config_path, *, scale=4, engine=None):
+        import yaml
+        self.path = Path(config_path).resolve()
+        self.params = yaml.safe_load(self.path.read_text())
+        if not isinstance(self.params, dict):
+            raise ContractError("OCR config must contain explicit RapidOCR parameters")
+        self.models = {}
+        for role in ("Det", "Rec", "Cls"):
+            path = Path(self.params.get(role + ".model_path", "")).resolve()
+            if not path.is_file() or path.suffix != ".onnx":
+                raise ContractError("Provision explicit local ONNX OCR files before running")
+            self.models[role] = hashlib.sha256(path.read_bytes()).hexdigest()
+        self.params.update({"EngineConfig.onnxruntime.use_cuda": False,
+            "EngineConfig.onnxruntime.intra_op_num_threads": 2,
+            "EngineConfig.onnxruntime.inter_op_num_threads": 1,
+            "Global.log_level": "warning"})
+        self.model_id = "rapidocr-3.9.2:" + hashlib.sha256(
+            json.dumps({"weights": self.models, "params": self.params}, sort_keys=True).encode()).hexdigest()[:16]
+        self.scale, self.engine, self.cache = scale, engine, OrderedDict()
+        self.stats = {"detector_calls": 0, "recognizer_calls": 0, "recognition_cache_hits": 0}
+
+    def read(self, image: Image.Image, evidence_id: str):
+        if self.engine is None:
+            from rapidocr import RapidOCR, EngineType, LangDet, LangRec, LangCls, ModelType, OCRVersion
+            params = dict(self.params)
+            enums = {"engine_type": EngineType, "model_type": ModelType, "ocr_version": OCRVersion}
+            for role, lang in (("Det", LangDet), ("Rec", LangRec), ("Cls", LangCls)):
+                for field, enum in {**enums, "lang_type": lang}.items():
+                    key = role + "." + field
+                    if key in params:
+                        params[key] = enum(params[key])
+            self.engine = RapidOCR(params=params)
+        im = image.convert("RGB").resize((image.width*self.scale, image.height*self.scale), Image.Resampling.NEAREST)
+        pixels = np.asarray(im)[:, :, ::-1].copy()
+        detected = self.engine(pixels, use_det=True, use_rec=False, use_cls=False)
+        self.stats["detector_calls"] += 1
+        observations = []
+        if detected.boxes is None:
+            return observations
+        if len(detected.boxes) > 32:
+            raise ContractError("OCR region cap exceeded; no silent dropping of text")
+        for quad in sorted(detected.boxes, key=lambda q: (float(q[:, 1].min()), float(q[:, 0].min()))):
+            x1, y1 = np.floor(quad.min(axis=0)).astype(int)
+            x2, y2 = np.ceil(quad.max(axis=0)).astype(int)
+            x1, y1, x2, y2 = max(0, x1), max(0, y1), min(im.width, x2), min(im.height, y2)
+            if x1 >= x2 or y1 >= y2:
+                continue
+            crop = pixels[y1:y2, x1:x2].copy()
+            key = hashlib.sha256(str(crop.shape).encode() + crop.tobytes()).hexdigest()
+            cached = self.cache.get(key)
+            if cached and time.monotonic() - cached[0] < 60:
+                text, confidence = cached[1:]
+                self.cache.move_to_end(key)
+                self.stats["recognition_cache_hits"] += 1
+            else:
+                result = self.engine(crop, use_det=False, use_rec=True, use_cls=False)
+                self.stats["recognizer_calls"] += 1
+                if result.txts is None or result.scores is None:
+                    continue
+                text, confidence = str(result.txts[0]), float(result.scores[0])
+                self.cache[key] = (time.monotonic(), text, confidence)
+                while len(self.cache) > 128:
+                    self.cache.popitem(last=False)
+            if text.strip():
+                observations.append(TextObservation("screen", (x1/im.width, y1/im.height, x2/im.width, y2/im.height),
+                                                    text, confidence, evidence_id))
+        return observations

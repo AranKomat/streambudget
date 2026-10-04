@@ -215,11 +215,18 @@ class GameConfig(Contract):
     compile_at_start: bool = False
     baseline: Literal["world", "recent"] = "world"
     stop_on_goal_claim: bool = True
+    async_perception: bool = False
+    semantic_refresh_steps: int = Field(default=8, ge=1, le=10000)
+    ocr_config_path: str | None = None
+    ocr_scale: int = Field(default=4, ge=1, le=4)
+    ocr_refresh_s: float = Field(default=2, gt=0, le=60)
     # V0 is stepped. No claim of real-time control while remote requests run.
     timing: Literal["stepped"] = "stepped"
 
     @model_validator(mode="after")
     def references(self):
+        if self.ocr_config_path and not self.async_perception:
+            raise ValueError("OCR requires the asynchronous perception path")
         if len({a.id for a in self.actions}) != len(self.actions):
             raise ValueError("Duplicate action IDs")
         if not self.actions or len(self.actions) > 32 or not any(a.button == "wait" for a in self.actions):

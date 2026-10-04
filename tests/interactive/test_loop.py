@@ -429,3 +429,135 @@ def test_resume_rejects_changed_emulator_version(tmp_path):
     with pytest.raises(ContractError, match='Emulator version'):
         GameRunner(config(), changed, out, resume=True)
     assert changed.closed
+
+
+def test_background_extraction_does_not_block_action_and_drains_before_checkpoint(tmp_path):
+    from threading import Event
+    from streambudget.interactive.contracts import ObservationPatch
+    entered, release = Event(), Event()
+    class SlowExtract(FixtureBackend):
+        def complete(self, role, system, context, images, output):
+            if role == 'extract':
+                entered.set()
+                assert release.wait(3)
+                return ObservationPatch(frame_id=context['current_frame_id'], summary='historical')
+            return super().complete(role, system, context, images, output)
+    env, out = FixtureEnvironment(), tmp_path / 'run'
+    r = GameRunner(config(async_perception=True, max_steps=1), env, out, backend=SlowExtract())
+    r.needs_plan = False
+    r.last_plan_step = 0
+    try:
+        r.step()
+        assert entered.wait(1)
+        assert r.completed_steps == 1 and env.frame_number > 0
+        assert r.world.db.execute('SELECT COUNT(*) FROM world_applied').fetchone()[0] == 0
+    finally:
+        release.set()
+    meta = r.run()
+    assert meta['async_perception']['semantic_submissions'] == 1
+    with sqlite3.connect(out / 'memory.sqlite') as db:
+        assert db.execute('SELECT COUNT(*) FROM world_applied').fetchone()[0] == 1
+    assert (out / 'checkpoint.json').exists()
+
+
+def test_stale_background_plan_cannot_stop_or_change_intent(tmp_path):
+    from threading import Event
+    from streambudget.interactive.contracts import Plan
+    entered, release = Event(), Event()
+    class SlowPlan(FixtureBackend):
+        def complete(self, role, system, context, images, output):
+            if role == 'plan':
+                entered.set()
+                assert release.wait(3)
+                return Plan(intent='obsolete intent', status='goal_claimed')
+            return super().complete(role, system, context, images, output)
+    r = GameRunner(config(async_perception=True, max_steps=2), FixtureEnvironment(), tmp_path / 'run', backend=SlowPlan())
+    r.last_background_role = None
+    try:
+        r.step()
+        assert entered.wait(1)
+        release.set()
+        r.plan_job['pending'].result(timeout=2)
+        r._poll_background()
+        assert r.intent != 'obsolete intent' and r.status == 'running'
+        assert r.async_stats['stale_plans'] == 1
+    finally:
+        release.set()
+    r.run()
+
+
+def test_background_ocr_is_source_linked_and_accounted(tmp_path):
+    from streambudget.interactive.text import TextObservation
+    class Reader:
+        model_id = 'test-ocr-not-a-benchmark'
+        stats = {}
+        def read(self, image, source):
+            return [TextObservation('screen', (0, 0, 1, 1), 'hello', 1, source)]
+    r = GameRunner(config(async_perception=True, max_steps=1), FixtureEnvironment(), tmp_path / 'run', ocr_reader=Reader())
+    first = r.current.id
+    meta = r.run()
+    assert meta['accounting']['calls'] == 1
+    assert meta['accounting']['failed_calls'] == 0
+    with sqlite3.connect(r.out / 'memory.sqlite') as db:
+        row = db.execute("SELECT payload,parents FROM evidence WHERE kind='ocr_observation'").fetchone()
+        assert json.loads(row[0])['observed_frame_id'] == first
+        assert json.loads(row[1]) == [first]
+
+
+def test_background_failure_is_not_retried_or_cleanly_checkpointed(tmp_path):
+    class Fail(FixtureBackend):
+        def complete(self, role, *args):
+            if role == 'extract':
+                raise RuntimeError('test failure')
+            return super().complete(role, *args)
+    out = tmp_path / 'run'
+    with pytest.raises(RuntimeError):
+        GameRunner(config(async_perception=True, max_steps=1), FixtureEnvironment(), out, backend=Fail()).run()
+    assert json.loads((out / 'run.json').read_text())['status'] == 'failed'
+    assert not (out / 'checkpoint.json').exists()
+
+
+def test_actor_failure_still_accounts_failed_background_work(tmp_path):
+    class Fail(FixtureBackend):
+        def complete(self, role, *args):
+            if role == 'extract':
+                raise RuntimeError('background error')
+            if role == 'act':
+                raise ValueError('actor error')
+            return super().complete(role, *args)
+    out = tmp_path / 'run'
+    with pytest.raises(ValueError, match='actor error'):
+        GameRunner(config(async_perception=True), FixtureEnvironment(), out, backend=Fail()).run()
+    assert json.loads((out / 'run.json').read_text())['status'] == 'failed'
+
+
+def test_background_jobs_are_bounded_and_latest_frame_is_coalesced(tmp_path):
+    from threading import Event
+    from streambudget.interactive.contracts import ObservationPatch
+    release = Event()
+    class Slow(FixtureBackend):
+        def complete(self, role, system, context, images, output):
+            if role == 'extract':
+                assert release.wait(3)
+                return ObservationPatch(frame_id=context['current_frame_id'], summary='old')
+            return super().complete(role, system, context, images, output)
+    r = GameRunner(config(async_perception=True, max_steps=3), FixtureEnvironment(), tmp_path / 'run', backend=Slow())
+    r.needs_plan, r.last_plan_step = False, 0
+    try:
+        for _ in range(3):
+            r.step()
+        assert r.async_stats['semantic_submissions'] == 1
+        assert r.async_stats['semantic_coalesced_frames'] == 2
+        assert r.plan_job is None
+    finally:
+        release.set()
+    r.run()
+
+
+def test_clean_async_resume_has_no_unresolved_attempts(tmp_path):
+    out = tmp_path / 'run'
+    first = GameRunner(config(async_perception=True, max_steps=2), FixtureEnvironment(), out).run()
+    assert first['completed_steps'] == 2
+    second = GameRunner(config(async_perception=True, max_steps=4), restore(out / 'environment.state'),
+                        out, resume=True).run()
+    assert second['completed_steps'] == 4

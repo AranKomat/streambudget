@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import dataclasses
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 import hashlib
 from io import BytesIO
 import json
 from pathlib import Path
+import sys
 import time
 import uuid
 
@@ -17,12 +19,13 @@ from ..store import EvidenceStore
 from ..types import ContractError
 from . import prompts
 from .context import bounded_context
-from .contracts import ActionChoice, GameConfig, ObservationPatch, Plan, SchemaPatch
+from .contracts import ActionChoice, Endpoint, GameConfig, ObservationPatch, Plan, SchemaPatch
 from .fixture import FixtureBackend
 from .models import BudgetExhausted, ChatBackend, ImageInput, Ledger
 from .ontology import canonical
 from .locking import RunLock
 from .world import World
+from .text import RapidTextReader, TemporalTextTracker, TextRegionCache, estimate_vertical_scroll
 
 
 def png(image):
@@ -70,6 +73,10 @@ class GameRunner:
         try:
             self._initialize(config, env, out, **kwargs)
         except BaseException:
+            for name in ("background", "ocr_worker"):
+                worker = getattr(self, name, None)
+                if worker:
+                    worker.shutdown(wait=True)
             with suppress(Exception):
                 env.close()
             with suppress(Exception):
@@ -85,7 +92,7 @@ class GameRunner:
             raise
 
     def _initialize(self, config: GameConfig, env, out: Path, *, allow_network=False,
-                 allow_paid=False, backend=None, resume=False):
+                 allow_paid=False, backend=None, resume=False, ocr_reader=None):
         self.config, self.env, self.out = config, env, out.resolve()
         self.start_wall = time.monotonic()
         self.completed_steps, self.last_plan_step = 0, -100000
@@ -95,6 +102,19 @@ class GameRunner:
         self.epoch = uuid.uuid4().hex
         self.status = "running"
         self.previous_wall = 0.0
+        self.background, self.ocr_worker = None, None
+        self.semantic_job, self.plan_job, self.ocr_job = None, None, None
+        self.last_semantic_step, self.semantic_hash = -100000, None
+        self.semantic_due = True
+        # Cold start: acquire one grounded memory observation before proposing focus IDs.
+        self.last_background_role = "plan"
+        self.hot_text = None
+        self.text_tracker = TemporalTextTracker(max_gap=5)
+        self.text_cache = TextRegionCache(max_age=config.ocr_refresh_s, threshold=0.001)
+        self.ocr_previous_image, self.ocr_previous_frame = None, None
+        self.async_stats = {"semantic_submissions": 0, "semantic_coalesced_frames": 0,
+            "ocr_submissions": 0, "ocr_coalesced_frames": 0, "ocr_frame_cache_hits": 0,
+            "stale_plans": 0}
         if resume:
             self._lock = RunLock(self.out / ".interactive.lock")
             cpath = self.out / "checkpoint.json"
@@ -172,6 +192,16 @@ class GameRunner:
             self.current = self.capture()
         self.backend = backend or (FixtureBackend() if config.backend == "fixture" else
             ChatBackend(config, self.ledger, allow_network=allow_network, allow_paid=allow_paid))
+        self.ocr_reader = ocr_reader or (RapidTextReader(config.ocr_config_path, scale=config.ocr_scale)
+                                       if config.ocr_config_path else None)
+        if resume and self.metadata.get("ocr_model") != getattr(self.ocr_reader, "model_id", None):
+            raise ContractError("OCR model/config changed since checkpoint")
+        if config.async_perception:
+            # One background Qwen request at a time, plus the actor. No unbounded queue.
+            self.background = ThreadPoolExecutor(max_workers=1, thread_name_prefix="semantic")
+            if self.ocr_reader:
+                self.ocr_worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ocr")
+            self.metadata["timing"] = "stepped actions; OCR, semantics and planning run in bounded background workers"
         self.metadata["status"] = "running"
         write_json(self.out / "run.json", self.metadata)
 
@@ -216,8 +246,235 @@ class GameRunner:
         packet = bounded_context(goal=self.config.goal, intent=self.intent,
             schema=self.world.ontology.current, actions=[a.model_dump() for a in self.config.actions],
             world=world, recent=[e.view() for e in recent], current_frame_id=self.current.id,
-            max_chars=self.config.max_context_chars, extra=extra)
+            max_chars=self.config.max_context_chars, extra=extra, hot_text=(
+                {**self.hot_text, "source_age_s": self.current.end - self.hot_text["observed_at"],
+                 "source_matches_current": self.hot_text["source_sha256"] == self.current.payload["sha256"],
+                 "tracks": [dict(t) for t in self.hot_text["tracks"]]} if self.hot_text else None))
+        if self.config.async_perception:
+            packet["background_planning"] = bool(self.plan_job)
+            if len(canonical(packet)) > self.config.max_context_chars:
+                raise ContractError("Background status exceeds context cap")
         return snap, packet
+
+    def _submit_model(self, role, system, context, images, output):
+        submit = getattr(self.backend, "submit", None)
+        if submit:
+            return submit(self.background, role, system, context, images, output)
+        if self.config.backend != "fixture":
+            raise ContractError("Asynchronous backend must support owner-thread ledger admission")
+        return self.background.submit(self.backend.complete, role, system, context, images, output)
+
+    def _perception_inputs(self):
+        snap, packet = self.packet()
+        frames = list(self.last_frames)
+        parents = [f.id for f in frames] + [e["id"] for e in packet["recent_evidence"]]
+        for ent in packet["world"].get("entities", []):
+            parents.append(ent["evidence_id"])
+            parents.extend(f["evidence_id"] for f in ent["facts"].values())
+        parents.extend(r["evidence"] for r in packet["world"].get("relations", []))
+        parents.extend(r["evidence"] for r in packet["world"].get("recent_conversations", []))
+        if packet.get("hot_text"):
+            parents.append(packet["hot_text"]["evidence_id"])
+        return dict(snap=snap, packet=packet, frame=self.current, frames=frames, parents=parents)
+
+    def _apply_semantics(self, patch, job):
+        if patch.frame_id != job["frame"].id:
+            raise ContractError("Extractor must describe its supplied CURRENT frame")
+        applied = self.world.apply(patch, job["snap"], offered_frames={f.id for f in job["frames"]},
+            offered_entities={e["id"] for e in job["packet"]["world"].get("entities", [])},
+            consumed_evidence=job["parents"])
+        if applied.changed:
+            self.save_regions(patch, applied, job["snap"])
+        self.needs_plan |= applied.needs_planning
+        self.log("semantic_completed", source_frame=job["frame"].id,
+                 current_frame=self.current.id, historical=job["frame"].id != self.current.id,
+                 evidence_id=applied.evidence_id)
+
+    def _schedule_background(self):
+        if self.ocr_reader and not self.ocr_job and self.current.id != self.ocr_previous_frame:
+            image = MediaStore.decode(self.image_raw(self.current))
+            now = time.monotonic()
+            pixel_changed = self.hot_text is None or self.hot_text["source_sha256"] != self.current.payload["sha256"]
+            if pixel_changed or self.text_cache.needs_read("screen", image, now):
+                ep = Endpoint(model=self.ocr_reader.model_id, billing="local")
+                call = self.ledger.reserve("ocr", ep, self.current.payload["sha256"], 1, 0)
+                with self.store.db:
+                    self.store.db.execute("INSERT INTO model_inputs VALUES(?,?,?,?)", (call, "{}",
+                        "local OCR; text is untrusted evidence", canonical([{"id": self.current.id,
+                         "sha256": self.current.payload["sha256"]}])))
+                try:
+                    future = self.ocr_worker.submit(self._ocr_read, image.copy(), self.current.id)
+                except Exception as exc:
+                    self.ledger.finish(call, endpoint=ep, error=type(exc).__name__)
+                    raise
+                self.ocr_job = dict(frame=self.current, image=image, start=now, call=call, endpoint=ep, future=future)
+                self.async_stats["ocr_submissions"] += 1
+                self.log("ocr_submitted", source_frame=self.current.id, call_id=call)
+            else:
+                self.async_stats["ocr_frame_cache_hits"] += 1
+                self.log("ocr_frame_reused", source_frame=self.current.id,
+                         prior_frame=self.ocr_previous_frame)
+        elif self.ocr_job:
+            self.async_stats["ocr_coalesced_frames"] += 1
+        if self.semantic_job or self.plan_job:
+            self.async_stats["semantic_coalesced_frames"] += 1
+            return
+        plan_due = self.needs_plan or self.completed_steps - self.last_plan_step >= self.config.plan_every
+        extract_due = (self.semantic_due or self.completed_steps - self.last_semantic_step >= self.config.semantic_refresh_steps
+                       ) and self.semantic_hash != self.current.payload["sha256"]
+        if extract_due and self.store.db.execute("SELECT 1 FROM world_applied WHERE frame_id=?", (self.current.id,)).fetchone():
+            extract_due = False
+            self.semantic_hash = self.current.payload["sha256"]
+            self.last_semantic_step = self.completed_steps
+        if plan_due and (self.last_background_role != "plan" or not extract_due):
+            snap, packet = self.packet()
+            self.plan_job = dict(snap=snap, packet=packet, frame=self.current, intent=self.intent,
+                                 round=0, step=self.completed_steps)
+            self.plan_job["pending"] = self._submit_model("plan", prompts.PLAN, packet,
+                                                         [self.image(self.current)], Plan)
+            self.log("plan_submitted", source_frame=self.current.id)
+            self.last_background_role = "plan"
+            return
+        if extract_due:
+            job = self._perception_inputs()
+            job["pending"] = self._submit_model("extract", prompts.EXTRACT, job["packet"],
+                [self.image(f, f.id != self.current.id) for f in job["frames"]], ObservationPatch)
+            self.semantic_job = job
+            self.last_background_role = "extract"
+            self.semantic_hash = self.current.payload["sha256"]
+            self.last_semantic_step, self.semantic_due = self.completed_steps, False
+            self.async_stats["semantic_submissions"] += 1
+            self.log("semantic_submitted", source_frame=self.current.id)
+
+    def image_raw(self, evidence):
+        # image() validates the same immutable source before any worker sees its pixels.
+        self.image(evidence)
+        return (self.media.root / evidence.payload["media_key"]).read_bytes()
+
+    def _ocr_read(self, image, frame_id):
+        start = time.monotonic()
+        observations = self.ocr_reader.read(image, frame_id)
+        return observations, time.monotonic() - start
+
+    def _finish_ocr(self, job, *, apply=True):
+        try:
+            observations, elapsed = job["future"].result()
+            if any(o.evidence_id != job["frame"].id for o in observations):
+                raise ContractError("OCR result does not identify its actual source frame")
+            response = {"observations": [dataclasses.asdict(o) for o in observations]}
+        except Exception as exc:
+            self.ledger.finish(job["call"], endpoint=job["endpoint"], elapsed=time.monotonic()-job["start"],
+                               error=type(exc).__name__)
+            raise
+        self.ledger.finish(job["call"], endpoint=job["endpoint"], response=response,
+                           elapsed=elapsed)
+        if not apply:
+            return
+        frame = job["frame"]
+        scroll = {}
+        if self.ocr_previous_image is not None:
+            dy, residual = estimate_vertical_scroll(self.ocr_previous_image, job["image"])
+            if dy is not None and residual < 2:
+                scroll = {"screen": (0, dy/job["image"].height)}
+        events = self.text_tracker.update(observations, frame.end, scroll=scroll)
+        record = self.store.derive(source=frame.source, kind="ocr_observation",
+            text="\n".join(o.text for o in observations), parents=[frame.id],
+            snapshot=self.store.snapshot(self.current.end), payload={**response, "events": events,
+                "observed_frame_id": frame.id, "observed_at": frame.end,
+                "source_sha256": frame.payload["sha256"], "model": self.ocr_reader.model_id,
+                "completed_wall": time.time(), "epistemic_status": "OCR_not_ground_truth"})
+        self.hot_text = {"evidence_id": record.id, "source_frame": frame.id, "observed_at": frame.end,
+            "source_sha256": frame.payload["sha256"], "tracks": [dict(id=t.id, text=t.text, box=t.box,
+                confidence=t.confidence, last_seen=t.last_seen) for t in self.text_tracker.tracks.values()
+                if t.last_seen == frame.end],
+            "warning": "OCR is untrusted; tracks are heuristic, speaker and semantic identity remain unknown"}
+        self.ocr_previous_frame, self.ocr_previous_image = frame.id, job["image"]
+        self.text_cache.record("screen", job["image"], job["start"])
+        self.semantic_due |= bool(events)
+        self.log("ocr_completed", source_frame=frame.id, evidence_id=record.id, events=events,
+                 elapsed_s=elapsed, delivery_delay_s=max(0, time.monotonic()-job["start"]-elapsed))
+
+    def _finish_plan(self, job, plan):
+        context, snap = job["packet"], job["snap"]
+        offered = {e["id"] for e in context["world"].get("entities", [])}
+        offered |= {e["id"] for r in context.get("retrieved", []) for e in r.get("entities", [])}
+        if set(plan.focus_ids) - offered:
+            raise ContractError("Planner focus contains unoffered entities")
+        applicable = (job["frame"].payload["sha256"] == self.current.payload["sha256"]
+                      and job["intent"] == self.intent
+                      and self.completed_steps - job["step"] <= self.config.plan_every)
+        if not applicable:
+            self.async_stats["stale_plans"] += 1
+            self.needs_plan = True
+            self.log("plan_discarded", source_frame=job["frame"].id, reason="source_or_intent_changed",
+                     result=plan.model_dump())
+            return
+        if (plan.search or plan.inspect_ids) and job["round"] < self.config.max_retrieval_rounds:
+            results = self.store.search(plan.search, snap, source=self.config.source, limit=6) if plan.search else []
+            extra = [self.world.retrieval_record(e, snap) for e in results]
+            visible_ids = {job["frame"].id} | offered
+            visible_ids |= {e["id"] for e in context["recent_evidence"] + context.get("retrieved", [])}
+            visible_ids |= {p for e in context["recent_evidence"] + context.get("retrieved", []) for p in e.get("parents", [])}
+            visible_ids |= {r["evidence"] for r in context["world"].get("relations", [])}
+            visible_ids |= {e["evidence_id"] for e in context["world"].get("entities", [])}
+            visible_ids |= {f["evidence_id"] for e in context["world"].get("entities", []) for f in e["facts"].values()}
+            anchors = []
+            for id in plan.inspect_ids:
+                if id not in visible_ids:
+                    raise ContractError("Inspection target was not exposed to the planner")
+                e = self.resolve_image(id, snap, offered)
+                if e:
+                    anchors.append(self.image(e, historical=True))
+            # Keep the original source-bound packet/snapshot throughout retrieval.
+            packet = bounded_context(goal=context["goal"], intent=context["intent"], schema=context["ontology"],
+                actions=context["actions"], world=context["world"], recent=context["recent_evidence"],
+                current_frame_id=job["frame"].id, max_chars=self.config.max_context_chars, extra=extra,
+                hot_text=context.get("hot_text"))
+            job.update(packet=packet, round=job["round"]+1)
+            job["pending"] = self._submit_model("plan", prompts.PLAN, packet,
+                ([self.image(job["frame"])] + anchors)[:self.config.max_images], Plan)
+            self.plan_job = job
+            self.log("retrieval", round=job["round"], results=[r["id"] for r in extra], anchors=[a.id for a in anchors])
+            return
+        self.intent, self.focus = plan.intent, plan.focus_ids
+        self.last_plan_step, self.needs_plan = self.completed_steps, False
+        self.log("plan", source_frame=job["frame"].id, result=plan.model_dump())
+        # A late model claim cannot terminate a newer episode.
+        if job["frame"].id == self.current.id:
+            if plan.status == "goal_claimed" and self.config.stop_on_goal_claim:
+                self.status = "goal_claimed"
+            elif plan.status == "blocked":
+                self.status = "blocked"
+
+    def _poll_background(self, *, wait=False, apply=True):
+        errors = []
+        for attr in ("ocr_job", "semantic_job", "plan_job"):
+            job = getattr(self, attr)
+            if not job:
+                continue
+            pending = job.get("pending", job.get("future"))
+            future = getattr(pending, "future", pending)
+            if not wait and not future.done():
+                continue
+            setattr(self, attr, None)
+            try:
+                if attr == "ocr_job":
+                    self._finish_ocr(job, apply=apply)
+                else:
+                    value = pending.result()
+                    if apply and attr == "semantic_job":
+                        self._apply_semantics(value, job)
+                    elif apply and attr == "plan_job" and not wait:
+                        self._finish_plan(job, value)
+                    elif attr == "plan_job":
+                        self.log("plan_retained_at_stop", source_frame=job["frame"].id,
+                                 result=value.model_dump(), note="not activated during shutdown")
+            except Exception as exc:
+                errors.append(exc)
+                self.log("background_failure", role=attr, source_frame=job["frame"].id,
+                         error_type=type(exc).__name__)
+        if errors:
+            raise errors[0]
 
     def save_regions(self, patch, applied, snap):
         for mention in patch.mentions:
@@ -325,33 +582,30 @@ class GameRunner:
             self.status = "blocked"
 
     def step(self):
-        snap, packet = self.packet()
-        images = [self.image(f, f.id != self.current.id) for f in self.last_frames]
-        already = self.store.db.execute("SELECT evidence_id FROM world_applied WHERE frame_id=?",
-                                        (self.current.id,)).fetchone()
-        if already:
-            patch = ObservationPatch.model_validate(self.store.get(already[0]).payload["interpretation"])
+        decision_start = time.monotonic()
+        if self.config.async_perception:
+            self._poll_background()
+            if self.status != "running":
+                return
+            self._schedule_background()
         else:
-            patch = self.backend.complete("extract", prompts.EXTRACT, packet, images, ObservationPatch)
-        if patch.frame_id != self.current.id:
-            raise ContractError("Extractor must describe the CURRENT frame, not a historical anchor")
-        parents = [f.id for f in self.last_frames] + [e["id"] for e in packet["recent_evidence"]]
-        for ent in packet["world"].get("entities", []):
-            parents.append(ent["evidence_id"])
-            parents.extend(f["evidence_id"] for f in ent["facts"].values())
-        parents.extend(r["evidence"] for r in packet["world"].get("relations", []))
-        parents.extend(r["evidence"] for r in packet["world"].get("recent_conversations", []))
-        applied = self.world.apply(patch, snap, offered_frames={f.id for f in self.last_frames},
-            offered_entities={e["id"] for e in packet["world"].get("entities", [])}, consumed_evidence=parents)
-        if applied.changed:
-            self.save_regions(patch, applied, snap)
-        self.needs_plan |= patch.needs_planning
-        if self.needs_plan or self.completed_steps - self.last_plan_step >= self.config.plan_every:
-            self.plan()
+            job = self._perception_inputs()
+            already = self.store.db.execute("SELECT evidence_id FROM world_applied WHERE frame_id=?",
+                                            (self.current.id,)).fetchone()
+            if already:
+                patch = ObservationPatch.model_validate(self.store.get(already[0]).payload["interpretation"])
+            else:
+                patch = self.backend.complete("extract", prompts.EXTRACT, job["packet"],
+                    [self.image(f, f.id != self.current.id) for f in job["frames"]], ObservationPatch)
+            self._apply_semantics(patch, job)
+            if self.needs_plan or self.completed_steps - self.last_plan_step >= self.config.plan_every:
+                self.plan()
         if self.status != "running":
             return
         _, context = self.packet()
+        actor_start = time.monotonic()
         choice = self.backend.complete("act", prompts.ACT, context, [self.image(self.current)], ActionChoice)
+        actor_elapsed = time.monotonic() - actor_start
         action = next((a for a in self.config.actions if a.id == choice.action_id), None)
         if action is None:
             raise ContractError("Action not in the operator-provided capability manifest")
@@ -363,6 +617,7 @@ class GameRunner:
            hashlib.sha256(png(fresh.image)).hexdigest() != self.current.payload["sha256"]:
             raise ContractError("World changed while deciding; refusing a stale action")
         action_id = "execution_" + uuid.uuid4().hex
+        decision_elapsed = time.monotonic() - decision_start
         with self.store.db:
             self.store.db.execute("INSERT INTO game_actions VALUES(?,?,?,?,?,NULL)",
                 (action_id, self.epoch, self.current.id, canonical(action.model_dump()), "dispatched"))
@@ -378,7 +633,8 @@ class GameRunner:
         self.current = self.capture()
         self.completed_steps += 1
         self.log("action", execution_id=action_id, before=before, after=self.current.id,
-                 action=action.model_dump(), receipt=dataclasses.asdict(receipt), intent=self.intent)
+                 action=action.model_dump(), receipt=dataclasses.asdict(receipt), intent=self.intent,
+                 decision_wall_s=decision_elapsed, actor_request_wall_s=actor_elapsed)
 
     def run(self):
         try:
@@ -411,6 +667,11 @@ class GameRunner:
                     break
             if self.status == "running":
                 self.status = "step_limit"
+            # Account for all dispatched work before creating a resumable checkpoint.
+            # Draining is shutdown overhead, never reported as action-path latency.
+            drain_start = time.monotonic()
+            self._poll_background(wait=True)
+            self.metadata["background_drain_s"] = time.monotonic() - drain_start
             screen = self.env.capture()
             if (screen.frame_number != self.current.payload["frame_number"] or
                     hashlib.sha256(png(screen.image)).hexdigest() != self.current.payload["sha256"]):
@@ -432,14 +693,30 @@ class GameRunner:
             self.log("failure", error_type=type(exc).__name__)
             raise
         finally:
+            propagating_error = sys.exc_info()[0] is not None
+            cleanup_error = None
             try:
+                try:
+                    self._poll_background(wait=True, apply=False)
+                except Exception as exc:
+                    cleanup_error = exc
+                    self.status = "failed"
+                finally:
+                    for worker in (self.background, self.ocr_worker):
+                        if worker:
+                            worker.shutdown(wait=True)
                 self.metadata.update(status=self.status, completed_steps=self.completed_steps,
                     elapsed_wall_s=self.previous_wall + time.monotonic()-self.start_wall,
                     current_frame_id=self.current.id, accounting=self.ledger.summary(),
                     ontology=self.world.ontology.current,
                     fixture_model_calls=getattr(self.backend, "calls", None),
+                    async_perception=self.async_stats,
+                    ocr_model=getattr(self.ocr_reader, "model_id", None),
+                    ocr_stats=getattr(self.ocr_reader, "stats", None),
                     final_world=self.world.view(self.store.snapshot(self.current.end)))
                 write_json(self.out / "run.json", self.metadata)
+                if cleanup_error and not propagating_error:
+                    raise cleanup_error
             finally:
                 try:
                     self.env.close()

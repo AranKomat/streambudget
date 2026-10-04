@@ -29,6 +29,8 @@ provided evidence; do not write a walkthrough or long low-level action sequence.
 Use supplied world state, memories and occasional images. You may request search text
 or up to four offered evidence IDs to inspect; the runtime can execute only these bounded
 read-only retrieval requests. Return focus_ids drawn from offered entities.
+If no entities are offered, focus_ids MUST be []; names, new:* handles and invented
+entity IDs are not valid focus IDs. You may describe a visible target in intent instead.
 Your intent should disambiguate the local target, not repeat an underspecified high-level
 goal. If location/identity is unknown, ask for observation or exploration rather than
 pretending a map exists. goal_claimed means a claim for human review, not verified success.
@@ -40,6 +42,9 @@ Actions are button holds with explicit simulator-frame duration followed by rele
 Do not assume one button hold equals one tile or one menu item. Observe again after it.
 At ambiguous interactions prefer WAIT or a small corrective movement to an irreversible
 selection. A short output is not evidence the control is correct; remain grounded.
+Background planning and memory may be delayed. Ground actions in the latest image;
+old OCR/world positions are not current truth. While no applicable intent is available,
+prefer observation/WAIT at consequential menus or irreversible interaction boundaries.
 """
 COMPILE = COMMON + """
 Propose a SMALL additive schema initialization for the requested task. Reuse the base

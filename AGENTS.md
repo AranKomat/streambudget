@@ -24,6 +24,12 @@ watch/investigation application and its historical results.
   per-request thinking settings rather than two resident models. Owner-tested
   hosted Qwen selection need not be repeated. Sol is optional reference/fallback,
   not the required fast path. Download weights only on the chosen GPU host.
+* The local profile enables bounded background semantics/planning. OCR is optional,
+  explicit host-local PP-OCRv6 small ONNX via RapidOCR; files stay off the Mac.
+  Worker inference never writes SQLite. Keep admission/settlement and source-bound
+  projections on the owner thread. Settle pending work before clean checkpoints;
+  retain stale/failed interpretations and never rewind live facts by arrival order.
+  Stepped actions are still not independently clocked real-time execution.
 * GPT trials default to 6.1 Sol/medium/explicit Flex; rates must match the served tier.
   Missing/mismatched tiers retain unknown charge holds. No implicit retry or fallback.
 * Run both applications' CPU tests and no-key demos after shared changes. Core regression
